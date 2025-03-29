@@ -1780,7 +1780,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin 4bus.json"
+			"value" : "gridlabd.bin test.json"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -1830,7 +1830,7 @@
 		"workdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/Users/david/GitHub/dchassin/regrow/model"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement"
 		},
 		"dumpfile" : {
 			"type" : "char1024",
@@ -1840,7 +1840,7 @@
 		"savefile" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "4bus.json"
+			"value" : "test.json"
 		},
 		"dumpall" : {
 			"type" : "bool",
@@ -1941,7 +1941,7 @@
 		"modelname" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "4bus.json"
+			"value" : "test.json"
 		},
 		"execdir" : {
 			"type" : "char1024",
@@ -1966,7 +1966,7 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "734543068"
+			"value" : "1221185560"
 		},
 		"randomseed" : {
 			"type" : "int32",
@@ -2675,7 +2675,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.195792, \"stime\" : 0.262739, \"maxrss\" : 39002112, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12502, \"majflt\" : 0, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3123}"
+			"value" : "{\"utime\" : 1.184371, \"stime\" : 0.256950, \"maxrss\" : 38907904, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12501, \"majflt\" : 1, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3591}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -2685,7 +2685,7 @@
 		"filename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "4bus.glm"
+			"value" : "test.glm"
 		},
 		"country" : {
 			"type" : "char8",

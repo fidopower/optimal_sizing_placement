@@ -8,13 +8,13 @@ the optimal sizing/placement problem and updates the model with the result.
 Then the OPF runs without curtailment and the simulation is run with the new model.
 
 >>> import gld
->>> test = Model("4bus.json")
+>>> test = Model("test.json")
 >>> test.optimal_powerflow()["curtailment"]
 >>> test.optimal_sizing(gen_cost=np.array([100,500,1000,1000])+1000j,
                         cap_cost={0:1000,1:500},
                         update_model=True)
 >>> test.optimal_powerflow(refresh=True)["curtailment"]
->>> test.run("4bus_test.json")
+>>> test.run("test_out.json")
 """
 
 import sys
@@ -1013,11 +1013,11 @@ class Model:
 
 if __name__ == "__main__":
 
-    if not os.path.exists("4bus.json"):
-        print("TEST: 4bus.json not found, testing not done",file=sys.stderr)
+    if not os.path.exists("test.json"):
+        print("TEST: test.json not found, testing not done",file=sys.stderr)
         quit()
 
-    test = Model("4bus.json")
+    test = Model("test.json")
 
     try:
         test.run("--version")
@@ -1066,7 +1066,6 @@ if __name__ == "__main__":
     testEq(test.mod_object("test",scale=1.0),{'class': 'geodata', 'id': "10", 'scale': '1.0 pu'},"mod object failed")
     testEq(test.del_object("test"),{'class': 'geodata', 'id': "10", 'scale': '1.0 pu'},"add object failed")
 
-    testEq(os.path.exists("4bus.json"),True,"test model 4bus.json not found")
     testEq("pypower" in test.modules(),True,"module failed")
     testEq(test.validate(["pypower"]),None, "validate failed")
     testEq("version" in test.globals(list),True,"globals list failed")
@@ -1102,25 +1101,14 @@ if __name__ == "__main__":
     testEq(test.optimal_powerflow()["curtailment"].tolist(),[0,0,5,5],"optimal powerflow failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [24.8+0j, 1.6+0j, 0j, 0j], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,verbose=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (14.8+0j), 1: (1.6+0j)}, 'capacitors': {2: 1.2}} , "optimal sizing failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (14.8+0j), 1: (1.6+0j)}, 'capacitors': {2: 1.2}} , "optimal sizing failed")
     testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),[0,0,0,0],"optimal powerflow failed")
 
     if runtime:
         test.data["globals"]["savefile"] = ""
-        test.save("4bus_test.json",indent=4)
-        rc,out,err = test.run("4bus_test.json",exception=False)
+        test.save("test_out.json",indent=4)
+        rc,out,err = test.run("test_out.json",exception=False)
         testEq(out,[''],'run test failed')
-
-    for case in os.listdir("."):
-        if case.startswith("case") and case.endswith(".json"):
-            test = Model(case)
-            test.optimal_sizing(gen_cost=100,cap_cost=10,update_model=True)
-            test.optimal_powerflow(refresh=True)
-
-    test = Model("wecc240.json")
-    test.optimal_sizing(gen_cost=100,cap_cost=10,update_model=True,verbose=True)
-    print(test.optimal_powerflow(refresh=True))
-
 
     print("\nTEST: completed tests",end="",file=sys.stderr,flush=True)
     print("\nTEST:",tested,"tested,",failed,"failed",file=sys.stderr)
