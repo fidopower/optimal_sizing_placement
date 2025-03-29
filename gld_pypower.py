@@ -509,7 +509,7 @@ class Model:
             return self.results["costs"]
         self.assert_module("pypower")
         if "costs" in self.results:
-            return self.result["costs"]
+            return self.results["costs"]
         self.results["costs"] = self.find("gencost")
         return self.results["costs"]
 
@@ -951,7 +951,7 @@ class Model:
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}    Bus       Pg       Qg      Pmax     Qmax     Qmin  ",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- -------- --------",file=verbose)
             for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_gens) if abs(x)>0}.items():
-                gen = f"gen_{len(self.find('gen'))}"
+                gen = f"gen:{len(self.data["objects"])}"
                 n = int(self.data['objects'][bus]['bus_i'])-1
                 obj = self.add_object("gen",gen,
                     parent=bus,
@@ -977,7 +977,7 @@ class Model:
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
             for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if abs(x)>0}.items():
-                shunt = f"shunt_{len(self.find('shunt'))}"
+                shunt = f"shunt:{len(self.data["objects"])}"
                 self.add_object("shunt",shunt,
                     parent=bus,
                     voltage_high=voltage_high,

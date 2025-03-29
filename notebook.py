@@ -24,12 +24,42 @@ def _(error, exception, file, gld, hint, mo):
     mo.stop(_check, error(_check))
     N = len(model.find("bus", list))
     K = len(model.find("branch", list))
+    {"powerflow":model.optimal_powerflow()}
     return K, N, model
 
 
 @app.cell
 def _(K, N, message):
     message(f"{N=}, {K=}")
+    return
+
+
+@app.cell
+def _(model):
+    gen_cost = [100,500,1000,1000]
+    cap_cost = [1000,500,0,0]
+    (sizing := {"sizing":model.optimal_sizing(gen_cost=gen_cost,cap_cost=cap_cost,refresh=True,update_model=True)})
+    return cap_cost, gen_cost, sizing
+
+
+@app.cell
+def _(model, sizing):
+    sizing
+    (flow := {"powerflow":model.optimal_powerflow(refresh=True)})
+    return (flow,)
+
+
+@app.cell
+def _(flow, model):
+    flow
+    {"generation":model.generation().round(3).tolist()}
+    return
+
+
+@app.cell
+def _(flow, model):
+    flow
+    {"capacitors":model.capacitors().round(3).tolist()}
     return
 
 
@@ -61,14 +91,9 @@ def _():
     import os
     import sys
     if os.environ["HOME"] == "/home/pyodide":
-        # replace these...
+        # cannot import from requirements.txt in WASM
         import numpy
         import cvxpy
-        # ...with this after https://github.com/marimo-team/marimo/issues/4307 is resolved
-        # import micropip
-        # await micropip.install(
-        #     [x.strip() for x in open("requirements.txt", "r").readlines()]
-        # )
     else:
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
