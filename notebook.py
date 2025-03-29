@@ -56,10 +56,22 @@ def _(mo):
 
 
 @app.cell
-def _():
+async def _():
     import marimo as mo
+    import os
+    import sys
+    if os.environ["HOME"] == "/home/pyodide":
+        import numpy
+        import cvxpy
+        import micropip
+        await micropip.install(
+            [x.strip() for x in open("requirements.txt", "r").readlines()]
+        )
+    else:
+        import subprocess
+        subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
     import gld_pypower as gld
-    return gld, mo
+    return cvxpy, gld, micropip, mo, numpy, os, subprocess, sys
 
 
 if __name__ == "__main__":
