@@ -7,7 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _(mo):
     # Model load
-    file = mo.ui.file(label="GridLAB-D model", filetypes=[".json"])
+    file = mo.ui.file(label="Load JSON model", filetypes=[".json"])
     file
     return (file,)
 
@@ -105,12 +105,12 @@ def _(error, exception, file, gld, hint, mo):
 @app.cell
 def _(K, N, mo, np, pd):
     # Result formatting
-    def format(x):
+    def format(x,prefix="",suffix=""):
         if isinstance(x, list):
-            return f"{x[0]:.1f}<{x[1]:.1f}"
+            return f"{prefix} {x[0]:.1f}<{x[1]:.1f} {suffix}"
         if isinstance(x, complex):
-            return f"{x.real:.1f}{x.imag:+.1f}j"
-        return f"{x:.1f}"
+            return f"{prefix} {x.real:.1f}{x.imag:+.1f}j {suffix}"
+        return f"{prefix} {x:.1f} {suffix}"
 
 
     # pd.DataFrame({x:str(y) for x,y in model.optimal_powerflow().items() if isinstance(y,np.ndarray)})
@@ -123,28 +123,28 @@ def _(K, N, mo, np, pd):
                 pd.DataFrame(
                     data={
                         "Total/Mean": [
-                            format(result["curtailment"].sum()),
-                            format(sum([abs(x) for x in result["generation"]])),
-                            format(result["capacitors"].sum()),
-                            format(sum([x for x, y in result["voltage"]]) / N),
-                            format(sum([y for x, y in result["voltage"]]) / N),
-                            format(result["flows"].mean()),
+                            format(abs(result["curtailment"].sum()),suffix="MW"),
+                            format(sum([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(abs(result["capacitors"].sum()),suffix="MVAr"),
+                            format(abs(sum([x for x, y in result["voltage"]]) / N),suffix="V"),
+                            format(sum([y for x, y in result["voltage"]]) / N,suffix="deg"),
+                            format(abs(result["flows"].mean()),suffix="MW"),
                         ],
                         "Minimum": [
-                            format(result["curtailment"].min()),
-                            format(min([abs(x) for x in result["generation"]])),
-                            format(result["capacitors"].min()),
-                            format(min([x for x, y in result["voltage"]])),
-                            format(min([y for x, y in result["voltage"]])),
-                            format(result["flows"].min()),
+                            format(abs(result["curtailment"].min()),suffix="MW"),
+                            format(min([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(abs(result["capacitors"].min()),suffix="MVAr"),
+                            format(abs(min([x for x, y in result["voltage"]])),suffix="V"),
+                            format(min([y for x, y in result["voltage"]]),suffix="deg"),
+                            format(abs(result["flows"].min()),suffix="MW"),
                         ],
                         "Maximum": [
-                            format(result["curtailment"].max()),
-                            format(max([abs(x) for x in result["generation"]])),
-                            format(result["capacitors"].max()),
-                            format(max([x for x, y in result["voltage"]])),
-                            format(max([y for x, y in result["voltage"]])),
-                            format(result["flows"].max()),
+                            format(abs(result["curtailment"].max()),suffix="MW"),
+                            format(max([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(abs(result["capacitors"].max()),suffix="MVAr"),
+                            format(abs(max([x for x, y in result["voltage"]])),suffix="V"),
+                            format(max([y for x, y in result["voltage"]]),suffix="deg"),
+                            format(abs(result["flows"].max()),suffix="MW"),
                         ],
                     },
                     index=[
@@ -183,53 +183,94 @@ def _(K, N, mo, np, pd):
 
 
 @app.cell
-def _(model, results):
+def _(error, model, results):
     # Initial powerflow result
-    original=results(model,model.optimal_powerflow())
+    try:
+        original = results(model, model.optimal_powerflow())
+    except Exception as err:
+        original = error(err)
     return (original,)
 
 
 @app.cell
 def _(mo):
-    gencost_ui = mo.ui.slider(label="Generation cost ($/MW):",start=0,stop=10000,step=100,value=1000,show_value=True,debounce=True)
-    capcost_ui = mo.ui.slider(label="Capacitor cost ($/MW)",start=0,stop=1000,step=10,value=100,show_value=True,debounce=True)
+    gencost_ui = mo.ui.slider(
+        label="Generation cost ($/MW):",
+        start=0,
+        stop=10000,
+        step=100,
+        value=1000,
+        show_value=True,
+        debounce=True,
+    )
+    capcost_ui = mo.ui.slider(
+        label="Capacitor cost ($/MW)",
+        start=0,
+        stop=1000,
+        step=10,
+        value=100,
+        show_value=True,
+        debounce=True,
+    )
     return capcost_ui, gencost_ui
 
 
 @app.cell
-def _(cap_cost, copy, gen_cost, model, results):
+def _(cap_cost, copy, error, gen_cost, model, results):
     osp_model = copy.deepcopy(model)
-    sizing=results(osp_model,osp_model.optimal_sizing(gen_cost=gen_cost,cap_cost=cap_cost,refresh=True,update_model=True))
+    try:
+        sizing = results(
+            osp_model,
+            osp_model.optimal_sizing(
+                gen_cost=gen_cost,
+                cap_cost=cap_cost,
+                refresh=True,
+                update_model=True,
+            ),
+        )
+    except Exception as err:
+        error(err)
     return osp_model, sizing
 
 
 @app.cell
-def _(copy, osp_model, results):
+def _(copy, error, osp_model, results):
     # Final powerflow result
     opf_model = copy.deepcopy(osp_model)
-    optimal=results(opf_model,opf_model.optimal_powerflow(refresh=True))
+    try:
+        optimal = results(opf_model, opf_model.optimal_powerflow(refresh=True))
+    except Exception as err:
+        optimal = error(err)
     return opf_model, optimal
 
 
 @app.cell
 def _(mo):
-    def message(msg,kind=None,color="black",background="white"):
+    def message(msg, kind=None, color="black", background="white"):
         if not kind:
-            return mo.md(f"<font color={color} style=\"background:{background}\">{msg}</font>")
+            return mo.md(
+                f'<font color={color} style="background:{background}">{msg}</font>'
+            )
         else:
-            return mo.md(f"<font color={color} style=\"background:{background}\"><b>{kind}</b>: {msg}</font>")
+            return mo.md(
+                f'<font color={color} style="background:{background}"><b>{kind}</b>: {msg}</font>'
+            )
+
 
     def hint(msg):
-        return message(msg,"HINT","blue","white")
+        return message(msg, "HINT", "blue", "white")
+
 
     def warning(msg):
-        return message(msg,"WARNING","blue","yellow")
+        return message(msg, "WARNING", "blue", "yellow")
+
 
     def error(msg):
-        return message(msg,"ERROR","red","white")
+        return message(msg, "ERROR", "red", "white")
+
 
     def exception(msg):
-        return message(msg,"EXCEPTION","red","yellow")
+        return message(msg, "EXCEPTION", "red", "yellow")
     return error, exception, hint, message, warning
 
 
