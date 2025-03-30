@@ -48,6 +48,10 @@ gridlabd MYFILE_RESULT.json
 
 where `RESULT` is `opf_initial`, `osp`, or `opf_final` according to which optimization is selected.
 
+## Example
+
+You can try this notebook using the file `example.json`. If you are running an online notebook, you can download the example file from the **View Files** sidebar and open it in the **Model** tab.
+
 # Technical Guide
 
 The OPF is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
