@@ -52,7 +52,12 @@ where `RESULT` is `opf_initial`, `osp`, or `opf_final` according to which optimi
 
 You can try this notebook using the file `example.json`. If you are running an online notebook, you can download the example file from the **View Files** sidebar and open it in the **Model** tab.
 
+----
+
 # Technical Guide
+
+
+## Optimal Powerflow
 
 The OPF is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
 
@@ -89,6 +94,8 @@ where
 * $y \in \mathbb{R}^N$ is the voltage magnitude, and
 * $C \in \mathbb{R}^N$ is the capacitor capacity.
 
+## Optimal Sizing and Placement
+
 The OSP is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
@@ -120,3 +127,10 @@ where
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
 * $y \in \mathbb{R}^N$ is the voltage magnitude, and
 
+## Further Reading
+
+* [PyPOWER Documentation](https://rwl.github.io/PYPOWER/)
+* [PyPOWER Source](https://github.com/rwl/PYPOWER/)
+* [Arras Energy Home](https://www.arras.energy/)
+* [Arras Energy Documentation](https://docs.arras.energy/)
+* [Arras Energy Source](https://github.com/arras-energy/)
