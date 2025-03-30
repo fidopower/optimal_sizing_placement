@@ -13,7 +13,7 @@ def _(mo):
 
 
 @app.cell
-def _(header_ui, mo, model, pd):
+def _(header_ui, mo, model, os, pd):
     def _noheader(x):
         return {y: z for y, z in x.items() if y not in model.data["header"]}
 
@@ -23,10 +23,9 @@ def _(header_ui, mo, model, pd):
             mo.md("# Input Data"),
             mo.hstack(
                 [
-                    mo.md(f"Model name: <U>{model.name}</U>"),
+                    mo.md(f"<B>Model name</B>: {os.path.split(model.name)[1]}"),
                     header_ui,
                 ],
-                justify="start",
             ),
             mo.ui.tabs(
                 {
@@ -51,19 +50,26 @@ def _(mo):
 
 
 @app.cell
-def _(capcost_ui, gencost_ui, mo, model, pd):
+def _(N, capcost_ui, gencost_ui, mo, model, np, pd):
     # Optimal sizing result
-    _costdata = model.find("cost",dict)
+    _costdata = model.find("capacity",dict)
     if _costdata:
-        gen_cost = [x["generator"] for x in _costdata]
-        cap_cost = [x["capacitor"] for x in _costdata]
-        _showcost = pd.DataFrame(_costdata)
+        gen_cost = np.zeros(N,dtype=complex)
+        cap_cost = np.zeros(N)
+        bus_name = []
+        for x,y in _costdata.items():
+            bus_name.append(y["parent"])
+            _bus = model.property(y["parent"],"bus_i")-1
+            print(_bus)
+            gen_cost[_bus] = model.property(x,"generator")
+            cap_cost[_bus] = model.property(x,"capacitor")
+        _showcost = pd.DataFrame({"Generator ($/MW)":gen_cost,"Capacitor ($/MVAr)":cap_cost},bus_name)
     else:
         gen_cost = gencost_ui.value
         cap_cost = capcost_ui.value
         _showcost = mo.hstack([gencost_ui,capcost_ui],justify='start')
-    _showcost
-    return cap_cost, gen_cost
+    mo.vstack([mo.md("# Capacity costs"),_showcost])
+    return bus_name, cap_cost, gen_cost, x, y
 
 
 @app.cell
@@ -77,12 +83,13 @@ def _(mo, optimal, original, sizing):
 
 
 @app.cell
-def _(json, mo, opf_model):
+def _(json, mo, opf_model, os):
+    _name = os.path.split(opf_model.name)[1]
     mo.download(
         json.dumps(opf_model.data,indent=4),
         mimetype="application/json",
-        filename=opf_model.name, 
-        label=f"Download optimal <U>{opf_model.name}</U>"
+        filename=_name, 
+        label=f"Download optimal <U>{_name}</U>"
     )
     return
 
@@ -113,13 +120,13 @@ def _(K, N, mo, np, pd):
         return f"{prefix} {x:.1f} {suffix}"
 
 
-    # pd.DataFrame({x:str(y) for x,y in model.optimal_powerflow().items() if isinstance(y,np.ndarray)})
     def results(model, result):
         if "curtailment" not in result:
             result["curtailment"] = np.zeros(N)
         return mo.vstack(
             [
                 mo.md("# Summary of Results"),
+                mo.md(f"**Cost of solution**: ${result['cost']:.2f}"),
                 pd.DataFrame(
                     data={
                         "Total/Mean": [
@@ -195,7 +202,7 @@ def _(error, model, results):
 @app.cell
 def _(mo):
     gencost_ui = mo.ui.slider(
-        label="Generation cost ($/MW):",
+        label="<B>Generation cost</B>: ($/MW)",
         start=0,
         stop=10000,
         step=100,
@@ -204,7 +211,7 @@ def _(mo):
         debounce=True,
     )
     capcost_ui = mo.ui.slider(
-        label="Capacitor cost ($/MW)",
+        label="<B>Capacitor cost</B>: ($/MW)",
         start=0,
         stop=1000,
         step=10,
