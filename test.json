@@ -1780,7 +1780,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin test.json"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/test.json"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -1941,12 +1941,12 @@
 		"modelname" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "test.json"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/test.json"
 		},
 		"execdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin"
 		},
 		"strictnames" : {
 			"type" : "bool",
@@ -1966,7 +1966,7 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1221185560"
+			"value" : "-618440908"
 		},
 		"randomseed" : {
 			"type" : "int32",
@@ -2412,7 +2412,7 @@
 		"exename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin"
 		},
 		"wget_options" : {
 			"type" : "char1024",
@@ -2675,7 +2675,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.184371, \"stime\" : 0.256950, \"maxrss\" : 38907904, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12501, \"majflt\" : 1, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3591}"
+			"value" : "{\"utime\" : 1.185130, \"stime\" : 0.254184, \"maxrss\" : 39055360, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12497, \"majflt\" : 21, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3670}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -2685,7 +2685,7 @@
 		"filename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "test.glm"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/test.glm"
 		},
 		"country" : {
 			"type" : "char8",

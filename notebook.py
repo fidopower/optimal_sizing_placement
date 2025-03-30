@@ -13,6 +13,81 @@ def _(mo):
 
 
 @app.cell
+def _(header_ui, mo, model, pd):
+    def _noheader(x):
+        return {y: z for y, z in x.items() if y not in model.data["header"]}
+
+
+    mo.vstack(
+        [
+            mo.md("# Input Data"),
+            mo.hstack(
+                [
+                    mo.md(f"Model name: <U>{model.name}</U>"),
+                    header_ui,
+                ],
+                justify="start",
+            ),
+            mo.ui.tabs(
+                {
+                    x: pd.DataFrame(
+                        {
+                            y: z if header_ui.value else _noheader(z)
+                            for y, z in model.find(x, dict).items()
+                        }
+                    ).transpose()
+                    for x in list(model.data["classes"])
+                }
+            ),
+        ],
+    )
+    return
+
+
+@app.cell
+def _(mo):
+    header_ui = mo.ui.checkbox(label="Show header data")
+    return (header_ui,)
+
+
+@app.cell
+def _(capcost_ui, gencost_ui, mo, model, pd):
+    # Optimal sizing result
+    _costdata = model.find("cost",dict)
+    if _costdata:
+        gen_cost = [x["generator"] for x in _costdata]
+        cap_cost = [x["capacitor"] for x in _costdata]
+        _showcost = pd.DataFrame(_costdata)
+    else:
+        gen_cost = gencost_ui.value
+        cap_cost = capcost_ui.value
+        _showcost = mo.hstack([gencost_ui,capcost_ui],justify='start')
+    _showcost
+    return cap_cost, gen_cost
+
+
+@app.cell
+def _(mo, optimal, original, sizing):
+    mo.ui.tabs({
+        "Initial optimal powerflow":original,
+        "Optimal sizing/placement solution":sizing,
+        "Final optimal powerflow":optimal,
+    })
+    return
+
+
+@app.cell
+def _(json, mo, opf_model):
+    mo.download(
+        json.dumps(opf_model.data,indent=4),
+        mimetype="application/json",
+        filename=opf_model.name, 
+        label=f"Download optimal <U>{opf_model.name}</U>"
+    )
+    return
+
+
+@app.cell
 def _(error, exception, file, gld, hint, mo):
     # Model check
     mo.stop(not file.value, hint("upload a JSON file"))
@@ -24,43 +99,116 @@ def _(error, exception, file, gld, hint, mo):
     mo.stop(_check, error(_check))
     N = len(model.find("bus", list))
     K = len(model.find("branch", list))
-    {"powerflow":model.optimal_powerflow()}
     return K, N, model
 
 
 @app.cell
-def _(K, N, message):
-    message(f"{N=}, {K=}")
-    return
+def _(K, N, mo, np, pd):
+    # Result formatting
+    def format(x):
+        if isinstance(x, list):
+            return f"{x[0]:.1f}<{x[1]:.1f}"
+        if isinstance(x, complex):
+            return f"{x.real:.1f}{x.imag:+.1f}j"
+        return f"{x:.1f}"
+
+
+    # pd.DataFrame({x:str(y) for x,y in model.optimal_powerflow().items() if isinstance(y,np.ndarray)})
+    def results(model, result):
+        if "curtailment" not in result:
+            result["curtailment"] = np.zeros(N)
+        return mo.vstack(
+            [
+                mo.md("# Summary of Results"),
+                pd.DataFrame(
+                    data={
+                        "Total/Mean": [
+                            format(result["curtailment"].sum()),
+                            format(sum([abs(x) for x in result["generation"]])),
+                            format(result["capacitors"].sum()),
+                            format(sum([x for x, y in result["voltage"]]) / N),
+                            format(sum([y for x, y in result["voltage"]]) / N),
+                            format(result["flows"].mean()),
+                        ],
+                        "Minimum": [
+                            format(result["curtailment"].min()),
+                            format(min([abs(x) for x in result["generation"]])),
+                            format(result["capacitors"].min()),
+                            format(min([x for x, y in result["voltage"]])),
+                            format(min([y for x, y in result["voltage"]])),
+                            format(result["flows"].min()),
+                        ],
+                        "Maximum": [
+                            format(result["curtailment"].max()),
+                            format(max([abs(x) for x in result["generation"]])),
+                            format(result["capacitors"].max()),
+                            format(max([x for x, y in result["voltage"]])),
+                            format(max([y for x, y in result["voltage"]])),
+                            format(result["flows"].max()),
+                        ],
+                    },
+                    index=[
+                        "Curtailment",
+                        "Generation",
+                        "Capacitors",
+                        "Voltage magnitude",
+                        "Voltage angle",
+                        "Line flow",
+                    ],
+                ),
+                mo.md("# Bus/Branch Results"),
+                mo.hstack(
+                    [
+                        pd.DataFrame(
+                            data={
+                                x: [format(z) for z in y.tolist()]
+                                for x, y in result.items()
+                                if isinstance(y, np.ndarray) and len(y) == N
+                            },
+                            index=model.get_name("bus"),
+                        ),
+                        pd.DataFrame(
+                            data={
+                                x: [format(z) for z in y.tolist()]
+                                for x, y in result.items()
+                                if isinstance(y, np.ndarray) and len(y) == K
+                            },
+                            index=model.get_name("branch"),
+                        ),
+                    ]
+                ),
+            ],
+        )
+    return format, results
 
 
 @app.cell
-def _(model):
-    gen_cost = [100,500,1000,1000]
-    cap_cost = [1000,500,0,0]
-    (sizing := {"sizing":model.optimal_sizing(gen_cost=gen_cost,cap_cost=cap_cost,refresh=True,update_model=True)})
-    return cap_cost, gen_cost, sizing
+def _(model, results):
+    # Initial powerflow result
+    original=results(model,model.optimal_powerflow())
+    return (original,)
 
 
 @app.cell
-def _(model, sizing):
-    sizing
-    (flow := {"powerflow":model.optimal_powerflow(refresh=True)})
-    return (flow,)
+def _(mo):
+    gencost_ui = mo.ui.slider(label="Generation cost ($/MW):",start=0,stop=10000,step=100,value=1000,show_value=True,debounce=True)
+    capcost_ui = mo.ui.slider(label="Capacitor cost ($/MW)",start=0,stop=1000,step=10,value=100,show_value=True,debounce=True)
+    return capcost_ui, gencost_ui
 
 
 @app.cell
-def _(flow, model):
-    flow
-    {"generation":model.generation().round(3).tolist()}
-    return
+def _(cap_cost, copy, gen_cost, model, results):
+    osp_model = copy.deepcopy(model)
+    sizing=results(osp_model,osp_model.optimal_sizing(gen_cost=gen_cost,cap_cost=cap_cost,refresh=True,update_model=True))
+    return osp_model, sizing
 
 
 @app.cell
-def _(flow, model):
-    flow
-    {"capacitors":model.capacitors().round(3).tolist()}
-    return
+def _(copy, osp_model, results):
+    # Final powerflow result
+    opf_model = copy.deepcopy(osp_model)
+    optimal=results(opf_model,opf_model.optimal_powerflow(refresh=True))
+    return opf_model, optimal
 
 
 @app.cell
@@ -90,6 +238,10 @@ def _():
     import marimo as mo
     import os
     import sys
+    import json
+    import pandas as pd
+    import numpy as np
+    import copy
     if os.environ["HOME"] == "/home/pyodide":
         # cannot import from requirements.txt in WASM
         import numpy
@@ -98,7 +250,7 @@ def _():
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
     import gld_pypower as gld
-    return cvxpy, gld, mo, numpy, os, subprocess, sys
+    return copy, cvxpy, gld, json, mo, np, numpy, os, pd, subprocess, sys
 
 
 if __name__ == "__main__":
