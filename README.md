@@ -32,11 +32,11 @@ with the parent referring to the bus at which the capacity addition costs apply.
 
 Three optimization results are presented. 
 
-The **Initial optimal powerflow** (OPF) shows the result of the fast-decoupled OPF solution prior to optimal sizing and placement, if feasible. The cost of the result is given in $/MWh. If load curtailment is necessary, it will be costed at 100x the maximum generation cost found in the model.
+The **Initial optimal powerflow** (OPF) tab shows the result of the fast-decoupled OPF solution prior to optimal sizing and placement, if feasible. The cost of the result is given in $/MWh. If load curtailment is necessary, it will be costed at 100x the maximum generation cost found in the model.
 
-The **Optimal sizing/placement solution** (OSP) solution shows the fast-decoupled sizing and placement solution given the capacity costs.
+The **Optimal sizing/placement** (OSP) tab shows the fast-decoupled sizing and placement solution given the capacity costs.
 
-The **Final optimal powerflow** (OPF) solution shows the fast-decoupled OPF solution after optimal sizing and placement is solved.
+The **Final optimal powerflow** (OPF) tab shows the fast-decoupled OPF solution after optimal sizing and placement is solved.
 
 All results are presented in two parts, the **Summary Data** and the **Network Data**. The summary data include totals, means, minima, and maxima values found in the model.  The network data shows the breakdown on the results by bus and branch.
 
@@ -129,8 +129,8 @@ where
 
 ## Further Reading
 
-* [PyPOWER Documentation](https://rwl.github.io/PYPOWER/)
-* [PyPOWER Source](https://github.com/rwl/PYPOWER/)
 * [Arras Energy Home](https://www.arras.energy/)
 * [Arras Energy Documentation](https://docs.arras.energy/)
 * [Arras Energy Source](https://github.com/arras-energy/)
+* [PyPOWER Documentation](https://rwl.github.io/PYPOWER/)
+* [PyPOWER Source](https://github.com/rwl/PYPOWER/)
