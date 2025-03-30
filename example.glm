@@ -1,0 +1,137 @@
+module pypower;
+
+// nodes
+object bus
+{
+	name "bus_0";
+	type "REF";
+	Pd "0 MW";
+	Qd "0 MVAr";
+	baseKV "12.5 kV";
+}
+object bus
+{
+	name "bus_1";
+	type "PQREF";
+	Pd "0 MW";
+	Qd "0 MVAr";
+	baseKV "12.5 kV";
+}
+object bus
+{
+	name "bus_2";
+	type "PQREF";
+	Pd "10 MW";
+	Qd "1 MVAr";
+	baseKV "12.5 kV";
+}
+object bus
+{
+	name "bus_3";
+	type "PQREF";
+	Pd "10 MW";
+	Qd "1 MVAr";
+	baseKV "12.5 kV";
+}
+
+// lines
+object branch
+{
+	name "branch:4";
+	from "bus_0";
+	to "bus_1";
+	r "0.01 pu*Ohm";
+	x "0.05 pu*Ohm";
+	rateA "25 MVA";
+	status "IN";
+}
+object branch
+{
+	name "branch:5";
+	from "bus_1";
+	to "bus_2";
+	r "0.01 pu*Ohm";
+	x "0.05 pu*Ohm";
+	b "0 pu/Ohm";
+	rateA "15 MVA";
+	status "IN";
+}
+object branch
+{
+	name "branch:6";
+	from "bus_1";
+	to "bus_3";
+	r "0.01 pu*Ohm";
+	x "0.05 pu*Ohm";
+	rateA "15 MVA";
+	status "IN";
+}
+
+
+// generators
+object gen
+{
+	name "gen:7";
+	parent "bus_0";
+	Pg "10 MW";
+	Qg "1 MVAr";
+	Qmax "1 MVAr";
+	Qmin "-1 MVAr";
+	mBase "100 MVA";
+	status "IN_SERVICE";
+	Pmax "10 MW";
+	Pmin "0 MW";
+}
+object gencost
+{
+	name "gencost:8";
+	parent "gen:7";
+	rng_state "1458777923";
+	guid "6FA207E546894B29";
+	model "POLYNOMIAL";
+	startup "0 $";
+	shutdown "0 $";
+	costs "0.01,100,0";
+}
+
+// capacitors
+object shunt
+{
+	name "shunt:9";
+	parent "bus_3";
+	control_mode "FIXED";
+	status "ONLINE";
+	voltage_high "1.05 pu";
+	voltage_low "0.95 pu";
+	remote_bus "bus_3";
+	admittance "0 MVAr";
+}
+
+// capacity expansion data
+class capacity {
+	complex generator[$/MW];
+	double capacitor[$/MW];
+}
+object capacity {
+	parent "bus_0";
+	generator 100+10j;
+	capacitor 1000;
+}
+object capacity {
+	parent "bus_1";
+	generator 500+500j;
+	capacitor 100;
+}
+object capacity {
+	parent "bus_2";
+	generator 1000+1000j;
+	capacitor 10;
+}
+object capacity {
+	parent "bus_3";
+	generator 1000+1000j;
+	capacitor 10;
+}
+
+#set savefile=${modelname/.glm/.json}
+

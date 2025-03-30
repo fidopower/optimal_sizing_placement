@@ -1744,6 +1744,25 @@
 				"unit" : "degF",
 				"description" : "Heat index (degF)"
 			}
+		},
+		"capacity" : {
+			"object_size" : "32",
+			"trl" : "0",
+			"profiler.numobjs" : "4",
+			"profiler.clocks" : "0",
+			"profiler.count" : "0",
+			"generator" : {
+				"type" : "complex",
+				"access" : "PUBLIC",
+				"flags" : "EXTENDED",
+				"unit" : "$/MW"
+			},
+			"capacitor" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "EXTENDED",
+				"unit" : "$/MW"
+			}
 		}
 	},
 	"globals" : {
@@ -1780,7 +1799,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/test.json"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -1840,7 +1859,7 @@
 		"savefile" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "test.json"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/example.json"
 		},
 		"dumpall" : {
 			"type" : "bool",
@@ -1941,7 +1960,7 @@
 		"modelname" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/test.json"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
 		},
 		"execdir" : {
 			"type" : "char1024",
@@ -1966,12 +1985,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-618440908"
+			"value" : "-357929005"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-789306597"
+			"value" : "-357929005"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2675,7 +2694,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.185130, \"stime\" : 0.254184, \"maxrss\" : 39055360, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12497, \"majflt\" : 21, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3670}"
+			"value" : "{\"utime\" : 1.180399, \"stime\" : 0.254907, \"maxrss\" : 39297024, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11708, \"majflt\" : 1, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 2, \"nivcsw\" : 3626}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -2685,7 +2704,7 @@
 		"filename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/test.glm"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
 		},
 		"country" : {
 			"type" : "char8",
@@ -2899,7 +2918,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "5AE5DC4882A30F17",
+			"guid" : "2195BDF5FEB5E8C2432FD99C46351A8D",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "0+0j MVA",
@@ -2933,10 +2952,10 @@
 		"bus_1" : {
 			"id" : "1",
 			"class" : "bus",
-			"rank" : "0",
+			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "73344DEA4691742E",
+			"guid" : "5452F6AF28D2E4085D0C40228C202386",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -2970,10 +2989,10 @@
 		"bus_2" : {
 			"id" : "2",
 			"class" : "bus",
-			"rank" : "0",
+			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "5BF8F4D322D00A8B",
+			"guid" : "4645C907EE466556395BAD3BC1306874",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "10+1j MVA",
@@ -3010,7 +3029,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "6DCE2F02206287B4",
+			"guid" : "1C0D0675664EA77D1D3C5C09C3A27D0",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "10+1j MVA",
@@ -3047,21 +3066,21 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "2EAD9A63E30CAB00",
+			"guid" : "3BA01B3F169EA30769C166C8DF38E30F",
 			"flags" : "0x100",
 			"from": "bus_0",
 			"to": "bus_1",
 			"fbus": "1",
 			"tbus": "2",
-			"r": "1 pu*Ohm",
-			"x": "0.1 pu*Ohm",
+			"r": "0.01 pu*Ohm",
+			"x": "0.05 pu*Ohm",
 			"b": "0 pu/Ohm",
 			"rateA": "25 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
 			"ratio": "0 pu",
 			"angle": "0 pu",
-			"status": "OUT",
+			"status": "IN",
 			"angmin": "0 deg",
 			"angmax": "0 deg",
 			"current": "0+0j A",
@@ -3073,21 +3092,21 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "25EC429B69975D03",
+			"guid" : "5B98364AABE815FB4E996366A036F327",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_2",
 			"fbus": "2",
 			"tbus": "3",
-			"r": "1 pu*Ohm",
-			"x": "0.1 pu*Ohm",
+			"r": "0.01 pu*Ohm",
+			"x": "0.05 pu*Ohm",
 			"b": "0 pu/Ohm",
 			"rateA": "15 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
 			"ratio": "0 pu",
 			"angle": "0 pu",
-			"status": "OUT",
+			"status": "IN",
 			"angmin": "0 deg",
 			"angmax": "0 deg",
 			"current": "0+0j A",
@@ -3099,21 +3118,21 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "91A28B36EAA4AD34",
+			"guid" : "70638B5FA56E93F34B81BD8D1762F551",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_3",
 			"fbus": "2",
 			"tbus": "4",
-			"r": "1 pu*Ohm",
-			"x": "0.1 pu*Ohm",
+			"r": "0.01 pu*Ohm",
+			"x": "0.05 pu*Ohm",
 			"b": "0 pu/Ohm",
 			"rateA": "15 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
 			"ratio": "0 pu",
 			"angle": "0 pu",
-			"status": "OUT",
+			"status": "IN",
 			"angmin": "0 deg",
 			"angmax": "0 deg",
 			"current": "0+0j A",
@@ -3126,16 +3145,16 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "50947D45A3A2CF9",
+			"guid" : "7BBA6F87B928F2A539A580AFDE26F071",
 			"flags" : "0x100",
 			"bus": "1",
-			"Pg": "0 MW",
-			"Qg": "0 MVAr",
+			"Pg": "10 MW",
+			"Qg": "1 MVAr",
 			"Qmax": "1 MVAr",
 			"Qmin": "-1 MVAr",
 			"Vg": "0 pu*V",
 			"mBase": "100 MVA",
-			"status": "OUT_OF_SERVICE",
+			"status": "IN_SERVICE",
 			"Pmax": "10 MW",
 			"Pmin": "0 MW",
 			"Pc1": "0 MW",
@@ -3175,16 +3194,16 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "111308A950BB9973",
+			"guid" : "2000493F4D9EFFBD2488139D45AD9D63",
 			"flags" : "0x100",
 			"control_mode": "FIXED",
-			"status": "OFFLINE",
+			"status": "ONLINE",
 			"voltage_high": "1.05 pu",
 			"voltage_low": "0.95 pu",
 			"remote_bus": "bus_3",
 			"admittance": "0 MVAr",
-			"steps_1": "10",
-			"admittance_1": "1 MVAr",
+			"steps_1": "0",
+			"admittance_1": "0 MVAr",
 			"steps_2": "0",
 			"admittance_2": "0 MVAr",
 			"steps_3": "0",
@@ -3199,6 +3218,54 @@
 			"admittance_7": "0 MVAr",
 			"steps_8": "0",
 			"admittance_8": "0 MVAr"
+		},
+		"capacity:10" : {
+			"id" : "10",
+			"class" : "capacity",
+			"parent" : "bus_0",
+			"rank" : "0",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "823564440",
+			"guid" : "C2F861D2319C5F65D2A3F854381C005",
+			"flags" : "0x100",
+			"generator": "100+10j $/MW",
+			"capacitor": "1000 $/MW"
+		},
+		"capacity:11" : {
+			"id" : "11",
+			"class" : "capacity",
+			"parent" : "bus_1",
+			"rank" : "0",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "1115438165",
+			"guid" : "4831789DA0959BB26D52B66D2EC2F7DB",
+			"flags" : "0x100",
+			"generator": "500+500j $/MW",
+			"capacitor": "100 $/MW"
+		},
+		"capacity:12" : {
+			"id" : "12",
+			"class" : "capacity",
+			"parent" : "bus_2",
+			"rank" : "0",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "1784484492",
+			"guid" : "1FA3B42FE086EB2113FE15B821148A14",
+			"flags" : "0x100",
+			"generator": "1000+1000j $/MW",
+			"capacitor": "10 $/MW"
+		},
+		"capacity:13" : {
+			"id" : "13",
+			"class" : "capacity",
+			"parent" : "bus_3",
+			"rank" : "0",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "74243042",
+			"guid" : "7ABF7B46DCE1EF37CBF9F89AC6A14E8",
+			"flags" : "0x100",
+			"generator": "1000+1000j $/MW",
+			"capacitor": "10 $/MW"
 		}
 	}
 }
