@@ -78,7 +78,7 @@ def _(N, capcost_ui, file, gencost_ui, hint, mo, model, np, pd):
                 _bus = model.property(y["parent"],"bus_i")-1
                 gen_cost[_bus] = model.property(x,"generator")
                 cap_cost[_bus] = model.property(x,"capacitor")
-            _showcost = pd.DataFrame({"Generator ($/MW)":gen_cost,"Capacitor ($/MVAr)":cap_cost},bus_name)
+            _showcost = pd.DataFrame({"Generator ($/MVA)":gen_cost,"Capacitor ($/MVAr)":cap_cost},bus_name)
         else:
             gen_cost = gencost_ui.value
             cap_cost = capcost_ui.value
@@ -138,38 +138,46 @@ def _(K, N, mo, np, pd):
                 mo.md(f"**Cost of solution**: ${result['cost']:.2f}"),
                 pd.DataFrame(
                     data={
-                        "Total/Mean": [
+                        "Total": [
                             format(abs(result["curtailment"].sum()),suffix="MW"),
-                            format(sum([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(sum([abs(x) for x in result["generation"]]),suffix="MVA"),
                             format(abs(result["capacitors"].sum()),suffix="MVAr"),
+                            format(abs(result["flows"]).sum(),suffix="MVA"),
+                            "-",
+                            "-",
+                        ],
+                        "Mean": [
+                            format(abs(result["curtailment"].sum())/N,suffix="MW"),
+                            format(sum([abs(x) for x in result["generation"]])/N,suffix="MVA"),
+                            format(abs(result["capacitors"].sum())/N,suffix="MVAr"),
+                            format(abs(result["flows"]).mean(),suffix="MVA"),
                             format(abs(sum([x for x, y in result["voltage"]]) / N),suffix="V"),
                             format(sum([y for x, y in result["voltage"]]) / N,suffix="deg"),
-                            format(abs(result["flows"].mean()),suffix="MW"),
                         ],
                         "Minimum": [
                             format(abs(result["curtailment"].min()),suffix="MW"),
-                            format(min([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(min([abs(x) for x in result["generation"]]),suffix="MVA"),
                             format(abs(result["capacitors"].min()),suffix="MVAr"),
+                            format(abs(result["flows"].min()),suffix="MVA"),
                             format(abs(min([x for x, y in result["voltage"]])),suffix="V"),
                             format(min([y for x, y in result["voltage"]]),suffix="deg"),
-                            format(abs(result["flows"].min()),suffix="MW"),
                         ],
                         "Maximum": [
                             format(abs(result["curtailment"].max()),suffix="MW"),
-                            format(max([abs(x) for x in result["generation"]]),suffix="MW"),
+                            format(max([abs(x) for x in result["generation"]]),suffix="MVA"),
                             format(abs(result["capacitors"].max()),suffix="MVAr"),
+                            format(abs(result["flows"].max()),suffix="MVA"),
                             format(abs(max([x for x, y in result["voltage"]])),suffix="V"),
                             format(max([y for x, y in result["voltage"]]),suffix="deg"),
-                            format(abs(result["flows"].max()),suffix="MW"),
                         ],
                     },
                     index=[
                         "Curtailment",
                         "Generation",
                         "Capacitors",
+                        "Line flow",
                         "Voltage magnitude",
                         "Voltage angle",
-                        "Line flow",
                     ],
                 ),
                 mo.md("# Network Data"),
