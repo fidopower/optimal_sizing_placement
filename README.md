@@ -21,8 +21,8 @@ The class definition for `capacity` object is
 ~~~
 class capacity 
 {
-    complex generator[$/MW];
-    double capacitor[$/MW];
+    complex generator[$/MVA];
+    double capacitor[$/MVAr];
 }
 ~~~
 
@@ -71,8 +71,9 @@ $\begin{array}{rll}
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
     & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
     & |Ix| \le F & \textrm{line flow constraints} \\
-    & 0 \le g \le \Re(S) & \textrm{real generation power constraints} \\
-    & |g| \le \Im(S) & \textrm{reactive generation power constraints} \\
+    & g \ge 0) & \textrm{real generation power constraints} \\
+    & |h| \le \Im(S) & \textrm{reactive generation power constraints} \\
+    & |g+hj| \le \Re(S) & \textrm{apparent generation power constraints} \\
     & 0 \le c \le C & \textrm{capacity setting constraints} \\
     & 0 \le d \le D & \textrm{load shedding constraints} \\
 \end{array}$

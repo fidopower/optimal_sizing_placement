@@ -787,8 +787,9 @@ class Model:
             y[0] == 1,  # swing bus voltage magnitude is always 1
             cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
             cp.abs(I @ x) <= F,  # line flow limits
-            g >= 0, g <= S.real,  # generation real power limits
+            g >= 0,  # generation real power limits
             cp.abs(h) <= S.imag,  # generation reactive power limits
+            cp.abs(g+h*1j) <= S.real, # generation apparent power limit
             c >= 0, c <= C,  # capacitor bank settings
             d >= 0, d <= D.real,  # demand curtailment
             ]
