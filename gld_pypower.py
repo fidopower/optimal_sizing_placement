@@ -727,7 +727,7 @@ class Model:
     def optimal_powerflow(self,
         refresh:bool=False,
         with_solver_data:bool=False,
-        verbose:bool=False,
+            verbose:bool|TypeVar('io.TextIOWrapper')=False,
         **kwargs) -> dict:
         """Compute optimal powerflow
 
@@ -794,7 +794,7 @@ class Model:
             d >= 0, d <= D.real,  # demand curtailment
             ]
         problem = cp.Problem(objective, constraints)
-        problem.solve(**kwargs)
+        problem.solve(verbose=(verbose!=False),**kwargs)
 
         if x.value is None:
             raise RuntimeError(problem.status)
@@ -932,7 +932,7 @@ class Model:
             c >= 0, # capacitor values must be positive
             ]
         problem = cp.Problem(objective, constraints)
-        problem.solve(**kwargs)
+        problem.solve(verbose=(verbose!=False),**kwargs)
 
         if x.value is None:
             raise RuntimeError(problem.status)

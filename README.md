@@ -2,11 +2,11 @@
 
 This Marimo notebook computes the optimal powerflow solution for a GridLAB-D
 network modeled using **pypower**. The notebook is organized using 3 tabs
-(not include the **Help** tab), the **Model** tab, the **Costs** tab, and the **Results** tab. 
+(not including the **Settings** and **Help** tabs), the **Model** tab, the **Costs** tab, and the **Results** tab. 
 
 ## Model 
 
-The **Model** tab is used load the initial model. Only GridLAB-D JSON model are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to complile the JSON file from the GLM file. 
+The **Model** tab is used load the initial model. Only GridLAB-D JSON model are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to compile the JSON file from the GLM file. 
 
 To upload a JSON file, click on **Open JSON model** button and select the file you wish to work with.  If you have already opened a model, the new one you select will be opened in its place, or you can click on **Click to clear files** to close the existing model.
 

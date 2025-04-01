@@ -595,6 +595,7 @@
 				"access" : "PUBLIC",
 				"flags" : "OUTPUT",
 				"unit" : "MW",
+				"default" : "0 MW",
 				"description" : "real power demand (MW)"
 			},
 			"Qd" : {
@@ -602,18 +603,21 @@
 				"access" : "PUBLIC",
 				"flags" : "OUTPUT",
 				"unit" : "MVAr",
+				"default" : "0 MVAr",
 				"description" : "reactive power demand (MVAr)"
 			},
 			"Gs" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "MW",
+				"default" : "0 MW",
 				"description" : "shunt conductance (MW at V = 1.0 p.u.)"
 			},
 			"Bs" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "MVAr",
+				"default" : "0 MVAr",
 				"description" : "shunt susceptance (MVAr at V = 1.0 p.u.)"
 			},
 			"area" : {
@@ -624,6 +628,7 @@
 			"baseKV" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"unit" : "kV",
 				"description" : "voltage magnitude (p.u.)"
 			},
@@ -631,12 +636,14 @@
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "pu*V",
+				"default" : "1 pu*V",
 				"description" : "voltage angle (degrees)"
 			},
 			"Va" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "deg",
+				"default" : "0 deg",
 				"description" : "base voltage (kV)"
 			},
 			"zone" : {
@@ -661,21 +668,25 @@
 			"lam_P" : {
 				"type" : "double",
 				"access" : "REFERENCE",
+				"flags" : "OUTPUT",
 				"description" : "Lagrange multiplier on real power mismatch (u/MW)"
 			},
 			"lam_Q" : {
 				"type" : "double",
 				"access" : "REFERENCE",
+				"flags" : "OUTPUT",
 				"description" : "Lagrange multiplier on reactive power mismatch (u/MVAr)"
 			},
 			"mu_Vmax" : {
 				"type" : "double",
 				"access" : "REFERENCE",
+				"flags" : "OUTPUT",
 				"description" : "Kuhn-Tucker multiplier on upper voltage limit (u/p.u.)"
 			},
 			"mu_Vmin" : {
 				"type" : "double",
 				"access" : "REFERENCE",
+				"flags" : "OUTPUT",
 				"description" : "Kuhn-Tucker multiplier on lower voltage limit (u/p.u.)"
 			},
 			"weather_file" : {
@@ -791,24 +802,28 @@
 			"r" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"unit" : "pu*Ohm",
 				"description" : "resistance (p.u.)"
 			},
 			"x" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"unit" : "pu*Ohm",
 				"description" : "reactance (p.u.)"
 			},
 			"b" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"unit" : "pu/Ohm",
 				"description" : "total line charging susceptance (p.u.)"
 			},
 			"rateA" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"unit" : "MVA",
 				"description" : "MVA rating A (long term rating)"
 			},
@@ -828,12 +843,14 @@
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "pu",
+				"default" : "1 pu",
 				"description" : "transformer off nominal turns ratio"
 			},
 			"angle" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"unit" : "pu",
+				"unit" : "deg",
+				"default" : "0 deg",
 				"description" : "transformer phase shift angle (degrees)"
 			},
 			"status" : {
@@ -843,29 +860,34 @@
 					"IN" : "0x1",
 					"OUT" : "0x0"
 				},
-				"description" : "initial branch status, 1 - in service, 0 - out of service"
+				"default" : "IN",
+				"description" : "initial branch status, IN=1 - in service, OUT=0 - out of service"
 			},
 			"angmin" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "deg",
+				"default" : "-360 deg",
 				"description" : "minimum angle difference, angle(Vf) - angle(Vt) (degrees)"
 			},
 			"angmax" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "deg",
+				"default" : "360 deg",
 				"description" : "maximum angle difference, angle(Vf) - angle(Vt) (degrees)"
 			},
 			"current" : {
 				"type" : "complex",
 				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
 				"unit" : "A",
 				"description" : "line current (A)"
 			},
 			"loss" : {
 				"type" : "double",
 				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
 				"unit" : "MW",
 				"description" : "line loss (MW)"
 			}
@@ -910,6 +932,7 @@
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "pu*V",
+				"default" : "1 pu*V",
 				"description" : "voltage magnitude setpoint (p.u.)"
 			},
 			"mBase" : {
@@ -926,6 +949,7 @@
 					"OUT_OF_SERVICE" : "0x0",
 					"IN_SERVICE" : "0x1"
 				},
+				"default" : "IN_SERVICE",
 				"description" : "1 - in service, 0 - out of service"
 			},
 			"Pmax" : {
@@ -1470,7 +1494,7 @@
 			"object_size" : "184",
 			"trl" : "7",
 			"module" : "pypower",
-			"profiler.numobjs" : "1",
+			"profiler.numobjs" : "0",
 			"profiler.clocks" : "0",
 			"profiler.count" : "0",
 			"control_mode" : {
@@ -1789,17 +1813,17 @@
 		"version.branch" : {
 			"type" : "char256",
 			"access" : "REFERENCE",
-			"value" : "develop"
+			"value" : "develop_fix_pypower_solver"
 		},
 		"version" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "4.3.14-250315-develop"
+			"value" : "4.3.14-250315-develop_fix_pypower_solver"
 		},
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -1839,7 +1863,7 @@
 		"verbose" : {
 			"type" : "bool",
 			"access" : "PUBLIC",
-			"value" : "FALSE"
+			"value" : "TRUE"
 		},
 		"iteration_limit" : {
 			"type" : "int32",
@@ -1955,7 +1979,7 @@
 		"kmlhost" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "https://code.arras.energy/develop/runtime"
+			"value" : "https://code.arras.energy/develop_fix_pypower_solver/runtime"
 		},
 		"modelname" : {
 			"type" : "char1024",
@@ -1965,7 +1989,7 @@
 		"execdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/bin"
 		},
 		"strictnames" : {
 			"type" : "bool",
@@ -1985,12 +2009,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-357929005"
+			"value" : "-177263144"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-357929005"
+			"value" : "-177263144"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2431,7 +2455,7 @@
 		"exename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/bin/gridlabd.bin"
 		},
 		"wget_options" : {
 			"type" : "char1024",
@@ -2622,37 +2646,37 @@
 		"pythonpath" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : ".:/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/share:/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/lib/gridlabd/python3.10/site-packages"
+			"value" : ".:/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/share:/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/lib/gridlabd/python3.10/site-packages"
 		},
 		"pythonexec" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin/python3"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/bin/python3"
 		},
 		"datadir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/share/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/share/gridlabd"
 		},
 		"bindir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/bin"
 		},
 		"vardir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/var/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/var/gridlabd"
 		},
 		"libdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/lib/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/lib/gridlabd"
 		},
 		"incdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/include"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/include"
 		},
 		"logfile" : {
 			"type" : "char1024",
@@ -2667,7 +2691,7 @@
 		"configpath" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop-darwin_23-x86_64/share/gridlabd/solver_py.conf"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250315-develop_fix_pypower_solver-darwin_23-x86_64/share/gridlabd/solver_py.conf"
 		},
 		"json_complex_format" : {
 			"type" : "set",
@@ -2694,7 +2718,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.180399, \"stime\" : 0.254907, \"maxrss\" : 39297024, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11708, \"majflt\" : 1, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 2, \"nivcsw\" : 3626}"
+			"value" : "{\"utime\" : 1.194431, \"stime\" : 0.257119, \"maxrss\" : 39542784, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11708, \"majflt\" : 126, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 1, \"nivcsw\" : 3872}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -2744,7 +2768,7 @@
 		"gitbranch" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "develop"
+			"value" : "develop-fix-pypower-solver"
 		},
 		"pypower::message_flags" : {
 			"type" : "set",
@@ -2846,7 +2870,7 @@
 				"INIT" : "0x0"
 			},
 			"access" : "PUBLIC",
-			"value" : "FAILED"
+			"value" : "SUCCESS"
 		},
 		"pypower::enforce_q_limits" : {
 			"type" : "bool",
@@ -2871,7 +2895,7 @@
 		"pypower::total_loss" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0 MW"
+			"value" : "+0.219248 MW"
 		},
 		"pypower::generation_shortfall" : {
 			"type" : "double",
@@ -2912,13 +2936,62 @@
 	"schedules" : {
 	},
 	"objects" : {
-		"bus_0" : {
+		"gen_0" : {
 			"id" : "0",
+			"class" : "gen",
+			"parent" : "bus_0",
+			"rank" : "1",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "16807",
+			"guid" : "52CE102295D9201C2BFCF11A7774A5DB",
+			"flags" : "0x100",
+			"bus": "1",
+			"Pg": "20.0711 MW",
+			"Qg": "-12.7213 MVAr",
+			"Qmax": "5 MVAr",
+			"Qmin": "-5 MVAr",
+			"Vg": "1 pu*V",
+			"mBase": "100 MVA",
+			"status": "IN_SERVICE",
+			"Pmax": "25 MW",
+			"Pmin": "0 MW",
+			"Pc1": "0 MW",
+			"Pc2": "0 MW",
+			"Qc1min": "0 MVAr",
+			"Qc1max": "0 MVAr",
+			"Qc2min": "0 MVAr",
+			"Qc2max": "0 MVAr",
+			"ramp_agc": "0 MW/min",
+			"ramp_10": "0 MW",
+			"ramp_30": "0 MW",
+			"ramp_q": "0 MVAr/min",
+			"apf": "0",
+			"mu_Pmax": "0 pu/MW",
+			"mu_Pmin": "0 pu/MW",
+			"mu_Qmax": "0 pu/MVAr",
+			"mu_Qmin": "0 pu/MVAr"
+		},
+		"gencost:1" : {
+			"id" : "1",
+			"class" : "gencost",
+			"parent" : "gen_0",
+			"rank" : "0",
+			"clock" : "1999-12-31 16:00:00 PST",
+			"rng_state" : "1458777923",
+			"guid" : "6FA207E546894B29",
+			"flags" : "0x100",
+			"model": "POLYNOMIAL",
+			"startup": "0 $",
+			"shutdown": "0 $",
+			"costs": "100,0"
+		},
+		"bus_0" : {
+			"id" : "2",
 			"class" : "bus",
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "16807",
-			"guid" : "2195BDF5FEB5E8C2432FD99C46351A8D",
+			"rng_state" : "1622650073",
+			"guid" : "2F35F2DC1D5728C43EC8BB98CC9559D8",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "0+0j MVA",
@@ -2929,7 +3002,7 @@
 			"Bs": "0 MVAr",
 			"area": "0",
 			"baseKV": "12.5 kV",
-			"Vm": "0 pu*V",
+			"Vm": "1 pu*V",
 			"Va": "0 deg",
 			"zone": "0",
 			"Vmax": "1.2 pu*V",
@@ -2950,12 +3023,12 @@
 			"weather_sensitivity": ""
 		},
 		"bus_1" : {
-			"id" : "1",
+			"id" : "3",
 			"class" : "bus",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "282475249",
-			"guid" : "5452F6AF28D2E4085D0C40228C202386",
+			"rng_state" : "984943658",
+			"guid" : "3F8163AD2DB920C96D9149E3FF11E7D0",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -2966,8 +3039,8 @@
 			"Bs": "0 MVAr",
 			"area": "0",
 			"baseKV": "12.5 kV",
-			"Vm": "0 pu*V",
-			"Va": "0 deg",
+			"Vm": "1.00316 pu*V",
+			"Va": "-0.631572 deg",
 			"zone": "0",
 			"Vmax": "1.2 pu*V",
 			"Vmin": "0.8 pu*V",
@@ -2987,12 +3060,12 @@
 			"weather_sensitivity": ""
 		},
 		"bus_2" : {
-			"id" : "2",
+			"id" : "4",
 			"class" : "bus",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1622650073",
-			"guid" : "4645C907EE466556395BAD3BC1306874",
+			"rng_state" : "1144108930",
+			"guid" : "3B9552D9E875D87C6E59ADEB369CF61F",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "10+1j MVA",
@@ -3003,8 +3076,8 @@
 			"Bs": "0 MVAr",
 			"area": "0",
 			"baseKV": "12.5 kV",
-			"Vm": "0 pu*V",
-			"Va": "0 deg",
+			"Vm": "1.00291 pu*V",
+			"Va": "-0.924945 deg",
 			"zone": "0",
 			"Vmax": "1.2 pu*V",
 			"Vmin": "0.8 pu*V",
@@ -3024,12 +3097,12 @@
 			"weather_sensitivity": ""
 		},
 		"bus_3" : {
-			"id" : "3",
+			"id" : "5",
 			"class" : "bus",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "984943658",
-			"guid" : "1C0D0675664EA77D1D3C5C09C3A27D0",
+			"rng_state" : "470211272",
+			"guid" : "1BCABE6BABA89BBB44EAB57D2525948",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "10+1j MVA",
@@ -3040,8 +3113,8 @@
 			"Bs": "0 MVAr",
 			"area": "0",
 			"baseKV": "12.5 kV",
-			"Vm": "0 pu*V",
-			"Va": "0 deg",
+			"Vm": "1.00291 pu*V",
+			"Va": "-0.924945 deg",
 			"zone": "0",
 			"Vmax": "1.2 pu*V",
 			"Vmin": "0.8 pu*V",
@@ -3060,13 +3133,13 @@
 			"HI": "0 degF",
 			"weather_sensitivity": ""
 		},
-		"branch:4" : {
-			"id" : "4",
+		"branch:6" : {
+			"id" : "6",
 			"class" : "branch",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1144108930",
-			"guid" : "3BA01B3F169EA30769C166C8DF38E30F",
+			"rng_state" : "101027544",
+			"guid" : "2C9AC1519AF4E01863B0603CF684502D",
 			"flags" : "0x100",
 			"from": "bus_0",
 			"to": "bus_1",
@@ -3074,25 +3147,25 @@
 			"tbus": "2",
 			"r": "0.01 pu*Ohm",
 			"x": "0.05 pu*Ohm",
-			"b": "0 pu/Ohm",
+			"b": "0.05 pu/Ohm",
 			"rateA": "25 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
-			"ratio": "0 pu",
-			"angle": "0 pu",
+			"ratio": "1 pu",
+			"angle": "0 deg",
 			"status": "IN",
-			"angmin": "0 deg",
-			"angmax": "0 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"angmin": "-360 deg",
+			"angmax": "360 deg",
+			"current": "1212.21-138.248j A",
+			"loss": "0.0759028 MW"
 		},
-		"branch:5" : {
-			"id" : "5",
+		"branch:7" : {
+			"id" : "7",
 			"class" : "branch",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "470211272",
-			"guid" : "5B98364AABE815FB4E996366A036F327",
+			"rng_state" : "1457850878",
+			"guid" : "7CE09CC21A057BAD5245F7310CA612C7",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_2",
@@ -3100,25 +3173,25 @@
 			"tbus": "3",
 			"r": "0.01 pu*Ohm",
 			"x": "0.05 pu*Ohm",
-			"b": "0 pu/Ohm",
+			"b": "0.05 pu/Ohm",
 			"rateA": "15 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
-			"ratio": "0 pu",
-			"angle": "0 pu",
+			"ratio": "1 pu",
+			"angle": "0 deg",
 			"status": "IN",
-			"angmin": "0 deg",
-			"angmax": "0 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"angmin": "-360 deg",
+			"angmax": "360 deg",
+			"current": "480.449-315.96j A",
+			"loss": "0.0168606 MW"
 		},
-		"branch:6" : {
-			"id" : "6",
+		"branch:8" : {
+			"id" : "8",
 			"class" : "branch",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "101027544",
-			"guid" : "70638B5FA56E93F34B81BD8D1762F551",
+			"rng_state" : "1458777923",
+			"guid" : "7CC62E2D8B4E43956D87AFC564D21B3",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_3",
@@ -3126,143 +3199,62 @@
 			"tbus": "4",
 			"r": "0.01 pu*Ohm",
 			"x": "0.05 pu*Ohm",
-			"b": "0 pu/Ohm",
+			"b": "0.05 pu/Ohm",
 			"rateA": "15 MVA",
 			"rateB": "0 MVA",
 			"rateC": "0 MVA",
-			"ratio": "0 pu",
-			"angle": "0 pu",
+			"ratio": "1 pu",
+			"angle": "0 deg",
 			"status": "IN",
-			"angmin": "0 deg",
-			"angmax": "0 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"angmin": "-360 deg",
+			"angmax": "360 deg",
+			"current": "480.449-315.96j A",
+			"loss": "0.0168606 MW"
 		},
-		"gen:7" : {
-			"id" : "7",
-			"class" : "gen",
-			"parent" : "bus_0",
-			"rank" : "1",
-			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1457850878",
-			"guid" : "7BBA6F87B928F2A539A580AFDE26F071",
-			"flags" : "0x100",
-			"bus": "1",
-			"Pg": "10 MW",
-			"Qg": "1 MVAr",
-			"Qmax": "1 MVAr",
-			"Qmin": "-1 MVAr",
-			"Vg": "0 pu*V",
-			"mBase": "100 MVA",
-			"status": "IN_SERVICE",
-			"Pmax": "10 MW",
-			"Pmin": "0 MW",
-			"Pc1": "0 MW",
-			"Pc2": "0 MW",
-			"Qc1min": "0 MVAr",
-			"Qc1max": "0 MVAr",
-			"Qc2min": "0 MVAr",
-			"Qc2max": "0 MVAr",
-			"ramp_agc": "0 MW/min",
-			"ramp_10": "0 MW",
-			"ramp_30": "0 MW",
-			"ramp_q": "0 MVAr/min",
-			"apf": "0",
-			"mu_Pmax": "0 pu/MW",
-			"mu_Pmin": "0 pu/MW",
-			"mu_Qmax": "0 pu/MVAr",
-			"mu_Qmin": "0 pu/MVAr"
-		},
-		"gencost:8" : {
-			"id" : "8",
-			"class" : "gencost",
-			"parent" : "gen:7",
-			"rank" : "0",
-			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1458777923",
-			"guid" : "6FA207E546894B29",
-			"flags" : "0x100",
-			"model": "POLYNOMIAL",
-			"startup": "0 $",
-			"shutdown": "0 $",
-			"costs": "0.01,100,0"
-		},
-		"shunt:9" : {
+		"capacity:9" : {
 			"id" : "9",
-			"class" : "shunt",
-			"parent" : "bus_3",
-			"rank" : "0",
-			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "2007237709",
-			"guid" : "2000493F4D9EFFBD2488139D45AD9D63",
-			"flags" : "0x100",
-			"control_mode": "FIXED",
-			"status": "ONLINE",
-			"voltage_high": "1.05 pu",
-			"voltage_low": "0.95 pu",
-			"remote_bus": "bus_3",
-			"admittance": "0 MVAr",
-			"steps_1": "0",
-			"admittance_1": "0 MVAr",
-			"steps_2": "0",
-			"admittance_2": "0 MVAr",
-			"steps_3": "0",
-			"admittance_3": "0 MVAr",
-			"steps_4": "0",
-			"admittance_4": "0 MVAr",
-			"steps_5": "0",
-			"admittance_5": "0 MVAr",
-			"steps_6": "0",
-			"admittance_6": "0 MVAr",
-			"steps_7": "0",
-			"admittance_7": "0 MVAr",
-			"steps_8": "0",
-			"admittance_8": "0 MVAr"
-		},
-		"capacity:10" : {
-			"id" : "10",
 			"class" : "capacity",
 			"parent" : "bus_0",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "823564440",
-			"guid" : "C2F861D2319C5F65D2A3F854381C005",
+			"rng_state" : "2007237709",
+			"guid" : "21443C6966AB6EFF1F1D69BC45B89A24",
 			"flags" : "0x100",
 			"generator": "100+10j $/MW",
 			"capacitor": "1000 $/MW"
 		},
-		"capacity:11" : {
-			"id" : "11",
+		"capacity:10" : {
+			"id" : "10",
 			"class" : "capacity",
 			"parent" : "bus_1",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1115438165",
-			"guid" : "4831789DA0959BB26D52B66D2EC2F7DB",
+			"rng_state" : "823564440",
+			"guid" : "451F58EDAF5993E15C54FF2D90ABFE11",
 			"flags" : "0x100",
 			"generator": "500+500j $/MW",
 			"capacitor": "100 $/MW"
 		},
-		"capacity:12" : {
-			"id" : "12",
+		"capacity:11" : {
+			"id" : "11",
 			"class" : "capacity",
 			"parent" : "bus_2",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "1784484492",
-			"guid" : "1FA3B42FE086EB2113FE15B821148A14",
+			"rng_state" : "1115438165",
+			"guid" : "1D3093DBA4B712DD481277CE9754DBB5",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
 			"capacitor": "10 $/MW"
 		},
-		"capacity:13" : {
-			"id" : "13",
+		"capacity:12" : {
+			"id" : "12",
 			"class" : "capacity",
 			"parent" : "bus_3",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
-			"rng_state" : "74243042",
-			"guid" : "7ABF7B46DCE1EF37CBF9F89AC6A14E8",
+			"rng_state" : "1784484492",
+			"guid" : "2AE2737E3D390C612B9048CDBCEAF8D8",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
 			"capacitor": "10 $/MW"

@@ -5,12 +5,13 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def _(capacity_costs, file, input_data, mo, results_view):
+def _(capacity_costs, file, input_data, mo, results_view, settings_view):
     # Main UI
     mo.ui.tabs({
         "Model":mo.vstack([file,input_data]),
         "Costs":capacity_costs,
         "Results":results_view,
+        "Settings":settings_view,
         "Help":mo.md(open("README.md","r").read())
     })
     return
@@ -93,11 +94,13 @@ def _(N, capcost_ui, file, gencost_ui, hint, mo, model, np, pd):
 def _(file, hint, mo, optimal, original, sizing):
     # Results UI
     if file.value:
-        results_view = mo.ui.tabs({
-            "Initial optimal powerflow":original,
-            "Optimal sizing/placement solution":sizing,
-            "Final optimal powerflow":optimal,
-        })
+        results_view = mo.vstack([
+            mo.ui.tabs({
+                "Initial optimal powerflow":original,
+                "Optimal sizing/placement solution":sizing,
+                "Final optimal powerflow":optimal,
+            }),
+        ])
     else:
         results_view = mo.vstack([file,hint("open your JSON model")])
     return (results_view,)
@@ -207,28 +210,6 @@ def _(K, N, mo, np, pd):
 
 
 @app.cell
-def _(error, file, json, mo, model, os, results):
-    # Initial powerflow result
-    if file.value:
-        try:
-            _name = os.path.split(model.name)[1]
-            _name = os.path.splitext(_name)
-            _name = f"{_name[0]}_opf_initial.json"
-            initial_download_ui = mo.download(
-                json.dumps(model.data, indent=4),
-                mimetype="application/json",
-                filename=_name,
-                label=f"Save optimal <U>{_name}</U>",
-            )
-            original = mo.vstack([results(model, model.optimal_powerflow()),initial_download_ui])
-        except Exception as err:
-            original = error(err)
-    else:
-        original = mo.md("")
-    return initial_download_ui, original
-
-
-@app.cell
 def _(mo):
     # Capacity costs
     gencost_ui = mo.ui.slider(
@@ -253,7 +234,66 @@ def _(mo):
 
 
 @app.cell
-def _(cap_cost, copy, error, file, gen_cost, json, mo, model, os, results):
+def _(mo):
+    verbose_ui = mo.ui.checkbox(label="Enable verbose output")
+    return (verbose_ui,)
+
+
+@app.cell
+def _(error, file, json, mo, model, os, results, verbose_ui):
+    # Initial powerflow result
+    if file.value:
+        try:
+            _name = os.path.split(model.name)[1]
+            _name = os.path.splitext(_name)
+            _name = f"{_name[0]}_opf_initial.json"
+            initial_download_ui = mo.download(
+                json.dumps(model.data, indent=4),
+                mimetype="application/json",
+                filename=_name,
+                label=f"Save optimal <U>{_name}</U>",
+            )
+            with mo.capture_stderr() as _stderr:
+                with mo.capture_stdout() as _stdout:
+                    _result = results(
+                        model,
+                        model.optimal_powerflow(verbose=verbose_ui.value),
+                    )
+            _output = _stdout.getvalue() + _stderr.getvalue()
+            original = mo.vstack(
+                [
+                    _result,
+                    initial_download_ui,
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
+                ]
+            )
+        except Exception as err:
+            _output = _stdout.getvalue() + _stderr.getvalue()
+            original = mo.vstack(
+                [
+                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
+                ]
+            )
+    else:
+        original = mo.md("")
+    return initial_download_ui, original
+
+
+@app.cell
+def _(
+    cap_cost,
+    copy,
+    error,
+    file,
+    gen_cost,
+    json,
+    mo,
+    model,
+    os,
+    results,
+    verbose_ui,
+):
     # Optimal sizing and placement
     if file.value:
         osp_model = copy.deepcopy(model)
@@ -267,29 +307,41 @@ def _(cap_cost, copy, error, file, gen_cost, json, mo, model, os, results):
                 filename=_name,
                 label=f"Save optimal <U>{_name}</U>",
             )
-            sizing = mo.vstack(
-                [
-                    results(
+            with mo.capture_stderr() as _stderr:
+                with mo.capture_stdout() as _stdout:
+                    _result = results(
                         osp_model,
                         osp_model.optimal_sizing(
                             gen_cost=gen_cost,
                             cap_cost=cap_cost,
                             refresh=True,
                             update_model=True,
+                            verbose=verbose_ui.value,
                         ),
-                    ),
-                    osp_download_ui
+                    )
+            _output = _stdout.getvalue() + _stderr.getvalue()
+            sizing = mo.vstack(
+                [
+                    _result,
+                    osp_download_ui,
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
         except Exception as err:
-            sizing = error(err)
+            _output = _stdout.getvalue() + _stderr.getvalue()
+            sizing = mo.vstack(
+                [
+                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
+                ]
+            )
     else:
         sizing = mo.md("")
     return osp_download_ui, osp_model, sizing
 
 
 @app.cell
-def _(copy, error, file, json, mo, os, osp_model, results):
+def _(copy, error, file, json, mo, os, osp_model, results, verbose_ui):
     # Final powerflow result
     if file.value:
         opf_model = copy.deepcopy(osp_model)
@@ -303,14 +355,30 @@ def _(copy, error, file, json, mo, os, osp_model, results):
                 filename=_name,
                 label=f"Save optimal <U>{_name}</U>",
             )
+            with mo.capture_stderr() as _stderr:
+                with mo.capture_stdout() as _stdout:
+                    _result = opf_model.optimal_powerflow(
+                        refresh=True, verbose=verbose_ui.value
+                    )
+            _output = _stdout.getvalue() + _stderr.getvalue()
             optimal = mo.vstack(
                 [
-                    results(opf_model, opf_model.optimal_powerflow(refresh=True)),
+                    results(
+                        opf_model,
+                        _result,
+                    ),
                     final_download_ui,
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
         except Exception as err:
-            optimal = error(err)
+            _output = _stdout.getvalue() + _stderr.getvalue()
+            optimal = mo.vstack(
+                [
+                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
+                ]
+            )
     else:
         optimal = mo.md("")
     return final_download_ui, opf_model, optimal
@@ -345,6 +413,12 @@ def _(mo):
     def exception(msg):
         return message(msg, "EXCEPTION", "red", "yellow")
     return error, exception, hint, message, warning
+
+
+@app.cell
+def _(mo, verbose_ui):
+    settings_view = mo.vstack([verbose_ui])
+    return (settings_view,)
 
 
 @app.cell
