@@ -5,16 +5,36 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def _(capacity_costs, file, input_data, mo, results_view, settings_view):
+def _(
+    capacity_costs,
+    file,
+    get_main,
+    input_data,
+    mo,
+    results_view,
+    set_main,
+    settings_view,
+):
     # Main UI
-    mo.ui.tabs({
-        "Model":mo.vstack([file,input_data]),
-        "Costs":capacity_costs,
-        "Results":results_view,
-        "Settings":settings_view,
-        "Help":mo.md(open("README.md","r").read())
-    })
-    return
+    main_tab = mo.ui.tabs(
+        {
+            "Model": mo.vstack([file, input_data]),
+            "Costs": capacity_costs,
+            "Results": results_view,
+            "Settings": settings_view,
+            "Help": mo.md(open("README.md", "r").read()),
+        },
+        value=get_main(),
+        on_change=set_main,
+    )
+    main_tab
+    return (main_tab,)
+
+
+@app.cell
+def _(mo):
+    get_main,set_main = mo.state("Model")
+    return get_main, set_main
 
 
 @app.cell
@@ -66,43 +86,71 @@ def _(mo):
 
 
 @app.cell
-def _(N, capcost_ui, file, gencost_ui, hint, mo, model, np, pd):
+def _(
+    N,
+    capcost_ui,
+    curtailment_ui,
+    file,
+    gencost_ui,
+    hint,
+    mo,
+    model,
+    np,
+    pd,
+):
     # Optimal sizing result
     if file.value:
-        _costdata = model.find("capacity",dict)
+        _costdata = model.find("capacity", dict)
         if _costdata:
-            gen_cost = np.zeros(N,dtype=complex)
+            gen_cost = np.zeros(N, dtype=complex)
             cap_cost = np.zeros(N)
             bus_name = []
-            for x,y in _costdata.items():
+            for x, y in _costdata.items():
                 bus_name.append(y["parent"])
-                _bus = model.property(y["parent"],"bus_i")-1
-                gen_cost[_bus] = model.property(x,"generator")
-                cap_cost[_bus] = model.property(x,"capacitor")
-            _showcost = pd.DataFrame({"Generator ($/MVA)":gen_cost,"Capacitor ($/MVAr)":cap_cost},bus_name)
+                _bus = model.property(y["parent"], "bus_i") - 1
+                gen_cost[_bus] = model.property(x, "generator")
+                cap_cost[_bus] = model.property(x, "capacitor")
+            _showcost = pd.DataFrame(
+                {"Generator ($/MVA)": gen_cost, "Capacitor ($/MVAr)": cap_cost},
+                bus_name,
+            )
         else:
             gen_cost = gencost_ui.value
             cap_cost = capcost_ui.value
-            _showcost = mo.hstack([gencost_ui,capcost_ui],justify='start')
-        capacity_costs = mo.vstack([mo.md("# Capacity costs"),_showcost]) 
+            _showcost = mo.vstack([mo.md("No bus-level cost data found. Using the following settings instead:"), gencost_ui, capcost_ui,curtailment_ui])
+        capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
     else:
-        capacity_costs = mo.vstack([file,hint("open your JSON model")])
+        capacity_costs = mo.vstack([file, hint("open your JSON model")])
     return bus_name, cap_cost, capacity_costs, gen_cost, x, y
 
 
 @app.cell
-def _(file, hint, mo, optimal, original, sizing):
+def _(mo):
+    get_result,set_result = mo.state("Initial optimal powerflow")
+    return get_result, set_result
+
+
+@app.cell
+def _(get_optimal, get_result, mo, original, set_result, sizing):
     # Results UI
+    results_tab = mo.ui.tabs(
+        {
+            "Initial optimal powerflow": original,
+            "Optimal sizing/placement solution": sizing,
+            "Final optimal powerflow": get_optimal(),
+        },
+        value=get_result(),
+        on_change=set_result,
+    )
+    return (results_tab,)
+
+
+@app.cell
+def _(file, hint, mo, results_tab):
     if file.value:
-        results_view = mo.vstack([
-            mo.ui.tabs({
-                "Initial optimal powerflow":original,
-                "Optimal sizing/placement solution":sizing,
-                "Final optimal powerflow":optimal,
-            }),
-        ])
+        results_view = mo.vstack([results_tab])
     else:
-        results_view = mo.vstack([file,hint("open your JSON model")])
+        results_view = mo.vstack([file, hint("open your JSON model")])
     return (results_view,)
 
 
@@ -210,37 +258,20 @@ def _(K, N, mo, np, pd):
 
 
 @app.cell
-def _(mo):
-    # Capacity costs
-    gencost_ui = mo.ui.slider(
-        label="<B>Generation cost</B>: ($/MW)",
-        start=0,
-        stop=10000,
-        step=100,
-        value=1000,
-        show_value=True,
-        debounce=True,
-    )
-    capcost_ui = mo.ui.slider(
-        label="<B>Capacitor cost</B>: ($/MW)",
-        start=0,
-        stop=1000,
-        step=10,
-        value=100,
-        show_value=True,
-        debounce=True,
-    )
-    return capcost_ui, gencost_ui
-
-
-@app.cell
-def _(mo):
-    verbose_ui = mo.ui.checkbox(label="Enable verbose output")
-    return (verbose_ui,)
-
-
-@app.cell
-def _(error, file, json, mo, model, os, results, verbose_ui):
+def _(
+    curtailment_ui,
+    error,
+    file,
+    get_result,
+    json,
+    mo,
+    model,
+    os,
+    problem_ui,
+    results,
+    solver_ui,
+    verbose_ui,
+):
     # Initial powerflow result
     if file.value:
         try:
@@ -257,7 +288,11 @@ def _(error, file, json, mo, model, os, results, verbose_ui):
                 with mo.capture_stdout() as _stdout:
                     _result = results(
                         model,
-                        model.optimal_powerflow(verbose=verbose_ui.value),
+                        model.optimal_powerflow(
+                            verbose=verbose_ui.value,
+                            curtailment_price=curtailment_ui.value,
+                            solver=solver_ui.value,
+                        ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
             original = mo.vstack(
@@ -271,12 +306,16 @@ def _(error, file, json, mo, model, os, results, verbose_ui):
             _output = _stdout.getvalue() + _stderr.getvalue()
             original = mo.vstack(
                 [
-                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.hstack([error(err), verbose_ui], justify="start"),
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
     else:
         original = mo.md("")
+    if problem_ui.value and get_result() == "Initial optimal powerflow":
+        mo.output.append(mo.md("---"))
+        mo.output.append(f"{get_result()} problem data")
+        mo.output.append(model.problem)
     return initial_download_ui, original
 
 
@@ -287,11 +326,14 @@ def _(
     error,
     file,
     gen_cost,
+    get_result,
     json,
     mo,
     model,
     os,
+    problem_ui,
     results,
+    solver_ui,
     verbose_ui,
 ):
     # Optimal sizing and placement
@@ -317,6 +359,7 @@ def _(
                             refresh=True,
                             update_model=True,
                             verbose=verbose_ui.value,
+                            solver=solver_ui.value,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -337,11 +380,36 @@ def _(
             )
     else:
         sizing = mo.md("")
+    if problem_ui.value and get_result() == "Optimal sizing/placement solution":
+        mo.output.append(mo.md("---"))
+        mo.output.append(f"{get_result()} problem data")
+        mo.output.append(osp_model.problem)
     return osp_download_ui, osp_model, sizing
 
 
 @app.cell
-def _(copy, error, file, json, mo, os, osp_model, results, verbose_ui):
+def _(mo):
+    get_optimal,set_optimal = mo.state(None)
+    return get_optimal, set_optimal
+
+
+@app.cell
+def _(
+    copy,
+    curtailment_ui,
+    error,
+    file,
+    get_result,
+    json,
+    mo,
+    os,
+    osp_model,
+    problem_ui,
+    results,
+    set_optimal,
+    solver_ui,
+    verbose_ui,
+):
     # Final powerflow result
     if file.value:
         opf_model = copy.deepcopy(osp_model)
@@ -358,10 +426,13 @@ def _(copy, error, file, json, mo, os, osp_model, results, verbose_ui):
             with mo.capture_stderr() as _stderr:
                 with mo.capture_stdout() as _stdout:
                     _result = opf_model.optimal_powerflow(
-                        refresh=True, verbose=verbose_ui.value
+                        refresh=True,
+                        verbose=verbose_ui.value,
+                        curtailment_price=curtailment_ui.value,
+                        solver=solver_ui.value,
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
-            optimal = mo.vstack(
+            set_optimal(mo.vstack(
                 [
                     results(
                         opf_model,
@@ -370,18 +441,22 @@ def _(copy, error, file, json, mo, os, osp_model, results, verbose_ui):
                     final_download_ui,
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
-            )
+            ))
         except Exception as err:
             _output = _stdout.getvalue() + _stderr.getvalue()
-            optimal = mo.vstack(
+            set_optimal(mo.vstack(
                 [
-                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.hstack([error(err), verbose_ui], justify="start"),
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
-            )
+            ))
     else:
-        optimal = mo.md("")
-    return final_download_ui, opf_model, optimal
+        set_optimal(mo.md(""))
+    if problem_ui.value and get_result() == "Final optimal powerflow":
+        mo.output.append(mo.md("---"))
+        mo.output.append(f"{get_result()} problem data")
+        mo.output.append(opf_model.problem)
+    return final_download_ui, opf_model
 
 
 @app.cell
@@ -416,8 +491,69 @@ def _(mo):
 
 
 @app.cell
-def _(mo, verbose_ui):
-    settings_view = mo.vstack([verbose_ui])
+def _(mo):
+    # Solver settings
+    verbose_ui = mo.ui.checkbox(label="Enable verbose output")
+    solver_ui = mo.ui.dropdown(label="**Preferred solver**:",options=["CLARABEL","OSQP","SCS"])
+    problem_ui = mo.ui.checkbox(label="Show problem data")
+    return problem_ui, solver_ui, verbose_ui
+
+
+@app.cell
+def _(mo):
+    # Capacity costs
+    gencost_ui = mo.ui.slider(
+        label="<B>Generation cost</B>: ($/MW)",
+        start=0,
+        stop=10000,
+        step=100,
+        value=1000,
+        show_value=True,
+        debounce=True,
+    )
+    capcost_ui = mo.ui.slider(
+        label="<B>Capacitor cost</B>: ($/MW)",
+        start=0,
+        stop=1000,
+        step=10,
+        value=100,
+        show_value=True,
+        debounce=True,
+    )
+    return capcost_ui, gencost_ui
+
+
+@app.cell
+def _(gencost_ui, mo, np):
+    # Curtailment cost
+    curtailment_ui = mo.ui.slider(
+        label="**Curtailment cost** ($/MW)",
+        steps=np.array([0, 0.01,0.02,0.05,0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],dtype=float)
+        * gencost_ui.value,
+        value = 10*gencost_ui.value,
+        debounce=True,
+        show_value=True,
+    )
+    return (curtailment_ui,)
+
+
+@app.cell
+def _(
+    capcost_ui,
+    curtailment_ui,
+    gencost_ui,
+    mo,
+    problem_ui,
+    solver_ui,
+    verbose_ui,
+):
+    # Setting tabs
+    settings_view = mo.vstack(
+        [mo.md("## Optimizer"),
+         solver_ui, verbose_ui, problem_ui,
+         mo.md("## Costs"),
+         gencost_ui, capcost_ui, curtailment_ui]
+    )
     return (settings_view,)
 
 
