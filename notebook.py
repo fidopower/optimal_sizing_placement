@@ -494,9 +494,64 @@ def _(mo):
 def _(mo):
     # Solver settings
     verbose_ui = mo.ui.checkbox(label="Enable verbose output")
-    solver_ui = mo.ui.dropdown(label="**Preferred solver**:",options=["CLARABEL","OSQP","SCS"])
+    solver_ui = mo.ui.dropdown(
+        label="**Preferred solver**:",
+        options=["CLARABEL", "OSQP"],
+        value="CLARABEL",
+        allow_select_none=False,
+    )
     problem_ui = mo.ui.checkbox(label="Show problem data")
-    return problem_ui, solver_ui, verbose_ui
+    osqp_max_iter = mo.ui.slider(
+        label="**Maximum iterations**:",
+        steps=[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        value=10000,
+        debounce=True,
+    )
+    osqp_eps_abs = mo.ui.slider(
+        label="**Absolute epsilon (10^)**:",
+        steps=range(-10, 1),
+        value=-5,
+        debounce=True,
+        show_value=True,
+    )
+    osqp_eps_rel = mo.ui.slider(
+        label="**Relative epsilon (10^)**:",
+        steps=range(-10, 1),
+        value=-5,
+        debounce=True,
+        show_value=True,
+    )
+    clarabel_max_iter = mo.ui.slider(
+        label="**Maximum iterations**:",
+        steps=[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        value=10000,
+        debounce=True,
+        show_value=True,
+    )
+    clarabel_time_limit = mo.ui.slider(
+        label="**Time limit (s)**:",
+        start=0,
+        stop=3600,
+        step=10,
+        value=0,
+        debounce=True,
+        show_value=True,
+    )
+    solver_options = {
+        "OSQP": [osqp_max_iter, osqp_eps_abs, osqp_eps_rel],
+        "CLARABEL": [clarabel_max_iter,clarabel_time_limit],
+    }
+    return (
+        clarabel_max_iter,
+        clarabel_time_limit,
+        osqp_eps_abs,
+        osqp_eps_rel,
+        osqp_max_iter,
+        problem_ui,
+        solver_options,
+        solver_ui,
+        verbose_ui,
+    )
 
 
 @app.cell
@@ -544,15 +599,28 @@ def _(
     gencost_ui,
     mo,
     problem_ui,
+    solver_options,
     solver_ui,
     verbose_ui,
 ):
     # Setting tabs
-    settings_view = mo.vstack(
-        [mo.md("## Optimizer"),
-         solver_ui, verbose_ui, problem_ui,
-         mo.md("## Costs"),
-         gencost_ui, capcost_ui, curtailment_ui]
+    settings_view = mo.accordion(
+        {"**Optimizer**":
+            mo.vstack(
+                [
+                    solver_ui,
+                    verbose_ui,
+                    problem_ui]+solver_options[solver_ui.value]
+                ),
+         "**Capacity costs**":
+                mo.vstack([
+                    gencost_ui,
+                    capcost_ui,
+                    curtailment_ui,
+                ])
+        },
+        multiple=True,
+        lazy=True,
     )
     return (settings_view,)
 
