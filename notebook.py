@@ -7,6 +7,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _(
     capacity_costs,
+    diagram,
     file,
     get_main,
     input_data,
@@ -21,6 +22,7 @@ def _(
             "Model": mo.vstack([file, input_data]),
             "Costs": capacity_costs,
             "Results": results_view,
+            "Network": diagram,
             "Settings": settings_view,
             "Help": mo.md(open("README.md", "r").read()),
         },
@@ -623,6 +625,53 @@ def _(
         lazy=True,
     )
     return (settings_view,)
+
+
+@app.cell
+def _(mo, model, opf_model, osp_model):
+    graph_model_ui = mo.ui.radio(
+        label="**Model**:",
+        options={"Original": model, "Capacity": osp_model, "Optimal": opf_model},
+        value="Original",
+        inline=True,
+    )
+    graph_orientation_ui = mo.ui.radio(
+        label="**Orientation**:",
+        options={"Horizontal": "LR", "Vertical": "TB"},
+        value="Horizontal",
+        inline=True,
+    )
+    graph_label_ui = mo.ui.radio(
+        label="**Bus labels**:",
+        options={"Name":lambda x:[graph_model_ui.value.get_name("bus",int(_x)-1) for _x in x],"Id":lambda x:x},
+        value="Name",
+        inline=True
+    )
+    return graph_label_ui, graph_model_ui, graph_orientation_ui
+
+
+@app.cell
+def _(file, graph_label_ui, graph_model_ui, graph_orientation_ui, hint, mo):
+    # Network graph
+
+    if file.value:
+        _diagram = [f"graph {graph_orientation_ui.value}"]
+        for _line, _spec in graph_model_ui.value.find("branch").items():
+            _f, _t = _spec["fbus"], _spec["tbus"]
+            _bus = graph_label_ui.value([_f,_t])
+            _name = [graph_model_ui.value.get_name("bus",int(_x)-1) for _x in [_f,_t]]
+            _load = [graph_model_ui.value.property(_name[_x],"Pd") for _x in range(0,len(_name))]
+            _from = f"{_bus[0]}" + (f"(({_bus[0]}))" if _load[0] == 0 else f'@{{shape: tri, label="{_bus[0]}"}}')
+            _to = f"{_bus[1]}" + (f"(({_bus[1]}))" if _load[1] == 0 else f'@{{shape: tri, label="{_bus[1]}"}}')
+            _flow = f"{abs(graph_model_ui.value.property(_line,'current')):.0f} A"
+            _diagram.append(f"    {_from} --{_flow}--> {_to}")
+        diagram = mo.vstack([
+            mo.hstack([graph_model_ui,graph_label_ui,graph_orientation_ui],align='stretch'),
+            mo.mermaid("\n".join(_diagram)),
+        ])
+    else:
+        diagram = mo.vstack([file, hint("open your JSON model")])
+    return (diagram,)
 
 
 @app.cell
