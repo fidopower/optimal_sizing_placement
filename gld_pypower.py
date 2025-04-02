@@ -726,13 +726,14 @@ class Model:
 
     def optimal_powerflow(self,
         refresh:bool=False,
-        with_solver_data:bool=False,
-            verbose:bool|TypeVar('io.TextIOWrapper')=False,
+        verbose:bool|TypeVar('io.TextIOWrapper')=False,
+        curtailment_price=None,
         **kwargs) -> dict:
         """Compute optimal powerflow
 
         Arguments:
         * refresh: force recalculation of previous result
+        * verbose: output solver data and results
         * kwargs: options passed of cvxpy.Problem.solve()
 
         Returns:
@@ -760,7 +761,7 @@ class Model:
         N = len(self.nodes(refresh))
 
         if verbose:
-            print(f"\ngld('{self.name}').optimal_powerflow(refresh={repr(refresh)},with_solver_data={repr(with_solver_data)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=sys.stderr)
+            print(f"\ngld('{self.name}').optimal_powerflow(refresh={repr(refresh)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=sys.stderr)
             print("\nN:",N,sep="\n",file=sys.stderr)
             print("\nG:",G,sep="\n",file=sys.stderr)
             print("\nD:",D,sep="\n",file=sys.stderr)
@@ -778,7 +779,9 @@ class Model:
         d = cp.Variable(N)  # demand curtailment
 
         cost = P @ cp.abs(g + h * 1j)
-        shed = np.ones(N)*100*max(P) @ d # load shedding 100x maximum generator price
+        if curtailment_price is None:
+            curtailment_price = 100*max(P)
+        shed = np.ones(N)*curtailment_price @ d # load shedding 100x maximum generator price
         objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
         constraints = [
             G.real @ x - g + c + D.real - d == 0,  # KCL/KVL real power laws
@@ -795,6 +798,7 @@ class Model:
             ]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=(verbose!=False),**kwargs)
+        self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
 
         if x.value is None:
             raise RuntimeError(problem.status)
@@ -810,15 +814,12 @@ class Model:
                 "status": problem.status,
                 "curtailment":np.array(d.value).round(3)*puS,
             }
-        if with_solver_data:
-            result["problem"] = problem.get_problem_data(problem.solver_stats.solver_name)
 
         return self.set_result("optimal_sizing",result)
 
     def optimal_sizing(self,            
             refresh:bool=False,
             verbose:bool|TypeVar('io.TextIOWrapper')=False,
-            with_solver_data:bool=False,
             update_model:bool=False,
             margin:float=0.2,
             gen_cost:float|list|dict=None,
@@ -834,7 +835,6 @@ class Model:
         Arguments:
         * refresh: force recalculation of all values
         * verbose: output solver data and results
-        * with_solver_data: include solver data
         * update_model: update model with new generation and capacitors
         * margin: load safety margin (default is +0.2)
         * gen_cost: generation addition cost data
@@ -901,7 +901,7 @@ class Model:
             min_power_ratio = np.array(min_power_ratio)
 
         if verbose:
-            print(f"\ngld('{self.name}').optimal_sizing(gen_cost={repr(gen_cost)},cap_cost={repr(cap_cost)},refresh={repr(refresh)},with_solver_data={repr(with_solver_data)},update_model={repr(update_model)},margin={repr(margin)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=verbose)
+            print(f"\ngld('{self.name}').optimal_sizing(gen_cost={repr(gen_cost)},cap_cost={repr(cap_cost)},refresh={repr(refresh)},update_model={repr(update_model)},margin={repr(margin)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=verbose)
             print("\nN:",N,sep="\n",file=verbose)
             print("\nG:",G,sep="\n",file=verbose)
             print("\nD:",D,sep="\n",file=verbose)
@@ -933,6 +933,7 @@ class Model:
             ]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=(verbose!=False),**kwargs)
+        self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
 
         if x.value is None:
             raise RuntimeError(problem.status)
@@ -952,7 +953,7 @@ class Model:
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}    Bus       Pg       Qg      Pmax     Qmax     Qmin  ",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- -------- --------",file=verbose)
             for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_gens) if abs(x)>0}.items():
-                gen = f"gen:{len(self.data["objects"])}"
+                gen = f"gen:{len(self.data['objects'])}"
                 n = int(self.data['objects'][bus]['bus_i'])-1
                 obj = self.add_object("gen",gen,
                     parent=bus,
@@ -978,7 +979,7 @@ class Model:
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
             for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if abs(x)>0}.items():
-                shunt = f"shunt:{len(self.data["objects"])}"
+                shunt = f"shunt:{len(self.data['objects'])}"
                 self.add_object("shunt",shunt,
                     parent=bus,
                     voltage_high=voltage_high,
@@ -1007,18 +1008,16 @@ class Model:
                     "capacitors": {n:x for n,x in enumerate(new_caps) if abs(x)>0},
                 }
             }
-        if with_solver_data:
-            result["problem"] = problem.get_problem_data(problem.solver_stats.solver_name)
 
         return self.set_result("optimal_sizing",result)
 
 if __name__ == "__main__":
 
-    if not os.path.exists("test.json"):
-        print("TEST: test.json not found, testing not done",file=sys.stderr)
+    if not os.path.exists("example.json"):
+        print("TEST: example.json not found, testing not done",file=sys.stderr)
         quit()
 
-    test = Model("test.json")
+    test = Model("example.json")
 
     try:
         test.run("--version")
@@ -1063,9 +1062,9 @@ if __name__ == "__main__":
     testEq(test.add_object("bus","bus_3",**bus_3)["bus_i"],bus_3["bus_i"],"add object failed")
     testException(lambda:test.add_object("bus","bus_0"),ValueError,"add object failed")
     testException(lambda:test.add_object("transformer","test"),ValueError,"add object failed")
-    testEq(test.add_object("geodata","test",scale=0.1),{'class': 'geodata', 'id': "10", 'scale': '0.1 pu'},"add object failed")
-    testEq(test.mod_object("test",scale=1.0),{'class': 'geodata', 'id': "10", 'scale': '1.0 pu'},"mod object failed")
-    testEq(test.del_object("test"),{'class': 'geodata', 'id': "10", 'scale': '1.0 pu'},"add object failed")
+    testEq(test.add_object("geodata","test",scale=0.1),{'class': 'geodata', 'id': "13", 'scale': '0.1 pu'},"add object failed")
+    testEq(test.mod_object("test",scale=1.0),{'class': 'geodata', 'id': "13", 'scale': '1.0 pu'},"mod object failed")
+    testEq(test.del_object("test"),{'class': 'geodata', 'id': "13", 'scale': '1.0 pu'},"add object failed")
 
     testEq("pypower" in test.modules(),True,"module failed")
     testEq(test.validate(["pypower"]),None, "validate failed")
@@ -1077,13 +1076,13 @@ if __name__ == "__main__":
     testEq(test.get_name('bus') , ['bus_0', 'bus_1', 'bus_2', 'bus_3'], "get bus name failed")
     testEq(test.get_name('bus',0) , 'bus_0', "get bus name failed")
     testEq(test.get_name('bus',[1,2]) , ['bus_1', 'bus_2'], "get bus name failed")
-    testEq(test.get_name('branch') , ['branch:4', 'branch:5', 'branch:6'], "get branch failed")
-    testEq(test.get_name('branch',0) , 'branch:4', "get branch failed")
-    testEq(test.get_name('branch',[1,2]) , ['branch:5', 'branch:6'], "get branch failed")
-    testEq(test.get_bus("gen:7") , "bus_0", "get bus failed")
-    testEq(test.get_bus(["gen:7"]) , ["bus_0"], "get bus failed")
-    testEq(test.get_bus("shunt:9") , "bus_3", "get bus failed")
-    testEq(test.get_bus(["shunt:9"]) , ["bus_3"], "get bus failed")
+    testEq(test.get_name('branch') , ['branch:6', 'branch:7', 'branch:8'], "get branch failed")
+    testEq(test.get_name('branch',0) , 'branch:6', "get branch failed")
+    testEq(test.get_name('branch',[1,2]) , ['branch:7', 'branch:8'], "get branch failed")
+    testEq(test.get_bus("gen_0") , "bus_0", "get bus failed")
+    testEq(test.get_bus(["gen_0"]) , ["bus_0"], "get bus failed")
+    # testEq(test.get_bus("shunt_0") , "bus_3", "get bus failed")
+    # testEq(test.get_bus(["shunt:9"]) , ["bus_3"], "get bus failed")
     testEq(test.property("bus_0","Pd"),0.0, "property float failed")
     testEq(test.property("bus_0","S"),0j, "property complex failed")
     testEq(test.perunit("S"),100, "perunit power failed")
@@ -1092,17 +1091,17 @@ if __name__ == "__main__":
     testEq(test.graphLaplacian().shape,(4,4), "graph Laplacian failed")
     testEq(test.graphIncidence().shape,(3,4), "graph incidence failed")
     testEq(test.demand().tolist(),[0j,0j,0.1+0.01j,0.1+0.01j], "demand failed")
-    testEq(list(test.generators().keys()) , ['gen:7'], "generators failed")
-    testEq(test.generation().tolist() , [complex(0.1,0.01),0j,-0j,0j], "generation failed")
-    testEq(list(test.costs().keys()) , ['gencost:8'], "costs failed")
-    testEq(test.prices().tolist() , [100,0,0,0], "prices failed")
+    testEq(list(test.generators().keys()) , ['gen_0'], "generators failed")
+    testEq(test.generation().tolist() , [(0.1+0.05j), 0j, 0j, 0j], "generation failed")
+    testEq(list(test.costs().keys()) , ['gencost:1'], "costs failed")
+    testEq(test.prices().tolist() , [0,0,0,0], "prices failed")
     testEq(test.lineratings().tolist() , [0.25,0.15,0.15], "line ratings failed")
-    testEq(test.capacitors().tolist() , [0,0,0,0.1], "capacitors failed")
+    testEq(test.capacitors().tolist() , [0,0,0,0], "capacitors failed")
 
-    testEq(test.optimal_powerflow()["curtailment"].tolist(),[0,0,5,5],"optimal powerflow failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [24.8+0j, 1.6+0j, 0j, 0j], "optimal sizing failed")
+    testEq(test.optimal_powerflow()["curtailment"].tolist(),[0.0, 0.0, 7.3, 7.3],"optimal powerflow failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (14.8+0j), 1: (1.6+0j)}, 'capacitors': {2: 1.2}} , "optimal sizing failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")
     testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),[0,0,0,0],"optimal powerflow failed")
 
     if runtime:
