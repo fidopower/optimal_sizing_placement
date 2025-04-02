@@ -1,4 +1,4 @@
-#set verbose=TRUE
+//#set verbose=TRUE
 
 module pypower
 {
@@ -10,7 +10,7 @@ object gen
 {
 	name "gen_0";
 	parent "bus_0";
-	Pmax "25 MW";
+	Pmax "10 MW";
 	Pmin "0 MW";
 	Pg "10 MW";
 	Qg "1 MVAr";
@@ -22,8 +22,6 @@ object gen
 object gencost
 {
 	parent "gen_0";
-	rng_state "1458777923";
-	guid "6FA207E546894B29";
 	model "POLYNOMIAL";
 	startup "0 $";
 	shutdown "0 $";
@@ -69,9 +67,9 @@ object branch
 {
 	from "bus_0";
 	to "bus_1";
-	r "0.01 pu*Ohm";
-	x "0.05 pu*Ohm";
-	b "0.05 pu/Ohm";
+	r "0.01 pu.Ohm";
+	x "0.05 pu.Ohm";
+	b "0.05 pu./Ohm";
 	rateA "25 MVA";
 	status "IN";
 }
@@ -79,9 +77,9 @@ object branch
 {
 	from "bus_1";
 	to "bus_2";
-	r "0.01 pu*Ohm";
-	x "0.05 pu*Ohm";
-	b "0.05 pu/Ohm";
+	r "0.01 pu.Ohm";
+	x "0.05 pu.Ohm";
+	b "0.05 pu./Ohm";
 	rateA "15 MVA";
 	status "IN";
 }
@@ -89,9 +87,9 @@ object branch
 {
 	from "bus_1";
 	to "bus_3";
-	r "0.01 pu*Ohm";
-	x "0.05 pu*Ohm";
-	b "0.05 pu/Ohm";
+	r "0.01 pu.Ohm";
+	x "0.05 pu.Ohm";
+	b "0.05 pu./Ohm";
 	rateA "15 MVA";
 	status "IN";
 }
@@ -122,5 +120,4 @@ object capacity {
 	capacitor 10;
 }
 
-#set savefile=${modelname/.glm/.json}
-
+#set savefile=example.json
