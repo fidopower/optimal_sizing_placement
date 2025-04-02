@@ -306,7 +306,7 @@ def _(
             _output = _stdout.getvalue() + _stderr.getvalue()
             original = mo.vstack(
                 [
-                    mo.hstack([error(err), verbose_ui], justify="start"),
+                    mo.hstack([error(err), verbose_ui, problem_ui], justify="start"),
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
@@ -374,7 +374,7 @@ def _(
             _output = _stdout.getvalue() + _stderr.getvalue()
             sizing = mo.vstack(
                 [
-                    mo.hstack([error(err),verbose_ui],justify='start'),
+                    mo.hstack([error(err),verbose_ui,problem_ui],justify='start'),
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
@@ -446,7 +446,7 @@ def _(
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(mo.vstack(
                 [
-                    mo.hstack([error(err), verbose_ui], justify="start"),
+                    mo.hstack([error(err), verbose_ui,problem_ui], justify="start"),
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             ))
