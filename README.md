@@ -128,8 +128,10 @@ where
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
 * $y \in \mathbb{R}^N$ is the voltage magnitude, and
 
-## Further Reading
+# References
 
+* [Joshua Taylor, *Convex Optimization of Power Systems*, Cambridge University Press (2015)](https://books.google.com/books?hl=en&lr=&id=JBdoBgAAQBAJ&oi=fnd&pg=PR11&dq=info:4_zKJR2GVGAJ:scholar.google.com&ots=A23AB6jlr9&sig=D2uoDpJMlNfCT9an9WOMuBvfk_k#v=onepage&q&f=false)
+* [FIDOpower Optimal Powerflow/Sizing/Placement on GitHub](https://github.com/fidopower/optimal_sizing_placement)
 * [Arras Energy Home](https://www.arras.energy/)
 * [Arras Energy Documentation](https://docs.arras.energy/)
 * [Arras Energy Source](https://github.com/arras-energy/)
