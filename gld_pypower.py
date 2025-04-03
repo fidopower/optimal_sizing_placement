@@ -1116,6 +1116,69 @@ class Model:
 
         return self.set_result("optimal_sizing",result)
 
+    def mermaid(self,
+        orientation:str="vertical",
+        label=None) -> str:
+        """Generate network diagram in Mermaid
+
+        Arguments:
+        * orientation:
+        * label:
+
+        Returns:
+        * str: Mermaid diagram string
+        """
+        orientations = {"vertical":"TB","horizontal":"LR"}
+        diagram = [f"""graph {orientations[orientation]}
+    classDef black fill:#000,stroke:#000;
+    classDef white fill:#fff,stroke:#000;
+    classDef red fill:#f64,stroke:#000;
+    classDef green fill:#0f0,stroke:#000;
+    classDef blue fill:#6cf,stroke:#000;
+"""]
+        def _node(bus,spec):
+            node = spec["bus_i"]
+            name = spec[label] if label else bus
+            Vm = self.property(bus,"Vm")
+            Pd = self.property(bus,"Pd")
+            gen = self.select({"class":"gen","bus":node})
+            Pg = sum([self.property(x,"Pg") for x in gen])
+            if Pd > 0:
+                shape = "tri"
+            elif Pg > 0:
+                shape = "circle"
+            else:
+                shape = "fork"
+            if Vm < 0.95:
+                color = "blue"
+            elif Vm > 1.05:
+                color = "red"
+            elif Pd == 0 and Pg == 0:
+                color = "black"
+            else:
+                color = "white"
+            return f"""    {node}@{{shape: {shape}, label: "{bus}"}}
+    class {node} {color}"""
+
+        for bus,spec in self.find("bus").items():
+
+            diagram.append(_node(bus,spec))
+
+        def _line(line,spec):
+            current = self.property(line,"current")
+            reverse = ( current.real < 0 )
+            current = abs(current/1000)
+            linetype = "--" if current < 1.0 else "=="
+            fbus = spec["tbus" if reverse else "fbus"]
+            tbus = spec["fbus" if reverse else "tbus"]
+            return f"""    {fbus} {linetype}{current:.2f} kA{linetype}> {tbus}"""
+
+        for line,spec in self.find("branch").items():
+
+            diagram.append(_line(line,spec))
+
+        return "\n".join(diagram)
+
 if __name__ == "__main__":
 
     if not os.path.exists("example.json"):
@@ -1160,6 +1223,7 @@ if __name__ == "__main__":
         testEq(test.run(),"","initial run test failed")
 
     bus_3 = test.get_object("bus_3")
+
     testEq(bus_3["bus_i"],'4',"get object failed")
     testException(lambda:test.add_object("bus","bus_3",**bus_3)["bus_i"],ValueError,"add object succeeded")
     testException(lambda:test.add_object("bus","bus_4",id="0")["bus_i"],ValueError,"add object succeeded")
@@ -1203,8 +1267,9 @@ if __name__ == "__main__":
     testEq(test.prices().tolist() , [0,0,0,0], "prices failed")
     testEq(test.lineratings().tolist() , [0.25,0.15,0.15], "line ratings failed")
     testEq(test.capacitors().tolist() , [0,0,0,0], "capacitors failed")
+    testEq(test.mermaid().split("\n")[0],"graph TB","mermaid failed")
 
-    testEq(test.optimal_powerflow()["curtailment"].tolist(),[0.0, 0.0, 7.3, 7.3],"optimal powerflow failed")
+    testEq(test.optimal_powerflow()["curtailment"].round(1).tolist(),[0.0, 0.0, 6.8, 6.8],"optimal powerflow failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")

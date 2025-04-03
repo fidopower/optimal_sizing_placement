@@ -6,17 +6,17 @@ network modeled using **pypower**. The notebook is organized using 3 tabs
 
 ## Model 
 
-The **Model** tab is used load the initial model. Only GridLAB-D JSON model are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to compile the JSON file from the GLM file. 
+The **Model** tab is used load the initial model. Only GridLAB-D JSON models are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to compile the JSON file from the GLM file. 
 
 To upload a JSON file, click on **Open JSON model** button and select the file you wish to work with.  If you have already opened a model, the new one you select will be opened in its place, or you can click on **Click to clear files** to close the existing model.
 
-Once your model is opened, the model data will be displayed in Pandas DataFrames, one per class found in the model. Select a tab to view each class in the model. Data frames are organized by object name in rows, and object property in columns.
+Once your model is opened, the model data will be displayed in a Pandas data frame, one tab per class found in the model. Select a tab to view a class in the model. Class data frames are organized by object name in rows, and object property in columns.
 
 ## Costs
 
-If the model contains `capacity` objects with `generator` and `capacitor` data included, then a data frame is shown with the capacity addition costs for each bus in the model.  If no capacity data is found, then a single value for generators and capacitors is given using slider inputs.
+If the model contains `capacity` objects with `generator` and `capacitor` data included, then a data frame is shown with the capacity addition costs for each bus in the model.  If no capacity data is found, then a single value for generators and capacitors is given using slider inputs. These values can also be set using the **Settings** tab.
 
-The class definition for `capacity` object is 
+The class definition for `capacity` objects is 
 
 ~~~
 class capacity 
@@ -26,7 +26,7 @@ class capacity
 }
 ~~~
 
-with the parent referring to the bus at which the capacity addition costs apply. Note the generator costs are presented a complex value, with the real part corresponding to the cost of adding real power capacity and the imaginary part corresponding to the cost of added reactive power capacity.
+with the parent referring to the bus at which the capacity addition costs apply. Note the `generator` costs are presented a complex value, with the real part corresponding to the cost of adding real power capacity in units of `$/MW` and the imaginary part corresponding to the cost of added reactive power capacity in units of `$/MVAr` in excess of the real power costs. The cost of `capacitor` objects are only for the reactive power, i.e., in `$/MVAr`.
 
 ## Results
 
@@ -47,6 +47,16 @@ gridlabd MYFILE_RESULT.json
 ~~~
 
 where `RESULT` is `opf_initial`, `osp`, or `opf_final` according to which optimization is selected.
+
+When an optimization fails, checkboxes to enable verbose and problem output are presented. These options can also be set using the **Settings** tab.
+
+## Network
+
+The **Network** tab displays a visual represention of the network.  Nodes are presented as circles, loads as triangles, and generation as upside down trianbles.  Normally the bus is labeled with its name. Options are presented to display the bus id, bus voltage per unit kV, or bus net load per unit MVA. The current flowing on lines is presented in units of `kA`.
+
+## Settings
+
+The **Settings** tab shows all the available options, organized by category.
 
 ## Example
 
