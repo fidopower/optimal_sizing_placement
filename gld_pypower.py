@@ -26,6 +26,7 @@ import numpy as np
 import numpy.linalg as la
 import cvxpy as cp
 from typing import Union, Any, TypeVar
+import warnings
 
 np.set_printoptions(linewidth=np.inf,formatter={float:lambda x:f"{x:8.4f}"})
 
@@ -53,6 +54,8 @@ class Model:
         self.data = data
         self.results = {}
         self.modified = False
+        self._last_name = None
+        self._last_data = None
 
     def __repr__(self):
         return f"Model({repr(self.name)})"
@@ -94,23 +97,28 @@ class Model:
             astype(self.data["classes"])
         return astype(self.data["classes"][module])
 
-    def property(self,object:str,property:str) -> Any:
+    def property(self,obj:str,name:str) -> Any:
         """Get an object property and convert to Python type
 
         Arguments:
-        * object: name of object
-        * property: name of property
+        * obj: name of object
+        * name: name of property
 
         Returns:
         * varies: value of object property
         """
-        object_data = self.data["objects"][object]
-        if property in self.data["header"]:
-            return object_data[property]
-        ptype = self.data["classes"][object_data["class"]][property]["type"]
+        if obj != self._last_name:
+            object_data = self.data["objects"][obj]
+            self._last_name = obj
+            self._last_data = object_data
+        else:
+            object_data = self._last_data
+        if name in self.data["header"]:
+            return object_data[name]
+        ptype = self.data["classes"][object_data["class"]][name]["type"]
         if ptype in dir(self):
-            return getattr(self,ptype)(object_data[property])
-        return object_data[property]
+            return getattr(self,ptype)(object_data[name])
+        return object_data[name]
 
     def format(self,value:Any) -> str:
         """Apply formatting rules
@@ -172,7 +180,7 @@ class Model:
              oclass:str,
              astype:type=dict,
             ) -> dict|list:
-        """Find objects
+        """Find objects of a class
 
         Arguments:
         * model: the GridLAB-D model
@@ -188,6 +196,27 @@ class Model:
         elif astype == dict:
             return {x:y for x, y in self.data["objects"].items() if y["class"] == oclass}
         raise ValueError("astype is not valid")
+
+    def select(self,
+               criteria:dict,
+               startwith:dict = None
+              ) -> dict:
+        """Select objects matching criteria
+
+        Arguments:
+        * criteria: selection criteria as "property":"value" dictionary
+        * startwith: data dictionary to start with
+
+        Returns:
+        * dict: object data by name
+        """
+        if startwith is None:
+            startwith = self.data["objects"]
+        result = dict(startwith)
+        for key,value in criteria.items():
+            result = {x:y for x,y in result.items() if key in y and y[key] == value}
+        return result
+
 
     def globals(self,name:str=None) -> Union[bool,int,float,complex,str]:
         """Get global variables
@@ -723,17 +752,31 @@ class Model:
     #
     # Optimizations
     #
+    def _solver_failed(err):
+        """Failed solution default handler"""
+        raise RuntimeError(err)
+
+    def _problem_invalid(err):
+        """Invalid problem default handler"""
+        raise ValueError(err)
 
     def optimal_powerflow(self,
         refresh:bool=False,
         verbose:bool|TypeVar('io.TextIOWrapper')=False,
         curtailment_price=None,
+        ref:int|str = None,
+        on_invalid:callable=_problem_invalid,
+        on_fail:callable=_solver_failed,
         **kwargs) -> dict:
         """Compute optimal powerflow
 
         Arguments:
         * refresh: force recalculation of previous result
         * verbose: output solver data and results
+        * curtailment_price: price at which load is curtailed
+        * ref: reference bus id or name
+        * on_invalid: invalid problem handler
+        * on_fail: solution failed handler
         * kwargs: options passed of cvxpy.Problem.solve()
 
         Returns:
@@ -746,29 +789,50 @@ class Model:
             pass
 
         if self.graphSpectral()[2] > 1:
-            raise RuntimeError(f"cannot solve OPF on more than one network at a time (model has {self.graphSpectral()[2]} networks)")
+            return on_invalid(f"{self.name} cannot solve OPF on more than one network at a time (model has {self.graphSpectral()[2]} networks)")
         if self.graphSpectral()[2] == 0:
-            raise RuntimeError(f"cannot solve OPF on invalid network modles (no zero eigenvalues found)")
+            return on_invalid(f"{self.name} cannot solve OPF on invalid network modles (no zero eigenvalues found)")
 
-        # extract data from model        
-        P = self.prices(refresh)
-        G = self.graphLaplacian(refresh)
-        D = self.demand('actual',refresh)
-        I = self.graphIncidence(refresh)
-        F = self.lineratings("A",refresh)
-        S = self.generation('capacity',refresh)
-        C = self.capacitors('installed',refresh)
-        N = len(self.nodes(refresh))
+        # setup verbose output
+        if verbose is True:
+            verbose = sys.stderr
+
+        # extract data from model   
+        try:
+            if ref is None:
+                ref = self.select({"class":"bus","type":"REF"})
+                if len(ref) > 0:
+                    ref = ref[list(ref)[0]]["bus_i"]
+                    if len(ref) > 1:
+                        warnings.warn(f"{self.name} multiple reference busses found, using bus {ref}")
+                else:
+                    warnings.warn(f"{self.name} no reference bus found, using bus 0")
+                    ref = 0
+            elif isinstance(ref,str):
+                ref = self.get_bus(ref)
+            P = self.prices(refresh)
+            G = self.graphLaplacian(refresh)
+            D = self.demand('actual',refresh)
+            I = self.graphIncidence(refresh)
+            F = self.lineratings("A",refresh)
+            S = self.generation('capacity',refresh)
+            C = self.capacitors('installed',refresh)
+            N = len(self.nodes(refresh))
+        except Exception as err:
+            return on_invalid(err)
 
         if verbose:
             print(f"\ngld('{self.name}').optimal_powerflow(refresh={repr(refresh)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=sys.stderr)
-            print("\nN:",N,sep="\n",file=sys.stderr)
-            print("\nG:",G,sep="\n",file=sys.stderr)
-            print("\nD:",D,sep="\n",file=sys.stderr)
-            print("\nI:",I,sep="\n",file=sys.stderr)
-            print("\nF:",F,sep="\n",file=sys.stderr)
-            print("\nS:",S,sep="\n",file=sys.stderr)
-            print("\nC:",C,sep="\n",file=sys.stderr)
+            print("\nN:",N,sep="\n",file=verbose)
+            print("\nG:",G,sep="\n",file=verbose)
+            print("\nD:",D,sep="\n",file=verbose)
+            print("\nI:",I,sep="\n",file=verbose)
+            print("\nF:",F,sep="\n",file=verbose)
+            print("\nS:",S,sep="\n",file=verbose)
+            print("\nC:",C,sep="\n",file=verbose)
+            print("\nTotal D:",np.array(D).sum(),sep="\n",file=verbose)
+            print("\nTotal S:",sum(S),sep="\n",file=verbose)
+            print("\nTotal C:",sum(C),sep="\n",file=verbose)
 
         # setup problem
         x = cp.Variable(N)  # nodal voltage angles
@@ -776,32 +840,36 @@ class Model:
         g = cp.Variable(N)  # generation real power dispatch
         h = cp.Variable(N)  # generation reactive power dispatch
         c = cp.Variable(N)  # capacitor bank settings
-        d = cp.Variable(N)  # demand curtailment
+        d = cp.Variable(N)  # demand real power curtailment
+        e = cp.Variable(N)  # demand reactive power curtailment
 
-        cost = P @ cp.abs(g + h * 1j)
-        if curtailment_price is None:
-            curtailment_price = 100*max(P)
-        shed = np.ones(N)*curtailment_price @ d # load shedding 100x maximum generator price
-        objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
-        constraints = [
-            G.real @ x - g + c + D.real - d == 0,  # KCL/KVL real power laws
-            G.imag @ y - h - c + D.imag - d @ D.imag / D.real == 0,  # KCL/KVL reactive power laws
-            x[0] == 0,  # swing bus voltage angle always 0
-            y[0] == 1,  # swing bus voltage magnitude is always 1
-            cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
-            cp.abs(I @ x) <= F,  # line flow limits
-            g >= 0,  # generation real power limits
-            cp.abs(h) <= S.imag,  # generation reactive power limits
-            cp.abs(g+h*1j) <= S.real, # generation apparent power limit
-            c >= 0, c <= C,  # capacitor bank settings
-            d >= 0, d <= D.real,  # demand curtailment
-            ]
-        problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=(verbose!=False),**kwargs)
-        self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+        try:
+            cost = P @ cp.abs(g + h * 1j)
+            if curtailment_price is None:
+                curtailment_price = 100*max(P)
+            shed = np.ones(N)*curtailment_price @ cp.abs(d+e*1j) # load shedding 100x maximum generator price
+            objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
+            constraints = [
+                G.real @ x - g + c + D.real - d == 0,  # KCL/KVL real power laws
+                G.imag @ y - h - c + D.imag - e == 0,  # KCL/KVL reactive power laws
+                x[ref] == 0,  # swing bus voltage angle always 0
+                y[ref] == 1,  # swing bus voltage magnitude is always 1
+                cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
+                cp.abs(I @ x) <= F,  # line flow limits
+                g >= 0,  # generation real power limits
+                cp.abs(h) <= S.imag,  # generation reactive power limits
+                cp.abs(g+h*1j) <= S.real, # generation apparent power limit
+                c >= 0, c <= C,  # capacitor bank settings
+                d >= 0, cp.abs(d+e*1j) <= cp.abs(D),  # demand curtailment constraint with flexible reactive power
+                ]
+            problem = cp.Problem(objective, constraints)
+            problem.solve(verbose=(verbose!=False),**kwargs)
+            self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+        except Exception as err:
+            return on_invalid(err)
 
         if x.value is None:
-            raise RuntimeError(problem.status)
+            return on_fail(problem.status)
         
         puV = self.perunit("V")
         puS = self.perunit("S")
@@ -829,6 +897,9 @@ class Model:
             voltage_low:float|list|dict=0.95,
             steps:float|list|dict=20,
             admittance:float|list|dict=0.1,
+            ref:int|str=None,
+            on_invalid=_problem_invalid,
+            on_fail=_solver_failed,
             **kwargs) -> dict:
         """Solve optimal sizing/placement problem
 
@@ -836,10 +907,17 @@ class Model:
         * refresh: force recalculation of all values
         * verbose: output solver data and results
         * update_model: update model with new generation and capacitors
-        * margin: load safety margin (default is +0.2)
+        * margin: load capacity margin
         * gen_cost: generation addition cost data
         * cap_cost: capacitor addition cost data
         * min_power_ratio: new generation minimum reactive power ratio relative to real power
+        * voltage_high: upper voltage constraint
+        * voltage_low: lower voltage constraint
+        * steps: number of capacitor steps
+        * admittance: capacity admittance per step
+        * ref: reference bus id or name
+        * on_invalid: invalid problem handler
+        * on_fail: failed solution handler
         * kwargs: arguments passed to solver
 
         Returns:
@@ -855,50 +933,67 @@ class Model:
 
         # check model network validity
         if self.graphSpectral()[2] > 1:
-            raise RuntimeError(f"cannot optimize more than one network at a time (model has {self.graphSpectral()[2]} networks)")
+            return on_invalid(f"{self.name} cannot optimize more than one network at a time (model has {self.graphSpectral()[2]} networks)")
         if self.graphSpectral()[2] == 0:
-            raise RuntimeError(f"cannot optimize on invalid network models (no zero eigenvalues found)")
+            return on_invalid(f"{self.name} cannot optimize on invalid network models (no zero eigenvalues found)")
         
         # setup verbose output
         if verbose is True:
             verbose = sys.stderr
 
         # extract model data
-        G = self.graphLaplacian(refresh)
-        D = self.demand('actual',refresh)
-        I = self.graphIncidence(refresh)
-        F = self.lineratings("A",refresh)
-        S = self.generation('capacity',refresh)
-        C = self.capacitors('installed',refresh)
-        N = len(self.nodes(refresh))
+        try:
+            if ref is None:
+                ref = self.select({"class":"bus","type":"REF"})
+                if len(ref) > 0:
+                    ref = ref[list(ref)[0]]["bus_i"]
+                    if len(ref) > 1:
+                        warnings.warn(f"{self.name} multiple reference busses found, using bus {ref}")
+                else:
+                    warnings.warn(f"{self.name} no reference bus found, using bus 0")
+                    ref = 0
+            elif isinstance(ref,str):
+                ref = self.get_bus(ref)
 
-        # normalize generation cost argument
-        if gen_cost is None:
-            gen_cost = np.zeros(N)
-        elif isinstance(gen_cost,float) or isinstance(gen_cost,int):
-            gen_cost = np.full(N,gen_cost)
-        elif isinstance(gen_cost,dict):
-            gen_cost = np.array([gen_cost[n] if n in gen_cost else 0 for n in range(N)])
-        elif isinstance(gen_cost,list):
-            gen_cost = np.array(gen_cost)
+            G = self.graphLaplacian(refresh)
+            D = self.demand('actual',refresh)
+            I = self.graphIncidence(refresh)
+            F = self.lineratings("A",refresh)
+            S = self.generation('capacity',refresh)
+            C = self.capacitors('installed',refresh)
+            N = len(self.nodes(refresh))
 
-        # normalize capacitor cost argument
-        if cap_cost is None:
-            cap_cost = np.zeros(N)
-        elif isinstance(cap_cost,float) or isinstance(cap_cost,int):
-            cap_cost = np.full(N,cap_cost)
-        elif isinstance(cap_cost,dict):
-            cap_cost = np.array([cap_cost[n] if n in cap_cost else 0 for n in range(N)])
-        elif isinstance(gen_cost,list):
-            cap_cost = np.array(cap_cost)
+            # normalize generation cost argument
+            if gen_cost is None:
+                gen_cost = np.zeros(N)
+            elif isinstance(gen_cost,float) or isinstance(gen_cost,int):
+                gen_cost = np.full(N,gen_cost)
+            elif isinstance(gen_cost,dict):
+                gen_cost = np.array([gen_cost[n] if n in gen_cost else 0 for n in range(N)])
+            elif isinstance(gen_cost,list):
+                gen_cost = np.array(gen_cost)
 
-        # normalize minimum reactive power argument
-        if isinstance(min_power_ratio,float):
-            min_power_ratio = np.full(N,min_power_ratio)
-        elif isinstance(min_power_ratio,dict):
-            min_power_ratio = np.array([min_power_ratio[n] if n in min_power_ratio else 0 for n in range(N)])
-        elif isinstance(min_power_ratio,list):
-            min_power_ratio = np.array(min_power_ratio)
+            # normalize capacitor cost argument
+            if cap_cost is None:
+                cap_cost = np.zeros(N)
+            elif isinstance(cap_cost,float) or isinstance(cap_cost,int):
+                cap_cost = np.full(N,cap_cost)
+            elif isinstance(cap_cost,dict):
+                cap_cost = np.array([cap_cost[n] if n in cap_cost else 0 for n in range(N)])
+            elif isinstance(gen_cost,list):
+                cap_cost = np.array(cap_cost)
+
+            # normalize minimum reactive power argument
+            if isinstance(min_power_ratio,float):
+                min_power_ratio = np.full(N,min_power_ratio)
+            elif isinstance(min_power_ratio,dict):
+                min_power_ratio = np.array([min_power_ratio[n] if n in min_power_ratio else 0 for n in range(N)])
+            elif isinstance(min_power_ratio,list):
+                min_power_ratio = np.array(min_power_ratio)
+
+        except Exception as err:
+
+            return on_invalid(err)
 
         if verbose:
             print(f"\ngld('{self.name}').optimal_sizing(gen_cost={repr(gen_cost)},cap_cost={repr(cap_cost)},refresh={repr(refresh)},update_model={repr(update_model)},margin={repr(margin)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=verbose)
@@ -909,6 +1004,9 @@ class Model:
             print("\nF:",F,sep="\n",file=verbose)
             print("\nS:",S,sep="\n",file=verbose)
             print("\nC:",C,sep="\n",file=verbose)
+            print("\nTotal D:",sum(D),sep="\n",file=verbose)
+            print("\nTotal S:",sum(S),sep="\n",file=verbose)
+            print("\nTotal C:",sum(C),sep="\n",file=verbose)
 
         # setup problem
         x = cp.Variable(N)  # nodal voltage angles
@@ -917,26 +1015,33 @@ class Model:
         h = cp.Variable(N)  # generation reactive power dispatch
         c = cp.Variable(N)  # capacitor bank settings
 
-        # construct problem
-        puS = self.perunit("S")
-        costs = gen_cost.real @ cp.abs(g) + gen_cost.imag @ cp.abs(h) + cap_cost @ cp.abs(c)
-        objective = cp.Minimize(costs/puS)  # minimum cost (generation + demand response)
-        constraints = [
-            g - G.real @ x - c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
-            h - G.imag @ y + c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
-            x[0] == 0,  # swing bus voltage angle always 0
-            y[0] == 1,  # swing bus voltage magnitude is always 1
-            cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
-            cp.abs(I @ x) <= F,  # line flow limits
-            g >= 0, # generation must be positive
-            c >= 0, # capacitor values must be positive
-            ]
-        problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=(verbose!=False),**kwargs)
-        self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+        try:
+
+            # construct problem
+            puS = self.perunit("S")
+            costs = gen_cost.real @ cp.abs(g) + gen_cost.imag @ cp.abs(h) + cap_cost @ cp.abs(c)
+            objective = cp.Minimize(costs/puS)  # minimum cost (generation + demand response)
+            constraints = [
+                g - G.real @ x - c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                h - G.imag @ y + c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+                x[ref] == 0,  # swing bus voltage angle always 0
+                y[ref] == 1,  # swing bus voltage magnitude is always 1
+                cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
+                cp.abs(I @ x) <= F,  # line flow limits
+                g >= 0, # generation must be positive
+                c >= 0, # capacitor values must be positive
+                ]
+            problem = cp.Problem(objective, constraints)
+            problem.solve(verbose=(verbose!=False),**kwargs)
+            self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+
+        except Exception as err:
+
+            return on_invalid(err)
 
         if x.value is None:
-            raise RuntimeError(problem.status)
+
+            return on_fail(problem.status)
 
         # update model with new values
         new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value.round(3) + cp.abs(h).value.round(3)*1j - S) ]
@@ -1073,6 +1178,7 @@ if __name__ == "__main__":
     testEq(test.globals("country"),"US", "globals get failed")
     testEq(test.find("bus",list),['bus_0', 'bus_1', 'bus_2', 'bus_3'], "find list failed")
     testEq([y['bus_i'] for y in test.find("bus",dict).values()],['1','2','3','4'], "find dict failed")
+    testEq(list(test.select({"class":"bus","type":"REF"})),['bus_0'],"select failed")
     testEq(test.get_name('bus') , ['bus_0', 'bus_1', 'bus_2', 'bus_3'], "get bus name failed")
     testEq(test.get_name('bus',0) , 'bus_0', "get bus name failed")
     testEq(test.get_name('bus',[1,2]) , ['bus_1', 'bus_2'], "get bus name failed")
@@ -1103,12 +1209,21 @@ if __name__ == "__main__":
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")
     testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),[0,0,0,0],"optimal powerflow failed")
-
     if runtime:
         test.data["globals"]["savefile"] = ""
         test.save("test_out.json",indent=4)
         rc,out,err = test.run("test_out.json",exception=False)
         testEq(out,[''],'run test failed')
+
+    for file in sorted(os.listdir("test")):
+        if file.startswith("case") and file.endswith(".json"):
+            test = Model(os.path.join("test",file))
+            if not test.optimal_powerflow(on_fail=lambda x:print(f"\nTEST: {file} initial OPF is {x}",file=sys.stderr)):
+                test.optimal_powerflow(verbose=True,on_fail=lambda x: print(test.problem,file=sys.stderr))
+                failed += 1
+            tested += 1
+            testEq(test.optimal_sizing(refresh=True,update_model=True)["status"],"optimal","sizing failed")
+            testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),"final OPF failed")
 
     print("\nTEST: completed tests",end="",file=sys.stderr,flush=True)
     print("\nTEST:",tested,"tested,",failed,"failed",file=sys.stderr)

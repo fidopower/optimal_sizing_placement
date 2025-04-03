@@ -325,6 +325,7 @@ def _(
 def _(
     cap_cost,
     copy,
+    demand_margin_ui,
     error,
     file,
     gen_cost,
@@ -362,6 +363,7 @@ def _(
                             update_model=True,
                             verbose=verbose_ui.value,
                             solver=solver_ui.value,
+                            margin=demand_margin_ui.value/100,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -582,22 +584,31 @@ def _(mo):
 
 @app.cell
 def _(gencost_ui, mo, np):
-    # Curtailment cost
+    # Curtailment settings
     curtailment_ui = mo.ui.slider(
-        label="**Curtailment cost** ($/MW)",
+        label="**Curtailment cost**: ($/MW)",
         steps=np.array([0, 0.01,0.02,0.05,0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100],dtype=float)
         * gencost_ui.value,
         value = 10*gencost_ui.value,
         debounce=True,
         show_value=True,
     )
-    return (curtailment_ui,)
+    demand_margin_ui = mo.ui.slider(
+        label="**Load capacity margin**: (%)",
+        start=0,
+        stop=100,
+        value=20,
+        debounce=True,
+        show_value=True,
+    )
+    return curtailment_ui, demand_margin_ui
 
 
 @app.cell
 def _(
     capcost_ui,
     curtailment_ui,
+    demand_margin_ui,
     gencost_ui,
     mo,
     problem_ui,
@@ -619,7 +630,11 @@ def _(
                     gencost_ui,
                     capcost_ui,
                     curtailment_ui,
-                ])
+                ]),
+         "**Loads**":
+             mo.vstack([
+                 demand_margin_ui,
+             ])
         },
         multiple=True,
         lazy=True,
@@ -628,25 +643,26 @@ def _(
 
 
 @app.cell
-def _(mo, model, opf_model, osp_model):
-    graph_model_ui = mo.ui.radio(
-        label="**Model**:",
-        options={"Original": model, "Capacity": osp_model, "Optimal": opf_model},
-        value="Original",
-        inline=True,
-    )
-    graph_orientation_ui = mo.ui.radio(
-        label="**Orientation**:",
-        options={"Horizontal": "LR", "Vertical": "TB"},
-        value="Horizontal",
-        inline=True,
-    )
-    graph_label_ui = mo.ui.radio(
-        label="**Bus labels**:",
-        options={"Name":lambda x:[graph_model_ui.value.get_name("bus",int(_x)-1) for _x in x],"Id":lambda x:x},
-        value="Name",
-        inline=True
-    )
+def _(file, mo, model, opf_model, osp_model):
+    if file.value:
+        graph_model_ui = mo.ui.radio(
+            label="**Model**:",
+            options={"Original": model, "Capacity": osp_model, "Optimal": opf_model},
+            value="Original",
+            inline=True,
+        )
+        graph_orientation_ui = mo.ui.radio(
+            label="**Orientation**:",
+            options={"Horizontal": "LR", "Vertical": "TB"},
+            value="Horizontal",
+            inline=True,
+        )
+        graph_label_ui = mo.ui.radio(
+            label="**Bus labels**:",
+            options={"Name":lambda x:[graph_model_ui.value.get_name("bus",int(_x)-1) for _x in x],"Id":lambda x:x},
+            value="Name",
+            inline=True
+        )
     return graph_label_ui, graph_model_ui, graph_orientation_ui
 
 

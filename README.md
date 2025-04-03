@@ -62,11 +62,11 @@ You can try this notebook using the file `example.json`. If you are running an o
 The OPF is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} d
+    \underset{x,y,g,h,c,d}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} |d+ej|
 \\
     \textrm{subject to} 
     & \Re(G) x - g + c + \Re(D) - d = 0 & \textrm{real power flow balance} \\
-    & \Im(G) y - h - c + \Im(D) - d \frac{\Im(D)}{\Re(D)} = 0 & \textrm{reactive power flow balance} \\
+    & \Im(G) y - h - c + \Im(D) - e = 0 & \textrm{reactive power flow balance} \\
     & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
     & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
@@ -75,7 +75,8 @@ $\begin{array}{rll}
     & |h| \le \Im(S) & \textrm{reactive generation power constraints} \\
     & |g+hj| \le \Re(S) & \textrm{apparent generation power constraints} \\
     & 0 \le c \le C & \textrm{capacity setting constraints} \\
-    & 0 \le d \le D & \textrm{load shedding constraints} \\
+    & d \ge 0 & \textrm{real power load shedding cannot be negative} \\
+    & |d+ej| \le |D| & \textrm{load shedding magnitude constraint}
 \end{array}$
 
 where
@@ -84,7 +85,8 @@ where
 * $g \in \mathbb{R}^N$ is the generator real power dispatch,
 * $h \in \mathbb{R}^N$ is the generator reactive power dispatch,
 * $\hat P\in \mathbb{R}$ is the maximum generation price,
-* $d \in \mathbb{R}^N$ is the demand curtailment,
+* $d \in \mathbb{R}^N$ is the real power demand curtailment,
+* $e \in \mathbb{R}^N$ is the reactive power demand curtailment,
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
 * $x \in \mathbb{R}^N$ is the voltage angle,
 * $c \in \mathbb{R}^N$ is the capacitor settings,
