@@ -1317,7 +1317,6 @@ if __name__ == "__main__":
             e_type,e_value,e_trace = sys.exc_info()
             testEq(e_type.__name__,exc.__name__,msg)
 
-    print("TEST: starting tests",file=sys.stderr,flush=True)
 
     if runtime:
         testEq(test.run(),"","initial run test failed")
@@ -1325,6 +1324,7 @@ if __name__ == "__main__":
     bus_3 = test.get_object("bus_3")
 
     # accessor tests
+    print("TEST: testing accessors",file=sys.stderr,flush=True)
     testEq(test.property("bus_0",'id'),2,"get header failed")
     testEq(bus_3["bus_i"],'4',"get object failed")
     testException(lambda:test.add_object("bus","bus_3",**bus_3)["bus_i"],ValueError,"add object succeeded")
@@ -1338,6 +1338,7 @@ if __name__ == "__main__":
     testEq(test.del_object("test"),{'class': 'geodata', 'id': "13", 'scale': '1.0 pu'},"add object failed")
 
     # content tests
+    print("TEST: testing model contents",file=sys.stderr,flush=True)
     testEq("pypower" in test.modules(),True,"module failed")
     testEq(test.validate(["pypower"]),None, "validate failed")
     testEq("version" in test.globals(list),True,"globals list failed")
@@ -1371,6 +1372,7 @@ if __name__ == "__main__":
     testEq(test.mermaid().split("\n")[0],"graph TB","mermaid failed")
 
     # optimization tests
+    print("TEST: testing optimizations",file=sys.stderr,flush=True)
     testEq(test.optimal_powerflow()["curtailment"].round(1).tolist(),[0.0, 0.0, 6.8, 6.8],"optimal powerflow failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
@@ -1383,6 +1385,7 @@ if __name__ == "__main__":
         testEq(out,[''],'run test failed')
 
     # case tests
+    print("TEST: testing pypower cases",file=sys.stderr,flush=True)
     for file in sorted(os.listdir("test")):
         if file.startswith("case") and file.endswith(".json"):
 
