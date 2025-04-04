@@ -188,7 +188,7 @@ def _(K, N, mo, np, pd):
         return mo.vstack(
             [
                 mo.md("# Summary Data"),
-                mo.md(f"**Cost of solution**: ${result['cost']:.2f}"),
+                mo.md(f"**Cost of solution**: ${result['cost']:,.2f}"),
                 pd.DataFrame(
                     data={
                         "Total": [
