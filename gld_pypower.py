@@ -1181,6 +1181,7 @@ class Model:
         return case
 
     def savecase(self,file):
+        """Save pypower case data"""
         with open(file,"w") as fh:
             print(f"""from numpy import array
 def {os.path.splitext(os.path.basename(self.name))[0]}():
@@ -1196,11 +1197,11 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
                     print(f"""    ppc["{key}"] = {value}""",file=fh)
 
     def runpf(self,casedata=None,**kwargs) -> dict:
-
+        """Run pypower powerflow solver"""
         return runpf(self.as_case() if casedata is None else casedata,ppoption(**kwargs))
 
     def runopf(self,casedata=None,**kwargs) -> dict:
-
+        """Run pypower optimal powerflow solver"""
         return runopf(self.as_case() if casedata is None else casedata,ppoption(**kwargs))
 
     def mermaid(self,
@@ -1209,7 +1210,7 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         overvolt:float=1.05,
         undervolt:float=0.95,
         highflow:float=1.0,
-        showbusdata=True
+        showbusdata:Union[bool,list]=False
         ) -> str:
         """Generate network diagram in Mermaid
 
@@ -1219,6 +1220,7 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         * overvolt: voltage limit for red fill
         * undervolt: voltage limit for blue fill
         * highflow: current limit for heavy line
+        * showbusdata: enable display of bus data (or list of properties to display)
 
         Returns:
         * str: Mermaid diagram string
@@ -1242,7 +1244,11 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
             Pg = sum([self.property(x,"Pg") for x in gens])
             Qg = sum([self.property(x,"Qg") for x in gens])
             shape = "rect" if showbusdata else "fork"
-            result = [f"""    {node}@{{shape: {shape}, label: "{name}"}}"""]
+            if isinstance(showbusdata,list):
+                busdata = "<br>".join([f"<b><u>{name}</u></b>"]+[f"{x}: {y}" for x,y in spec.items() if x in showbusdata])
+            else:
+                busdata = "<br>".join([f"<b><u>{name}</u></b>"]+[f"{x}: {y}" for x,y in spec.items() if x in ["id","type","area","Vm","Va","zone"]])
+            result = [f"""    {node}@{{shape: {shape}, label: "{busdata}"}}"""]
 
             if not undervolt is None and Vm < undervolt:
                 color = "blue"
