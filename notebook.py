@@ -42,7 +42,7 @@ def _(mo):
 @app.cell
 def _(mo):
     # Model load
-    file = mo.ui.file(label="Open JSON model", filetypes=[".json"])
+    file = mo.ui.file(label="Open JSON model", kind='area',filetypes=[".json"])
     return (file,)
 
 
@@ -497,14 +497,14 @@ def _(mo):
 @app.cell
 def _(mo):
     # Solver settings
-    verbose_ui = mo.ui.checkbox(label="Enable verbose output")
+    verbose_ui = mo.ui.checkbox(label="**Enable verbose output**")
     solver_ui = mo.ui.dropdown(
         label="**Preferred solver**:",
         options=["CLARABEL", "OSQP"],
         value="CLARABEL",
         allow_select_none=False,
     )
-    problem_ui = mo.ui.checkbox(label="Show problem data")
+    problem_ui = mo.ui.checkbox(label="**Show problem data**")
     osqp_max_iter = mo.ui.slider(
         label="**Maximum iterations**:",
         steps=[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
@@ -609,7 +609,8 @@ def _(mo):
     # Graph settings
     voltage_ui = mo.ui.range_slider(label="**Voltage limits**: (pu.V)",start=0.5,stop=1.5,step=0.01,value=[0.95,1.05],debounce=True,show_value=True)
     current_ui = mo.ui.slider(label="**High flow**: (kA)",steps=[0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000],value=1000,debounce=True,show_value=True)
-    return current_ui, voltage_ui
+    showbusdata_ui = mo.ui.checkbox(label="**Show bus data**")
+    return current_ui, showbusdata_ui, voltage_ui
 
 
 @app.cell
@@ -621,6 +622,7 @@ def _(
     gencost_ui,
     mo,
     problem_ui,
+    showbusdata_ui,
     solver_options,
     solver_ui,
     verbose_ui,
@@ -646,7 +648,7 @@ def _(
                  demand_margin_ui,
              ]),
          "**Network**":
-             mo.vstack([voltage_ui,current_ui]),
+             mo.vstack([voltage_ui,current_ui,showbusdata_ui]),
         },
         multiple=True,
         lazy=True,
@@ -693,6 +695,7 @@ def _(
     graph_orientation_ui,
     hint,
     mo,
+    showbusdata_ui,
     voltage_ui,
 ):
     # Network graph
@@ -704,11 +707,12 @@ def _(
             undervolt=voltage_ui.value[0],
             overvolt=voltage_ui.value[1],
             highflow=current_ui.value,
+            showbusdata=showbusdata_ui.value,
             )
         diagram = mo.vstack(
             [
                 mo.hstack(
-                    [graph_model_ui, graph_label_ui, graph_orientation_ui],
+                    [graph_model_ui, graph_label_ui, graph_orientation_ui,showbusdata_ui],
                     align="stretch",
                 ),
                 mo.mermaid(_diagram),

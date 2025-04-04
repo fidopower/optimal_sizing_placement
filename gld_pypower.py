@@ -1020,7 +1020,7 @@ class Model:
             # construct problem
             puS = self.perunit("S")
             costs = gen_cost.real @ cp.abs(g) + gen_cost.imag @ cp.abs(h) + cap_cost @ cp.abs(c)
-            objective = cp.Minimize(costs/puS)  # minimum cost (generation + demand response)
+            objective = cp.Minimize(costs)  # minimum cost (generation + demand response)
             constraints = [
                 g - G.real @ x - c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
                 h - G.imag @ y + c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
@@ -1122,6 +1122,7 @@ class Model:
         overvolt:float=1.05,
         undervolt:float=0.95,
         highflow:float=1.0,
+        showbusdata=True
         ) -> str:
         """Generate network diagram in Mermaid
 
@@ -1153,12 +1154,15 @@ class Model:
             loads = self.select({"class":"load","parent":bus})
             Pg = sum([self.property(x,"Pg") for x in gens])
             Qg = sum([self.property(x,"Qg") for x in gens])
-            result = [f"""    {node}@{{shape: fork, label: "{bus}"}}"""]
+            shape = "rect" if showbusdata else "fork"
+            result = [f"""    {node}@{{shape: {shape}, label: "{name}"}}"""]
 
             if not undervolt is None and Vm < undervolt:
                 color = "blue"
             elif not overvolt is None and Vm > overvolt:
                 color = "red"
+            elif showbusdata:
+                color = "white"
             else:
                 color = "black"
             result.append(f"""    class {node} {color}""")
