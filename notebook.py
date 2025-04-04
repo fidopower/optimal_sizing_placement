@@ -736,11 +736,12 @@ def _():
     if os.environ["HOME"] == "/home/pyodide":
         # cannot import from requirements.txt in WASM
         import cvxpy
+        import pypower
     else:
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
     import gld_pypower as gld
-    return copy, cvxpy, gld, json, mo, np, os, pd, subprocess, sys
+    return copy, cvxpy, gld, json, mo, np, os, pd, pypower, subprocess, sys
 
 
 if __name__ == "__main__":

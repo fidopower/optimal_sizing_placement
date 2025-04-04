@@ -27,6 +27,12 @@ import numpy.linalg as la
 import cvxpy as cp
 from typing import Union, Any, TypeVar
 import warnings
+try:
+    from pypower.api import runpf, runopf, ppoption, printpf
+except ModuleNotFoundError as err:
+    def pypower_api(*args,**kwargs):
+        raise RuntimeError(f"pypower not available ({err})")
+    runpf = runopf = ppoption = printpf = pypower_api
 
 np.set_printoptions(linewidth=np.inf,formatter={float:lambda x:f"{x:8.4f}"})
 
@@ -97,12 +103,13 @@ class Model:
             astype(self.data["classes"])
         return astype(self.data["classes"][module])
 
-    def property(self,obj:str,name:str) -> Any:
+    def property(self,obj:str,name:str,astype:str=None) -> Any:
         """Get an object property and convert to Python type
 
         Arguments:
         * obj: name of object
         * name: name of property
+        * astype: force property to type
 
         Returns:
         * varies: value of object property
@@ -114,11 +121,37 @@ class Model:
         else:
             object_data = self._last_data
         if name in self.data["header"]:
-            return object_data[name]
-        ptype = self.data["classes"][object_data["class"]][name]["type"]
-        if ptype in dir(self):
-            return getattr(self,ptype)(object_data[name])
-        return object_data[name]
+            ptype = self.data["header"][name]["type"]
+            if ptype in dir(self):
+                result = getattr(self,ptype)(object_data[name])
+            else:
+                result = object_data[name]
+        else:
+            ptype = self.data["classes"][object_data["class"]][name]["type"]
+            if ptype in dir(self):
+                result = getattr(self,ptype)(object_data[name])
+            else:
+                result = object_data[name]
+
+        if astype is None or isinstance(result,astype):
+            return result
+        elif name in self.data["header"]:
+            spec = self.data["header"][name]
+        elif name in self.data["classes"][object_data["class"]]:
+            spec = self.data["classes"][object_data["class"]][name]
+        else:
+            return astype(result)
+
+        if astype in [int,float] and isinstance(spec,dict) and spec["type"] == "enumeration":
+
+            return astype(int(spec["keywords"][result][2:],16))
+
+        elif astype is int and isinstance(spec,dict) and spec["type"] == "set":
+
+            raise NotImplementedError("set astype")
+
+        return astype(result)
+            
 
     def format(self,value:Any) -> str:
         """Apply formatting rules
@@ -1116,6 +1149,37 @@ class Model:
 
         return self.set_result("optimal_sizing",result)
 
+    def as_case(self) -> dict:
+
+        busdata = ["bus_i","type","Pd","Qd","Gs","Bs","area","Vm","Va","baseKV","zone","Vmax","Vmin"]
+        branchdata = ["fbus","tbus","r","x","b","rateA","rateB","rateC","ratio","angle","status","angmin","angmax"]
+        gendata = ["bus","Pg","Qg","Qmax","Qmin","Vg","mBase","status","Pmax","Pmin","Pc1","Pc2","Qc1min","Qc1max","Qc2min","Qc2max","ramp_agc","ramp_10","ramp_30","ramp_q","apf"]
+        gencostdata = ["model","startup","shutdown","costs"]
+        case = {
+            "version": "2",
+            "baseMVA": self.globals("pypower::baseMVA"),
+            "bus": [[self.property(x,y,astype=float) for y in busdata] for x in self.find("bus")],
+            "branch": [[self.property(x,y,astype=float) for y in branchdata] for x in self.find("branch")],
+            "gen": [[self.property(x,y,astype=float) for y in gendata] for x in self.find("gen")],
+            "gencost": [[self.property(x,y,astype=float) for y in gencostdata[:-1]] for x in self.find("gencost")],
+        }
+        costs = [[float(y) for y in self.property(x,gencostdata[-1]).split(",")] for x in self.find("gencost")]
+        for n,cost in enumerate(costs):
+            case["gencost"][n].extend([len(cost)]+cost)
+
+        for array in ["bus","branch","gen","gencost"]:
+            case[array] = np.array(case[array])
+
+        return case
+
+    def runpf(self,casedata=None,**kwargs) -> dict:
+
+        return runpf(self.as_case() if casedata is None else casedata,ppoption(**kwargs))
+
+    def runopf(self,casedata=None,**kwargs) -> dict:
+
+        return runopf(self.as_case() if casedata is None else casedata,ppoption(**kwargs))
+
     def mermaid(self,
         orientation:str="vertical",
         label=None,
@@ -1219,12 +1283,9 @@ if __name__ == "__main__":
         tested += 1
         if a != b:
             caller = inspect.getframeinfo(inspect.stack()[1][0])
-            print(f"\nTEST [{os.path.basename(caller.filename)}@{caller.lineno}]: {msg}: {repr(a)} != {repr(b)}",file=sys.stderr,flush=True)
+            print(f"TEST [{os.path.basename(caller.filename)}@{caller.lineno}]: {msg}: {repr(a)} != {repr(b)}",file=sys.stderr,flush=True)
             global failed
-            print("TEST: continuing tests",end="",file=sys.stderr,flush=True)
             failed += 1
-        else:
-            print(".",end="",flush=True,file=sys.stderr)
     def testException(a,exc,msg):
         try:
             a()
@@ -1233,13 +1294,14 @@ if __name__ == "__main__":
             e_type,e_value,e_trace = sys.exc_info()
             testEq(e_type.__name__,exc.__name__,msg)
 
-    print("TEST: starting tests",end="",file=sys.stderr,flush=True)
+    print("TEST: starting tests",file=sys.stderr,flush=True)
 
     if runtime:
         testEq(test.run(),"","initial run test failed")
 
     bus_3 = test.get_object("bus_3")
 
+    testEq(test.property("bus_0",'id'),2,"get header failed")
     testEq(bus_3["bus_i"],'4',"get object failed")
     testException(lambda:test.add_object("bus","bus_3",**bus_3)["bus_i"],ValueError,"add object succeeded")
     testException(lambda:test.add_object("bus","bus_4",id="0")["bus_i"],ValueError,"add object succeeded")
@@ -1299,6 +1361,19 @@ if __name__ == "__main__":
     for file in sorted(os.listdir("test")):
         if file.startswith("case") and file.endswith(".json"):
             test = Model(os.path.join("test",file))
+
+            try:
+                testEq(test.runpf(OUT_ALL=0,VERBOSE=0)[1],1,f"{file} runpf failed")
+            except Exception as err:
+                print(f"ERROR: {file} runpf raised exception {err}",file=sys.stderr)
+                failed += 1
+
+            try:
+                testEq(test.runopf(OUT_ALL=0,VERBOSE=0)[1],1,f"{file} runopf failed")
+            except Exception as err:
+                print(f"ERROR: {file} runopf raised exception {err}",file=sys.stderr)
+                failed += 1
+
             if not test.optimal_powerflow(on_fail=lambda x:print(f"\nTEST: {file} initial OPF is {x}",file=sys.stderr)):
                 test.optimal_powerflow(verbose=True,on_fail=lambda x: print(test.problem,file=sys.stderr))
                 failed += 1
@@ -1306,5 +1381,5 @@ if __name__ == "__main__":
             testEq(test.optimal_sizing(refresh=True,update_model=True)["status"],"optimal","sizing failed")
             testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),"final OPF failed")
 
-    print("\nTEST: completed tests",end="",file=sys.stderr,flush=True)
-    print("\nTEST:",tested,"tested,",failed,"failed",file=sys.stderr)
+    print("\nTEST: completed",tested,"tests",end="",file=sys.stderr,flush=True)
+    print("\nERROR:",failed,"test failed",file=sys.stderr)
