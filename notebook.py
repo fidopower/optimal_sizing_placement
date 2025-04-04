@@ -609,7 +609,7 @@ def _(mo):
     # Graph settings
     voltage_ui = mo.ui.range_slider(label="**Voltage limits**: (pu.V)",start=0.5,stop=1.5,step=0.01,value=[0.95,1.05],debounce=True,show_value=True)
     current_ui = mo.ui.slider(label="**High flow**: (kA)",steps=[0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000],value=1000,debounce=True,show_value=True)
-    showbusdata_ui = mo.ui.checkbox(label="**Show bus data**")
+    showbusdata_ui = mo.ui.multiselect(label="**Show bus data**:",options=["id","type","area","Vm","Va","zone"],value=None)
     return current_ui, showbusdata_ui, voltage_ui
 
 
