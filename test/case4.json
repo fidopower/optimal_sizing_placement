@@ -3073,7 +3073,7 @@
 			"rng_state" : "1144108930",
 			"guid" : "40D71E87F33B63F767DF4CAD8BD53EA5",
 			"flags" : "0x100",
-			"bus": "3",
+			"bus": "4",
 			"Pg": "318 MW",
 			"Qg": "0 MVAr",
 			"Qmax": "100 MVAr",

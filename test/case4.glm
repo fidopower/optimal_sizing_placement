@@ -83,7 +83,7 @@ object pypower.bus
 object pypower.gen 
 {
     name pp_gen_1;
-    bus 3;
+    bus 4;
     Pg 318 MW;
     Qg 0 MVAr;
     Qmax 100 MVAr;

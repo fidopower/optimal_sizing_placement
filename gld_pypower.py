@@ -1149,28 +1149,51 @@ class Model:
 
         return self.set_result("optimal_sizing",result)
 
+    #
+    # PyPOWER
+    #
+
+    pypower = {
+        "bus": ["bus_i","type","Pd","Qd","Gs","Bs","area","Vm","Va","baseKV","zone","Vmax","Vmin"],
+        "branch": ["fbus","tbus","r","x","b","rateA","rateB","rateC","ratio","angle","status","angmin","angmax"],
+        "gen": ["bus","Pg","Qg","Qmax","Qmin","Vg","mBase","status","Pmax","Pmin","Pc1","Pc2","Qc1min","Qc1max","Qc2min","Qc2max","ramp_agc","ramp_10","ramp_30","ramp_q","apf"],
+        "gencost": ["model","startup","shutdown"],
+        }
+
     def as_case(self) -> dict:
 
-        busdata = ["bus_i","type","Pd","Qd","Gs","Bs","area","Vm","Va","baseKV","zone","Vmax","Vmin"]
-        branchdata = ["fbus","tbus","r","x","b","rateA","rateB","rateC","ratio","angle","status","angmin","angmax"]
-        gendata = ["bus","Pg","Qg","Qmax","Qmin","Vg","mBase","status","Pmax","Pmin","Pc1","Pc2","Qc1min","Qc1max","Qc2min","Qc2max","ramp_agc","ramp_10","ramp_30","ramp_q","apf"]
-        gencostdata = ["model","startup","shutdown","costs"]
         case = {
             "version": "2",
             "baseMVA": self.globals("pypower::baseMVA"),
-            "bus": [[self.property(x,y,astype=float) for y in busdata] for x in self.find("bus")],
-            "branch": [[self.property(x,y,astype=float) for y in branchdata] for x in self.find("branch")],
-            "gen": [[self.property(x,y,astype=float) for y in gendata] for x in self.find("gen")],
-            "gencost": [[self.property(x,y,astype=float) for y in gencostdata[:-1]] for x in self.find("gencost")],
-        }
-        costs = [[float(y) for y in self.property(x,gencostdata[-1]).split(",")] for x in self.find("gencost")]
+            }
+        for name,fields in self.pypower.items():
+            case[name] = [[self.property(x,y,astype=float) for y in fields] for x in self.find(name)]
+        costs = [[float(y) for y in self.property(x,"costs").split(",")] for x in self.find("gencost")]
         for n,cost in enumerate(costs):
             case["gencost"][n].extend([len(cost)]+cost)
+        if len(case["gencost"]) == 0:
+            del case["gencost"]
 
-        for array in ["bus","branch","gen","gencost"]:
-            case[array] = np.array(case[array])
+        for array in self.pypower:
+            if array in case:
+                case[array] = np.array(case[array])
 
         return case
+
+    def savecase(self,file):
+        with open(file,"w") as fh:
+            print(f"""from numpy import array
+def {os.path.splitext(os.path.basename(self.name))[0]}():
+    ppc = {{}}""",file=fh)
+            for key,value in self.as_case().items():
+                if hasattr(value,"tolist"):
+                    print(f"""    ppc["{key}"] = array([""",file=fh)
+                    print(f"""        # {" ".join([f"{x:9.9s}" for x in self.pypower[key]])}""",file=fh)
+                    for row in value.tolist():
+                        print(f"""        [{", ".join([f"{x:8.4g}" for x in row])}],""",file=fh)
+                    print(f"""    ])""",file=fh)
+                else:
+                    print(f"""    ppc["{key}"] = {value}""",file=fh)
 
     def runpf(self,casedata=None,**kwargs) -> dict:
 
@@ -1301,6 +1324,7 @@ if __name__ == "__main__":
 
     bus_3 = test.get_object("bus_3")
 
+    # accessor tests
     testEq(test.property("bus_0",'id'),2,"get header failed")
     testEq(bus_3["bus_i"],'4',"get object failed")
     testException(lambda:test.add_object("bus","bus_3",**bus_3)["bus_i"],ValueError,"add object succeeded")
@@ -1313,6 +1337,7 @@ if __name__ == "__main__":
     testEq(test.mod_object("test",scale=1.0),{'class': 'geodata', 'id': "13", 'scale': '1.0 pu'},"mod object failed")
     testEq(test.del_object("test"),{'class': 'geodata', 'id': "13", 'scale': '1.0 pu'},"add object failed")
 
+    # content tests
     testEq("pypower" in test.modules(),True,"module failed")
     testEq(test.validate(["pypower"]),None, "validate failed")
     testEq("version" in test.globals(list),True,"globals list failed")
@@ -1329,8 +1354,6 @@ if __name__ == "__main__":
     testEq(test.get_name('branch',[1,2]) , ['branch:7', 'branch:8'], "get branch failed")
     testEq(test.get_bus("gen_0") , "bus_0", "get bus failed")
     testEq(test.get_bus(["gen_0"]) , ["bus_0"], "get bus failed")
-    # testEq(test.get_bus("shunt_0") , "bus_3", "get bus failed")
-    # testEq(test.get_bus(["shunt:9"]) , ["bus_3"], "get bus failed")
     testEq(test.property("bus_0","Pd"),0.0, "property float failed")
     testEq(test.property("bus_0","S"),0j, "property complex failed")
     testEq(test.perunit("S"),100, "perunit power failed")
@@ -1347,6 +1370,7 @@ if __name__ == "__main__":
     testEq(test.capacitors().tolist() , [0,0,0,0], "capacitors failed")
     testEq(test.mermaid().split("\n")[0],"graph TB","mermaid failed")
 
+    # optimization tests
     testEq(test.optimal_powerflow()["curtailment"].round(1).tolist(),[0.0, 0.0, 6.8, 6.8],"optimal powerflow failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
     testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
@@ -1358,27 +1382,39 @@ if __name__ == "__main__":
         rc,out,err = test.run("test_out.json",exception=False)
         testEq(out,[''],'run test failed')
 
+    # case tests
     for file in sorted(os.listdir("test")):
         if file.startswith("case") and file.endswith(".json"):
+
             test = Model(os.path.join("test",file))
 
+            # pypower PF test
             try:
                 testEq(test.runpf(OUT_ALL=0,VERBOSE=0)[1],1,f"{file} runpf failed")
             except Exception as err:
                 print(f"ERROR: {file} runpf raised exception {err}",file=sys.stderr)
+                test.savecase("test/"+file.replace(".json","_runpf_failed.py"))
                 failed += 1
 
+            # pypower OPF test
             try:
-                testEq(test.runopf(OUT_ALL=0,VERBOSE=0)[1],1,f"{file} runopf failed")
+                if test.find("gencost"):
+                    testEq(test.runopf(OUT_ALL=0,VERBOSE=0)["success"],True,f"{file} runopf failed")
             except Exception as err:
                 print(f"ERROR: {file} runopf raised exception {err}",file=sys.stderr)
+                test.savecase("test/"+file.replace(".json","_runopf_failed.py"))
                 failed += 1
 
+            # enhanced OPF test
             if not test.optimal_powerflow(on_fail=lambda x:print(f"\nTEST: {file} initial OPF is {x}",file=sys.stderr)):
                 test.optimal_powerflow(verbose=True,on_fail=lambda x: print(test.problem,file=sys.stderr))
                 failed += 1
             tested += 1
+
+            # OSP test
             testEq(test.optimal_sizing(refresh=True,update_model=True)["status"],"optimal","sizing failed")
+
+            # OSP/OPF test
             testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),"final OPF failed")
 
     print("\nTEST: completed",tested,"tests",end="",file=sys.stderr,flush=True)

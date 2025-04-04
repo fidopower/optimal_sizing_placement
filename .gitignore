@@ -163,3 +163,4 @@ cython_debug/
 *_exception_gen.csv
 *_out.glm
 *_out.json
+test/case*.py
