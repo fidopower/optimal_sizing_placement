@@ -835,9 +835,9 @@ class Model:
             if ref is None:
                 ref = self.select({"class":"bus","type":"REF"})
                 if len(ref) > 0:
-                    ref = ref[list(ref)[0]]["bus_i"]
                     if len(ref) > 1:
-                        warnings.warn(f"{self.name} multiple reference busses found, using bus {ref}")
+                        warnings.warn(f"{self.name} multiple reference busses found {ref}, using bus {ref[0]}")
+                    ref = ref[list(ref)[0]]["bus_i"]
                 else:
                     warnings.warn(f"{self.name} no reference bus found, using bus 0")
                     ref = 0
@@ -979,9 +979,9 @@ class Model:
             if ref is None:
                 ref = self.select({"class":"bus","type":"REF"})
                 if len(ref) > 0:
-                    ref = ref[list(ref)[0]]["bus_i"]
                     if len(ref) > 1:
-                        warnings.warn(f"{self.name} multiple reference busses found, using bus {ref}")
+                        warnings.warn(f"{self.name} multiple reference busses found {ref}, using bus {ref[0]}")
+                    ref = ref[list(ref)[0]]["bus_i"]
                 else:
                     warnings.warn(f"{self.name} no reference bus found, using bus 0")
                     ref = 0
@@ -1417,5 +1417,8 @@ if __name__ == "__main__":
             # OSP/OPF test
             testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),"final OPF failed")
 
-    print("\nTEST: completed",tested,"tests",end="",file=sys.stderr,flush=True)
-    print("\nERROR:",failed,"test failed",file=sys.stderr)
+    print("TEST: completed",tested,"tests",file=sys.stderr,flush=True)
+    if failed:
+        print("ERROR:",failed,"test failed",file=sys.stderr)
+    else:
+        print("TEST: no errors",file=sys.stderr)
