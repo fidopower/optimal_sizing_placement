@@ -1118,12 +1118,19 @@ class Model:
 
     def mermaid(self,
         orientation:str="vertical",
-        label=None) -> str:
+        label=None,
+        overvolt:float=1.05,
+        undervolt:float=0.95,
+        highflow:float=1.0,
+        ) -> str:
         """Generate network diagram in Mermaid
 
         Arguments:
-        * orientation:
-        * label:
+        * orientation: horizontal or vertical graph orientation
+        * label: property to use as label
+        * overvolt: voltage limit for red fill
+        * undervolt: voltage limit for blue fill
+        * highflow: current limit for heavy line
 
         Returns:
         * str: Mermaid diagram string
@@ -1141,24 +1148,29 @@ class Model:
             name = spec[label] if label else bus
             Vm = self.property(bus,"Vm")
             Pd = self.property(bus,"Pd")
-            gen = self.select({"class":"gen","bus":node})
-            Pg = sum([self.property(x,"Pg") for x in gen])
-            if Pd > 0:
-                shape = "tri"
-            elif Pg > 0:
-                shape = "circle"
-            else:
-                shape = "fork"
-            if Vm < 0.95:
+            Qd = self.property(bus,"Qd")
+            gens = self.select({"class":"gen","bus":node})
+            loads = self.select({"class":"load","parent":bus})
+            Pg = sum([self.property(x,"Pg") for x in gens])
+            Qg = sum([self.property(x,"Qg") for x in gens])
+            result = [f"""    {node}@{{shape: fork, label: "{bus}"}}"""]
+
+            if not undervolt is None and Vm < undervolt:
                 color = "blue"
-            elif Vm > 1.05:
+            elif not overvolt is None and Vm > overvolt:
                 color = "red"
-            elif Pd == 0 and Pg == 0:
-                color = "black"
             else:
-                color = "white"
-            return f"""    {node}@{{shape: {shape}, label: "{bus}"}}
-    class {node} {color}"""
+                color = "black"
+            result.append(f"""    class {node} {color}""")
+
+            if abs(complex(Pg,Qg)) > 0 or len(loads)>0:
+                result.append(f"""    G{node}@{{shape: circle, label: "{name}"}} --{Pg:.1f}{Qg:+.1f}j MVA--> {node}""")
+                result.append(f"""    class G{node} white""")
+            if abs(complex(Pd,Qd)) > 0:
+                result.append(f"""    {node} --{Pd:.1f}{Qd:+.1f}j MVA--> L{node}@{{shape: tri, label: "{name}"}}""")
+                result.append(f"""    class L{node} white""")
+
+            return "\n".join(result)
 
         for bus,spec in self.find("bus").items():
 
@@ -1168,7 +1180,7 @@ class Model:
             current = self.property(line,"current")
             reverse = ( current.real < 0 )
             current = abs(current/1000)
-            linetype = "--" if current < 1.0 else "=="
+            linetype = "--" if not highflow is None and current < highflow else "=="
             fbus = spec["tbus" if reverse else "fbus"]
             tbus = spec["fbus" if reverse else "tbus"]
             return f"""    {fbus} {linetype}{current:.2f} kA{linetype}> {tbus}"""
