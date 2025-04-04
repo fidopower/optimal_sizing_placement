@@ -605,8 +605,17 @@ def _(gencost_ui, mo, np):
 
 
 @app.cell
+def _(mo):
+    # Graph settings
+    voltage_ui = mo.ui.range_slider(label="**Voltage limits**: (pu.V)",start=0.5,stop=1.5,step=0.01,value=[0.95,1.05],debounce=True,show_value=True)
+    current_ui = mo.ui.slider(label="**High flow**: (kA)",steps=[0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000],value=1000,debounce=True,show_value=True)
+    return current_ui, voltage_ui
+
+
+@app.cell
 def _(
     capcost_ui,
+    current_ui,
     curtailment_ui,
     demand_margin_ui,
     gencost_ui,
@@ -615,6 +624,7 @@ def _(
     solver_options,
     solver_ui,
     verbose_ui,
+    voltage_ui,
 ):
     # Setting tabs
     settings_view = mo.accordion(
@@ -634,7 +644,9 @@ def _(
          "**Loads**":
              mo.vstack([
                  demand_margin_ui,
-             ])
+             ]),
+         "**Network**":
+             mo.vstack([voltage_ui,current_ui]),
         },
         multiple=True,
         lazy=True,
@@ -654,29 +666,44 @@ def _(file, mo, model, opf_model, osp_model):
         graph_orientation_ui = mo.ui.radio(
             label="**Orientation**:",
             options={"Horizontal": "horizontal", "Vertical": "vertical"},
-            value="Horizontal",
+            value="Vertical",
             inline=True,
         )
-        graph_label_ui = mo.ui.radio(
+        graph_label_ui = mo.ui.dropdown(
             label="**Bus labels**:",
             options={"Name":None,
                      "Id":"id",
-                     "Voltage":"Vb",
+                     "|V|":"Vm",
+                     "<V":"Va",
+                     "Type":"type",
+                     "Area":"area",
+                     "Zone":"zone"
                     },
-            value="Name",
-            inline=True
+            value="Name"
         )
     return graph_label_ui, graph_model_ui, graph_orientation_ui
 
 
 @app.cell
-def _(file, graph_label_ui, graph_model_ui, graph_orientation_ui, hint, mo):
+def _(
+    current_ui,
+    file,
+    graph_label_ui,
+    graph_model_ui,
+    graph_orientation_ui,
+    hint,
+    mo,
+    voltage_ui,
+):
     # Network graph
 
     if file.value:
         _diagram = graph_model_ui.value.mermaid(
-            # orientation=graph_orientation_ui.value,
-            # label=graph_label_ui.value,
+            orientation=graph_orientation_ui.value,
+            label=graph_label_ui.value,
+            undervolt=voltage_ui.value[0],
+            overvolt=voltage_ui.value[1],
+            highflow=current_ui.value,
             )
         diagram = mo.vstack(
             [
@@ -689,7 +716,6 @@ def _(file, graph_label_ui, graph_model_ui, graph_orientation_ui, hint, mo):
         )
     else:
         diagram = mo.vstack([file, hint("open your JSON model")])
-
     return (diagram,)
 
 
