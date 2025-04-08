@@ -189,7 +189,7 @@ solver tolerances and how to make adjustments.
 This status value indicates that the voltage angle assumption required by
 the **Settings** $\rightarrow$ **Voltage angle accuracy limit** has been exceeded
 by one or more voltages in the solution. Exceeding this limit implies
-that the solution is inaccurate because the error in the approximation of $\sin(x) \approx x$ used by the fast-decoupled powerflow constraints is unacceptably large. Exceptionally large angles, e.g., in excess of 45$^\circ$ will result in potentially wildly inaccurate results. In general, the simplest solution is to add busses on branches over which large angles are observed.
+that the solution is inaccurate because the error in the approximation $\sin(x) \approx x$ used by the fast-decoupled powerflow constraints is unacceptably large. Exceptionally large angles, e.g., in excess of 45$^\circ$ will result in potentially wildly inaccurate results. In general, the simplest solution is to add busses on branches over which large angles are observed.
 
 ## Failed
 
@@ -206,9 +206,12 @@ numerical problems within the model itself.
 # References
 
 * [Joshua Taylor, *Convex Optimization of Power Systems*, Cambridge University Press (2015)](https://books.google.com/books?hl=en&lr=&id=JBdoBgAAQBAJ&oi=fnd&pg=PR11&dq=info:4_zKJR2GVGAJ:scholar.google.com&ots=A23AB6jlr9&sig=D2uoDpJMlNfCT9an9WOMuBvfk_k#v=onepage&q&f=false)
-* [FIDOpower Optimal Powerflow/Sizing/Placement on GitHub](https://github.com/fidopower/optimal_sizing_placement)
-* [Arras Energy Home](https://www.arras.energy/)
-* [Arras Energy Documentation](https://docs.arras.energy/)
-* [Arras Energy Source](https://github.com/arras-energy/)
+* [FIDOpower](https://github.com/fidopower/)
+    * [Optimal Powerflow/Sizing/Placement](https://github.com/fidopower/optimal_sizing_placement)
+* [Arras Energy](https://www.arras.energy/)
+    * [Documentation](https://docs.arras.energy/)
+    * [Source](https://github.com/arras-energy/)
 * [PyPOWER Documentation](https://rwl.github.io/PYPOWER/)
-* [PyPOWER Source](https://github.com/rwl/PYPOWER/)
+    * [Source](https://github.com/rwl/PYPOWER/)
+* [CVXPY](https://www.cvxpy.org/index.html)
+
