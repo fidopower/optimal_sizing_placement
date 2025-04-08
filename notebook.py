@@ -172,7 +172,7 @@ def _(error, exception, file, gld, mo):
 
 
 @app.cell
-def _(K, N, mo, np, pd):
+def _(K, N, message, mo, np, pd, warning):
     # Result formatting
     def format(x,prefix="",suffix=""):
         if isinstance(x, list):
@@ -189,6 +189,7 @@ def _(K, N, mo, np, pd):
             [
                 mo.md("# Summary Data"),
                 mo.md(f"**Cost of solution**: ${result['cost']:,.2f}"),
+                (message if result['status'] == "optimal" else warning)(f"**Solution status**: {result['status']}"),
                 pd.DataFrame(
                     data={
                         "Total": [
@@ -204,7 +205,7 @@ def _(K, N, mo, np, pd):
                             format(sum([abs(x) for x in result["generation"]])/N,suffix="MVA"),
                             format(abs(result["capacitors"].sum())/N,suffix="MVAr"),
                             format(abs(result["flows"]).mean(),suffix="MVA"),
-                            format(abs(sum([x for x, y in result["voltage"]]) / N),suffix="V"),
+                            format(abs(sum([x for x, y in result["voltage"]]) / N),suffix="kV"),
                             format(sum([y for x, y in result["voltage"]]) / N,suffix="deg"),
                         ],
                         "Minimum": [
@@ -212,7 +213,7 @@ def _(K, N, mo, np, pd):
                             format(min([abs(x) for x in result["generation"]]),suffix="MVA"),
                             format(abs(result["capacitors"].min()),suffix="MVAr"),
                             format(abs(result["flows"].min()),suffix="MVA"),
-                            format(abs(min([x for x, y in result["voltage"]])),suffix="V"),
+                            format(abs(min([x for x, y in result["voltage"]])),suffix="kV"),
                             format(min([y for x, y in result["voltage"]]),suffix="deg"),
                         ],
                         "Maximum": [
@@ -220,7 +221,7 @@ def _(K, N, mo, np, pd):
                             format(max([abs(x) for x in result["generation"]]),suffix="MVA"),
                             format(abs(result["capacitors"].max()),suffix="MVAr"),
                             format(abs(result["flows"].max()),suffix="MVA"),
-                            format(abs(max([x for x, y in result["voltage"]])),suffix="V"),
+                            format(abs(max([x for x, y in result["voltage"]])),suffix="kV"),
                             format(max([y for x, y in result["voltage"]]),suffix="deg"),
                         ],
                     },
@@ -261,6 +262,7 @@ def _(K, N, mo, np, pd):
 
 @app.cell
 def _(
+    angle_limit_ui,
     curtailment_ui,
     error,
     file,
@@ -294,6 +296,7 @@ def _(
                             verbose=verbose_ui.value,
                             curtailment_price=curtailment_ui.value,
                             solver=solver_ui.value,
+                            angle_limit=angle_limit_ui.value,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -323,6 +326,7 @@ def _(
 
 @app.cell
 def _(
+    angle_limit_ui,
     cap_cost,
     copy,
     demand_margin_ui,
@@ -364,6 +368,7 @@ def _(
                             verbose=verbose_ui.value,
                             solver=solver_ui.value,
                             margin=demand_margin_ui.value/100,
+                            angle_limit=angle_limit_ui.value,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -399,6 +404,7 @@ def _(mo):
 
 @app.cell
 def _(
+    angle_limit_ui,
     copy,
     curtailment_ui,
     error,
@@ -434,6 +440,7 @@ def _(
                         verbose=verbose_ui.value,
                         curtailment_price=curtailment_ui.value,
                         solver=solver_ui.value,
+                            angle_limit=angle_limit_ui.value,
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(mo.vstack(
@@ -541,11 +548,21 @@ def _(mo):
         debounce=True,
         show_value=True,
     )
+    angle_limit_ui = mo.ui.slider(
+        label="**Voltage angle accuracy limit (deg)**:",
+        start=0,
+        stop=45,
+        step=1,
+        value=10,
+        debounce=True,
+        show_value=True,
+    )
     solver_options = {
-        "OSQP": [osqp_max_iter, osqp_eps_abs, osqp_eps_rel],
-        "CLARABEL": [clarabel_max_iter,clarabel_time_limit],
+        "OSQP": [osqp_max_iter, osqp_eps_abs, osqp_eps_rel,angle_limit_ui],
+        "CLARABEL": [clarabel_max_iter,clarabel_time_limit,angle_limit_ui],
     }
     return (
+        angle_limit_ui,
         clarabel_max_iter,
         clarabel_time_limit,
         osqp_eps_abs,
@@ -607,9 +624,27 @@ def _(gencost_ui, mo, np):
 @app.cell
 def _(mo):
     # Graph settings
-    voltage_ui = mo.ui.range_slider(label="**Voltage limits**: (pu.V)",start=0.5,stop=1.5,step=0.01,value=[0.95,1.05],debounce=True,show_value=True)
-    current_ui = mo.ui.slider(label="**High flow**: (kA)",steps=[0,1,2,5,10,20,50,100,200,500,1000,2000,5000,10000],value=1000,debounce=True,show_value=True)
-    showbusdata_ui = mo.ui.multiselect(label="**Show bus data**:",options=["id","type","area","Vm","Va","zone"],value=None)
+    voltage_ui = mo.ui.range_slider(
+        label="**Voltage limits**: (pu.V)",
+        start=0.5,
+        stop=1.5,
+        step=0.01,
+        value=[0.95, 1.05],
+        debounce=True,
+        show_value=True,
+    )
+    current_ui = mo.ui.slider(
+        label="**High flow**: (kA)",
+        steps=[0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
+        value=1000,
+        debounce=True,
+        show_value=True,
+    )
+    showbusdata_ui = mo.ui.multiselect(
+        label="**Show bus data**:",
+        options=["id", "type", "area", "Vm", "Va", "zone"],
+        value=None,
+    )
     return current_ui, showbusdata_ui, voltage_ui
 
 

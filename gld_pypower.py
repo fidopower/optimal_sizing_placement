@@ -798,6 +798,7 @@ class Model:
         verbose:bool|TypeVar('io.TextIOWrapper')=False,
         curtailment_price=None,
         ref:int|str = None,
+        angle_limit:float=10.0,
         on_invalid:callable=_problem_invalid,
         on_fail:callable=_solver_failed,
         **kwargs) -> dict:
@@ -808,6 +809,7 @@ class Model:
         * verbose: output solver data and results
         * curtailment_price: price at which load is curtailed
         * ref: reference bus id or name
+        * angle_limit: voltage angle accuracy limit
         * on_invalid: invalid problem handler
         * on_fail: solution failed handler
         * kwargs: options passed of cvxpy.Problem.solve()
@@ -898,21 +900,27 @@ class Model:
             problem = cp.Problem(objective, constraints)
             problem.solve(verbose=(verbose!=False),**kwargs)
             self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+
         except Exception as err:
+
             return on_invalid(err)
 
         if x.value is None:
             return on_fail(problem.status)
         
+        status = "inaccurate/approximation" if np.abs(x.value).max() > angle_limit/57.3 else problem.status
+        if verbose:
+            print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
+
         puV = self.perunit("V")
         puS = self.perunit("S")
         result = {
-                "voltage": np.array([y.value.round(3)*puV,x.value.round(3)*57.3]).transpose(),
+                "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array(c.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
                 "cost" : problem.value.round(2),
-                "status": problem.status,
+                "status": status,
                 "curtailment":np.array(d.value).round(3)*puS,
             }
 
@@ -931,6 +939,7 @@ class Model:
             steps:float|list|dict=20,
             admittance:float|list|dict=0.1,
             ref:int|str=None,
+            angle_limit:float=10.0,
             on_invalid=_problem_invalid,
             on_fail=_solver_failed,
             **kwargs) -> dict:
@@ -949,6 +958,7 @@ class Model:
         * steps: number of capacitor steps
         * admittance: capacity admittance per step
         * ref: reference bus id or name
+        * angle_limit: voltage angle accuracy limit
         * on_invalid: invalid problem handler
         * on_fail: failed solution handler
         * kwargs: arguments passed to solver
@@ -1129,8 +1139,9 @@ class Model:
                 if verbose:
                     print(' ',' '.join([self.format(self.property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
 
+        status = "inaccurate/approximation" if np.abs(x.value).max() > angle_limit/57.3 else problem.status
         if verbose:
-            print(f"Cost: {problem.value:.2f}",file=verbose)
+            print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
 
         # generate result data
         puV = self.perunit("V")
@@ -1140,7 +1151,7 @@ class Model:
                 "capacitors": np.array(c.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
                 "cost" : problem.value.round(2),
-                "status": problem.status,
+                "status": status,
                 "additions": {
                     "generation": {n:x for n,x in enumerate(new_gens) if abs(x)>0},
                     "capacitors": {n:x for n,x in enumerate(new_caps) if abs(x)>0},
@@ -1315,6 +1326,15 @@ if __name__ == "__main__":
             print(f"TEST [{os.path.basename(caller.filename)}@{caller.lineno}]: {msg}: {repr(a)} != {repr(b)}",file=sys.stderr,flush=True)
             global failed
             failed += 1
+    def testIn(a,b,msg):
+        import inspect
+        global tested
+        tested += 1
+        if not a in b:
+            caller = inspect.getframeinfo(inspect.stack()[1][0])
+            print(f"TEST [{os.path.basename(caller.filename)}@{caller.lineno}]: {msg}: {repr(a)} != {repr(b)}",file=sys.stderr,flush=True)
+            global failed
+            failed += 1
     def testException(a,exc,msg):
         try:
             a()
@@ -1421,10 +1441,10 @@ if __name__ == "__main__":
             tested += 1
 
             # OSP test
-            testEq(test.optimal_sizing(refresh=True,update_model=True)["status"],"optimal","sizing failed")
+            testIn(test.optimal_sizing(refresh=True,angle_limit=10,update_model=True)["status"],["optimal","inaccurate/approximation"],f"{file} sizing failed")
 
             # OSP/OPF test
-            testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),"final OPF failed")
+            testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),np.zeros(len(test.find("bus"))).tolist(),f"{file} final OPF failed")
 
     print("TEST: completed",tested,"tests",file=sys.stderr,flush=True)
     if failed:
