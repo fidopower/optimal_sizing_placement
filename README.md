@@ -140,6 +140,69 @@ where
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
 * $y \in \mathbb{R}^N$ is the voltage magnitude, and
 
+---- 
+
+# Troubleshooting Guide
+
+The following optimizer results may be observed:
+
+## Optimal
+
+A complementary (primal and dual) solution has been found. The primal and dual
+variables are replaced with their computed values, and the objective value
+of the problem returned.
+
+## Infeasible
+
+The problem is infeasible as a result of an unbounded direction. The
+values of the variables are filled with `NaN`, and the objective value is
+set to $+\infty$ for minimizations and feasibility problems, and $-\infty$
+for maximizations.
+
+## Unbounded
+
+The solver has determined that the problem is unbounded. The objective value
+is set to $-\infty$ for minimizations, and $+\infty$ for maximizations.
+The values of any dual variables are replaced with `NaN`, as the dual problem
+is in fact infeasible.
+
+For unbounded problems, CVX stores an unbounded direction into the problem
+variables. This is is a direction along which the feasible set is unbounded,
+and the optimal value approaches $\pm\infty$. 
+
+## Inaccurate
+
+The solution may be inaccurate for the following reasons.
+
+### Optimal/Unbounded/Infeasible
+
+These three status values indicate that the solver was unable to make a
+determination to within the default numerical tolerance. However, it
+determined that the results obtained satisfied a relaxed tolerance level and
+therefore may still be suitable for further use. If this occurs, you should
+test the validity of the computed solution before using it in further
+calculations. See Controlling precision for a more advanced discussion of
+solver tolerances and how to make adjustments. 
+
+### Approximation
+
+This status value indicates that the voltage angle assumption required by
+the **Settings** $\rightarrow$ **Voltage angle accuracy limit** has been exceeded
+by one or more voltages in the solution. Exceeding this limit implies
+that the solution is inaccurate because the error in the approximation of $\sin(x) \approx x$ used by the fast-decoupled powerflow constraints is unacceptably large. Exceptionally large angles, e.g., in excess of 45$^\circ$ will result in potentially wildly inaccurate results. In general, the simplest solution is to add busses on branches over which large angles are observed.
+
+## Failed
+
+The solver failed to make sufficient progress towards a solution, even to
+within the relaxed tolerance setting. The objective values and primal and
+dual variables are filled with `NaN`. This result usually arises from
+numerical problems within the model itself.
+
+## Overdetermined
+
+The presolver has determined that the problem has more equality constraints than variables, which means that the coefficient matrix of the equality constraints is singular. In practice, such problems are often, but not always, infeasible. Unfortunately, solvers typically cannot handle such problems, so a precise conclusion cannot be reached. This result usually arises from
+numerical problems within the model itself.
+
 # References
 
 * [Joshua Taylor, *Convex Optimization of Power Systems*, Cambridge University Press (2015)](https://books.google.com/books?hl=en&lr=&id=JBdoBgAAQBAJ&oi=fnd&pg=PR11&dq=info:4_zKJR2GVGAJ:scholar.google.com&ots=A23AB6jlr9&sig=D2uoDpJMlNfCT9an9WOMuBvfk_k#v=onepage&q&f=false)
