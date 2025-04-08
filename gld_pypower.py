@@ -103,7 +103,7 @@ class Model:
             astype(self.data["classes"])
         return astype(self.data["classes"][module])
 
-    def property(self,obj:str,name:str,astype:str=None) -> Any:
+    def get_property(self,obj:str,name:str|list,astype:str=None) -> Any:
         """Get an object property and convert to Python type
 
         Arguments:
@@ -114,6 +114,8 @@ class Model:
         Returns:
         * varies: value of object property
         """
+        if isinstance(name,list):
+            return [self.get_property(obj,x,astype) for x in name]
         if obj != self._last_name:
             object_data = self.data["objects"][obj]
             self._last_name = obj
@@ -151,7 +153,13 @@ class Model:
             raise NotImplementedError("set astype")
 
         return astype(result)
-            
+
+    def set_property(self,obj,**kwargs):
+
+        for name,value in kwargs.items():
+            if name in self.data["objects"]:
+                self.data["objects"][obj][name] = type(value)
+        return self.data["objects"][obj]            
 
     def format(self,value:Any) -> str:
         """Apply formatting rules
@@ -480,13 +488,16 @@ class Model:
         """
         if isinstance(name,list):
             return [self.get_bus(x) for x in name]
-        if self.property(name,"class") == "bus":
+        if self.get_property(name,"class") == "bus":
             return name
-        parent = self.property(name,"parent")
+        parent = self.get_property(name,"parent")
         return self.get_bus(parent)
 
     def get_branch(self,kind:str,id:int|list[int]=None):
         return None
+
+    def get_areas(self) -> list:
+        return list(set([x["area"] for x in self.find("bus",dict).values()]))
 
     def perunit(self,kind:str,refresh:bool=True) -> Union[list,float]:
         """Get the per-unit values in the pypower model
@@ -499,10 +510,10 @@ class Model:
         elif kind == 'S':
             self.results["perunit"+kind] = self.globals("pypower::baseMVA")
         elif kind == 'V':
-            self.results["perunit"+kind] = [self.property(x,"baseKV") for x in self.find("bus")]
+            self.results["perunit"+kind] = [self.get_property(x,"baseKV") for x in self.find("bus")]
         elif kind == 'Z':
             names = {y["bus_i"]:x for x,y in self.find("bus").items()}
-            self.results["perunit"+kind] = [self.property(names[x["fbus"]],"baseKV")**2/self.globals("pypower::baseMVA") for x in self.find("branch",dict).values()]
+            self.results["perunit"+kind] = [self.get_property(names[x["fbus"]],"baseKV")**2/self.globals("pypower::baseMVA") for x in self.find("branch",dict).values()]
         else:
             raise ValueError("invalid kind")
         return self.results["perunit"+kind]
@@ -587,7 +598,7 @@ class Model:
         self.assert_module("pypower")
         if "impedance" in self.results and not refresh:
             return self.results["impedance"]
-        self.results["impedance"] = [complex(self.property(x,"r"),self.property(x,"x")) for x in self.lines(refresh)]
+        self.results["impedance"] = [complex(self.get_property(x,"r"),self.get_property(x,"x")) for x in self.lines(refresh)]
         return self.results["impedance"]
 
     def graphLaplacian(self,refresh:bool=False) -> np.array:
@@ -612,7 +623,7 @@ class Model:
         self.results["graphLaplacian"] = np.diag(sum(G)) - G # graph Laplacian
         return self.results["graphLaplacian"]
 
-    def graphIncidence(self,refresh:bool=False) -> np.array:
+    def graphIncidence(self,refresh:bool=False,weighted:bool=True) -> np.array:
         """Get network indicidence matrix
 
         Arguments:
@@ -621,20 +632,21 @@ class Model:
         Returns:
         * np.array: incidence matrix
         """
-        if "graphIncidence" in self.results and not refresh:
-            return self.results["graphIncidence"]
+        cachename = f"graphIncidence.{'weighted' if weighted else 'unweighted'}"
+        if cachename in self.results and not refresh:
+            return self.results[cachename]
         self.assert_module("pypower")
         lines = self.find("branch")
         N = len(self.find("bus",list))
         L = len(lines)
         B = np.array([[int(x["fbus"])-1,int(x["tbus"])-1] for x in lines.values()])
-        R = [self.property(x,"r")+self.property(x,"x")*1j for x in lines]
+        R = [self.get_property(x,"r")+self.get_property(x,"x")*1j for x in lines] if weighted else np.ones(L,dtype=complex)
         I = np.zeros((L, N))  # link-node incidence matrix
         for n, l in enumerate(B):
             I[n][l[0]] = -R[n].real
             I[n][l[1]] = R[n].real
-        self.results["graphIncidence"] = I
-        return self.results["graphIncidence"]
+        self.results[cachename] = I
+        return self.results[cachename]
 
     def graphSpectral(self,refresh:bool=False) -> tuple[float]:
         """Get spectral analysis results
@@ -670,9 +682,9 @@ class Model:
         if f"demand.{kind}" in self.results and not refresh:
             return self.results[f"demand.{kind}" ]
         if kind == "actual":
-            self.results[f"demand.{kind}" ] = np.array([complex(self.property(x,"Pd"),self.property(x,"Qd")) for x in self.nodes(refresh)]) / self.perunit("S")
+            self.results[f"demand.{kind}" ] = np.array([complex(self.get_property(x,"Pd"),self.get_property(x,"Qd")) for x in self.nodes(refresh)]) / self.perunit("S")
         elif kind == "peak":
-            self.results[f"demand.{kind}" ] = np.array([complex(self.property(x,"Pd"),self.property(x,"Qd")) for x in self.nodes(refresh)]) / self.perunit("S")
+            self.results[f"demand.{kind}" ] = np.array([complex(self.get_property(x,"Pd"),self.get_property(x,"Qd")) for x in self.nodes(refresh)]) / self.perunit("S")
         else:
             raise ValueError(f"kind '{kind}' is invalid")
         return self.results[f"demand.{kind}" ]
@@ -694,9 +706,9 @@ class Model:
             pass
         puS = self.perunit("S",refresh)
         if kind == 'capacity':
-            gen = [(self.property(x,"bus"),complex(self.property(x,"Pmax")/puS,self.property(x,"Qmax")/puS)) for x in self.generators(refresh)]
+            gen = [(self.get_property(x,"bus"),complex(self.get_property(x,"Pmax")/puS,self.get_property(x,"Qmax")/puS)) for x in self.generators(refresh)]
         elif kind == 'actual':
-            gen = [(self.property(x,"bus"),complex(self.property(x,"Pg")/puS,self.property(x,"Qg")/puS)) for x in self.generators(refresh)]
+            gen = [(self.get_property(x,"bus"),complex(self.get_property(x,"Pg")/puS,self.get_property(x,"Qg")/puS)) for x in self.generators(refresh)]
         else:
             raise ValueError(f"kind '{kind}' is invalid")
         result = np.zeros(len(self.nodes(refresh)),dtype=complex)
@@ -716,7 +728,7 @@ class Model:
         if "prices" in self.results and not refresh:
             if not refresh:
                 return self.results["prices"]
-        costs = {self.property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()}
+        costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()}
         self.results[f"prices"] = np.array([costs[n+1] if n+1 in costs else 0 for n in range(len(self.nodes(refresh)))])
         return self.results[f"prices"]
 
@@ -734,7 +746,7 @@ class Model:
                 return self.get_result(f"shunts")
         except:
             pass
-        result = {y["parent"]:{'setting':self.property(x,"admittance"),'capacity':self.property(x,"admittance_1")*self.property(x,"steps_1")} for x,y in self.find("shunt").items()}
+        result = {y["parent"]:{'setting':self.get_property(x,"admittance"),'capacity':self.get_property(x,"admittance_1")*self.get_property(x,"steps_1")} for x,y in self.find("shunt").items()}
         return self.set_result(f"shunts",result)
 
     def capacitors(self,kind:str='installed',refresh:bool=False) -> np.array:
@@ -755,9 +767,9 @@ class Model:
         puS = self.perunit("S",refresh)
         shunts = self.shunts(refresh)
         if kind == 'installed':
-            cap = [(self.property(x,"bus_i"),shunts[x]["capacity"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
+            cap = [(self.get_property(x,"bus_i"),shunts[x]["capacity"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
         elif kind == 'setting':
-            cap = [(self.property(x,"bus_i"),shunts[x]["setting"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
+            cap = [(self.get_property(x,"bus_i"),shunts[x]["setting"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
         else:
             raise ValueError(f"kind '{kind}' is invalid")
         result = np.zeros(len(self.nodes(refresh)))
@@ -779,8 +791,80 @@ class Model:
             return self.results[f"lineratings.{rating}"]
         if rating not in "ABC":
             return ValueError(f"line rating '{rating}' is invalid'")
-        self.results[f"lineratings.{rating}"] = np.array([self.property(x,f"rate{rating}") for x in self.lines()])/self.perunit('S',refresh) 
+        self.results[f"lineratings.{rating}"] = np.array([self.get_property(x,f"rate{rating}") for x in self.lines()])/self.perunit('S',refresh) 
         return self.results[f"lineratings.{rating}"]
+
+    def lineflow(self,refresh:bool=False) -> np.array:
+        """Get line flows
+
+        Arguments:
+        * refresh: force recalculation of previous results
+
+        Returns:
+        * np.array: line flows pu.MVA
+        """
+        I = self.graphIncidence(refresh=refresh,weighted=True)
+        x = [self.get_property(x,'Va') for x in self.find('bus')]
+        return I@x
+
+    def linevoltage(self,part:str='Va',refresh:bool=False) -> np.array:
+        """Get line voltage angles/magnitude differences
+
+        Arguments:
+        * part: 'Va' or 'Vm'
+        * refresh: force recalculation of previous results
+
+        Returns:
+        * np.array: line voltage angle/magnitude differences
+        """
+        I = self.graphIncidence(refresh=refresh,weighted=False)
+        x = [self.get_property(x,part) for x in self.find('bus')]
+        return I@x
+
+    def linesplit(self,angle_limit:float=10.0,update_model=False) -> dict:
+        """Identify/fix lines with large voltage angles
+
+        Arguments:
+        * angle_limit: the maximum angle allowed before a line is split
+
+        Returns:
+        * dict: line names and angles
+        """
+        result = {}
+
+        # compute voltage angle differences
+        I = self.graphIncidence(weighted=False)
+        x = [self.get_property(x,'Va') for x in self.find('bus')]
+        Va = I@x
+
+        # identify large angles
+        for n,v in enumerate(Va.tolist()):
+            if abs(v) > angle_limit:
+                result[self.get_name('branch',n)] = v
+        if not update_model:
+            return result
+
+        # update model
+        for name,angle in result.items():
+            n = int(abs(angle)//angle_limit) + 1
+            print("\nsplitting line",name,"in",n,"parts",file=sys.stderr)
+            fbus,tbus = self.get_property(name,["fbus","tbus"])
+            data = self.get_object(name)
+            values = {
+                "r": self.get_property(name,"r")/n,
+                "x": self.get_property(name,"x")/n,
+                "b": self.get_property(name,"b")*n,
+                "angle": self.get_property(name,"angle")/n,
+                "ratio": self.get_property(name,"ratio")**(1/n),
+                "loss": self.get_property(name,"loss")/n,
+            }
+            # print("before",data,file=sys.stderr)
+            self.set_property(name,**values)
+            print("after",data,file=sys.stderr)
+            # self.mod_object(name,data)
+            
+
+        return result
 
     #
     # Optimizations
@@ -908,7 +992,7 @@ class Model:
         if x.value is None:
             return on_fail(problem.status)
         
-        status = "inaccurate/approximation" if np.abs(x.value).max() > angle_limit/57.3 else problem.status
+        status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:
             print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
 
@@ -916,6 +1000,7 @@ class Model:
         puS = self.perunit("S")
         result = {
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
+                "angles": self.linevoltage('Va'),
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array(c.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
@@ -1114,7 +1199,7 @@ class Model:
                     status="IN_SERVICE",
                     )
                 if verbose:
-                    print(' ',' '.join([self.format(self.property(gen,x)) for x in ['parent','bus','Pg','Qg','Pmax','Qmax','Qmin']]),file=verbose)
+                    print(' ',' '.join([self.format(self.get_property(gen,x)) for x in ['parent','bus','Pg','Qg','Pmax','Qmax','Qmin']]),file=verbose)
                 self.add_object("gencost",f"gencost_{len(self.find('gencost'))}",
                     parent=gen,
                     model="POLYNOMIAL",
@@ -1137,9 +1222,9 @@ class Model:
                     admittance_1=admittance,
                     )
                 if verbose:
-                    print(' ',' '.join([self.format(self.property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
+                    print(' ',' '.join([self.format(self.get_property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
 
-        status = "inaccurate/approximation" if np.abs(x.value).max() > angle_limit/57.3 else problem.status
+        status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:
             print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
 
@@ -1147,6 +1232,7 @@ class Model:
         puV = self.perunit("V")
         result = {
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
+                "angles": self.linevoltage('Va'),
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array(c.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
@@ -1178,8 +1264,8 @@ class Model:
             "baseMVA": self.globals("pypower::baseMVA"),
             }
         for name,fields in self.pypower.items():
-            case[name] = [[self.property(x,y,astype=float) for y in fields] for x in self.find(name)]
-        costs = [[float(y) for y in self.property(x,"costs").split(",")] for x in self.find("gencost")]
+            case[name] = [[self.get_property(x,y,astype=float) for y in fields] for x in self.find(name)]
+        costs = [[float(y) for y in self.get_property(x,"costs").split(",")] for x in self.find("gencost")]
         for n,cost in enumerate(costs):
             case["gencost"][n].extend([len(cost)]+cost)
         if len(case["gencost"]) == 0:
@@ -1221,7 +1307,9 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         overvolt:float=1.05,
         undervolt:float=0.95,
         highflow:float=1.0,
-        showbusdata:Union[bool,list]=False
+        showbusdata:Union[bool,list]=False,
+        showarea:str=None,
+        showpopup:Union[bool,list]=False,
         ) -> str:
         """Generate network diagram in Mermaid
 
@@ -1232,6 +1320,8 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         * undervolt: voltage limit for blue fill
         * highflow: current limit for heavy line
         * showbusdata: enable display of bus data (or list of properties to display)
+        * showarea: limit display to area
+        * showpopup: include popup data
 
         Returns:
         * str: Mermaid diagram string
@@ -1247,13 +1337,13 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         def _node(bus,spec):
             node = spec["bus_i"]
             name = spec[label] if label else bus
-            Vm = self.property(bus,"Vm")
-            Pd = self.property(bus,"Pd")
-            Qd = self.property(bus,"Qd")
+            Vm = self.get_property(bus,"Vm")
+            Pd = self.get_property(bus,"Pd")
+            Qd = self.get_property(bus,"Qd")
             gens = self.select({"class":"gen","bus":node})
             loads = self.select({"class":"load","parent":bus})
-            Pg = sum([self.property(x,"Pg") for x in gens])
-            Qg = sum([self.property(x,"Qg") for x in gens])
+            Pg = sum([self.get_property(x,"Pg") for x in gens])
+            Qg = sum([self.get_property(x,"Qg") for x in gens])
             shape = "rect" if showbusdata else "fork"
             if isinstance(showbusdata,list):
                 busdata = "<br>".join([f"<b><u>{name}</u></b>"]+[f"{x}: {y}" for x,y in spec.items() if x in showbusdata])
@@ -1280,12 +1370,16 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
 
             return "\n".join(result)
 
-        for bus,spec in self.find("bus").items():
+        if showarea is None:
+            busses = self.find("bus")
+        else:
+            busses = self.select({"class":"bus","area":showarea})
+        for bus,spec in busses.items():
 
             diagram.append(_node(bus,spec))
 
         def _line(line,spec):
-            current = self.property(line,"current")
+            current = self.get_property(line,"current")
             reverse = ( current.real < 0 )
             current = abs(current/1000)
             linetype = "--" if not highflow is None and current < highflow else "=="
@@ -1294,8 +1388,14 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
             return f"""    {fbus} {linetype}{current:.2f} kA{linetype}> {tbus}"""
 
         for line,spec in self.find("branch").items():
+            if self.get_name("bus",int(spec["fbus"])-1) in busses or self.get_name("bus",int(spec["tbus"])-1) in busses:
+                diagram.append(_line(line,spec))
 
-            diagram.append(_line(line,spec))
+        if showpopup == True or isinstance(showpopup,list):
+            for bus,spec in busses.items():
+                popup = f""" "{"<br>".join([f"<b>{x}</b>: {y}" for x,y in spec.items() if showpopup ==True or x in showpopup])}" """.strip()
+                diagram.append(f"""    click {spec["bus_i"]} callback {popup}\n""")
+                diagram.append(f"""    click {spec["bus_i"]} call callback() {popup}""")
 
         return "\n".join(diagram)
 
@@ -1351,7 +1451,7 @@ if __name__ == "__main__":
 
     # accessor tests
     print("TEST: testing accessors",file=sys.stderr,flush=True)
-    testEq(test.property("bus_0",'id'),2,"get header failed")
+    testEq(test.get_property("bus_0",'id'),2,"get header failed")
     testEq(bus_3["bus_i"],'4',"get object failed")
     testException(lambda:test.add_object("bus","bus_3",**bus_3)["bus_i"],ValueError,"add object succeeded")
     testException(lambda:test.add_object("bus","bus_4",id="0")["bus_i"],ValueError,"add object succeeded")
@@ -1381,8 +1481,8 @@ if __name__ == "__main__":
     testEq(test.get_name('branch',[1,2]) , ['branch:7', 'branch:8'], "get branch failed")
     testEq(test.get_bus("gen_0") , "bus_0", "get bus failed")
     testEq(test.get_bus(["gen_0"]) , ["bus_0"], "get bus failed")
-    testEq(test.property("bus_0","Pd"),0.0, "property float failed")
-    testEq(test.property("bus_0","S"),0j, "property complex failed")
+    testEq(test.get_property("bus_0","Pd"),0.0, "property float failed")
+    testEq(test.get_property("bus_0","S"),0j, "property complex failed")
     testEq(test.perunit("S"),100, "perunit power failed")
     testEq(test.perunit("V"),[12.5, 12.5, 12.5, 12.5], "perunit voltage failed")
     testEq(test.perunit("Z"),[1.5625, 1.5625, 1.5625], "perunit impedance failed")
@@ -1439,6 +1539,9 @@ if __name__ == "__main__":
                 test.optimal_powerflow(verbose=True,on_fail=lambda x: print(test.problem,file=sys.stderr))
                 failed += 1
             tested += 1
+            split = test.linesplit()
+            if split:
+                print(file,test.linesplit(update_model=True),file=sys.stderr)
 
             # OSP test
             testIn(test.optimal_sizing(refresh=True,angle_limit=10,update_model=True)["status"],["optimal","inaccurate/approximation"],f"{file} sizing failed")

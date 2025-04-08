@@ -237,7 +237,7 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                sum([y for x, y in result["voltage"]]) / N,
+                                sum(result["angles"]) / K,
                                 suffix="deg",
                             ),
                         ],
@@ -254,7 +254,7 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                min([y for x, y in result["voltage"]]),
+                                min(result["angles"]),
                                 suffix="deg",
                             ),
                         ],
@@ -271,7 +271,7 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                max([y for x, y in result["voltage"]]),
+                                max(result["angles"]),
                                 suffix="deg",
                             ),
                         ],
@@ -691,7 +691,7 @@ def _(gencost_ui, mo, np):
 
 
 @app.cell
-def _(mo):
+def _(file, mo, model):
     # Graph settings
     voltage_ui = mo.ui.range_slider(
         label="**Voltage limits**: (pu.V)",
@@ -714,7 +714,11 @@ def _(mo):
         options=["id", "type", "area", "Vm", "Va", "zone"],
         value=None,
     )
-    return current_ui, showbusdata_ui, voltage_ui
+    showarea_ui = mo.ui.dropdown(
+        label="**Show area**:",
+        options=model.get_areas() if file.value else [],
+    )
+    return current_ui, showarea_ui, showbusdata_ui, voltage_ui
 
 
 @app.cell
@@ -780,7 +784,7 @@ def _(file, mo, model, opf_model, osp_model):
             inline=True,
         )
         graph_label_ui = mo.ui.dropdown(
-            label="**Bus labels**:",
+            label="**Bus label**:",
             options={
                 "Name": None,
                 "Id": "id",
@@ -804,6 +808,7 @@ def _(
     graph_orientation_ui,
     hint,
     mo,
+    showarea_ui,
     showbusdata_ui,
     voltage_ui,
 ):
@@ -816,17 +821,24 @@ def _(
             overvolt=voltage_ui.value[1],
             highflow=current_ui.value,
             showbusdata=showbusdata_ui.value,
+            showarea=showarea_ui.value,
         )
         diagram = mo.vstack(
             [
                 mo.hstack(
                     [
                         graph_model_ui,
-                        graph_label_ui,
                         graph_orientation_ui,
+                    ],
+                    align="start",
+                ),
+                mo.hstack(
+                    [
+                        graph_label_ui,
+                        showarea_ui,
                         showbusdata_ui,
                     ],
-                    align="stretch",
+                    align="start",
                 ),
                 mo.mermaid(_diagram),
             ]
