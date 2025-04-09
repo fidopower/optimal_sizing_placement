@@ -716,7 +716,7 @@ def _(file, mo, model):
     )
     showarea_ui = mo.ui.dropdown(
         label="**Show area**:",
-        options=model.get_areas() if file.value else [],
+        options=sorted(model.get_areas()) if file.value else [],
     )
     return current_ui, showarea_ui, showbusdata_ui, voltage_ui
 
