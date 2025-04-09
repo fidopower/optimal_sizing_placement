@@ -113,9 +113,9 @@ def _(
             bus_name = []
             for x, y in _costdata.items():
                 bus_name.append(y["parent"])
-                _bus = model.property(y["parent"], "bus_i") - 1
-                gen_cost[_bus] = model.property(x, "generator")
-                cap_cost[_bus] = model.property(x, "capacitor")
+                _bus = model.get_property(y["parent"], "bus_i") - 1
+                gen_cost[_bus] = model.get_property(x, "generator")
+                cap_cost[_bus] = model.get_property(x, "capacitor")
             _showcost = pd.DataFrame(
                 {"Generator ($/MVA)": gen_cost, "Capacitor ($/MVAr)": cap_cost},
                 bus_name,
