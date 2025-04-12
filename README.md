@@ -84,7 +84,7 @@ $\begin{array}{rll}
     & g \ge 0 & \textrm{real generation power constraints} \\
     & |h| \le \Im(S) & \textrm{reactive generation power constraints} \\
     & \sqrt{g^2+h^2} \le \Re(S) & \textrm{apparent generation power constraints} \\
-    & 0 \le c \le C & \textrm{capacity setting constraints} \\
+    & 0 \le c \le C & \textrm{capacitor setting constraints} \\
     & d \ge 0 & \textrm{real power load shedding cannot be negative} \\
     & \sqrt{d^2+e^2} \le |D| & \textrm{load shedding magnitude constraint}
 \end{array}$
