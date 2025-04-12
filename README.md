@@ -72,7 +72,7 @@ You can try this notebook using the file `example.json`. If you are running an o
 The OPF is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} |d+ej|
+    \underset{x,y,g,h,c,d}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} \sqrt{d^2+e^2}
 \\
     \textrm{subject to} 
     & \Re(G) x - g + c + \Re(D) - d = 0 & \textrm{real power flow balance} \\
@@ -83,10 +83,10 @@ $\begin{array}{rll}
     & |Ix| \le F & \textrm{line flow constraints} \\
     & g \ge 0 & \textrm{real generation power constraints} \\
     & |h| \le \Im(S) & \textrm{reactive generation power constraints} \\
-    & |g+hj| \le \Re(S) & \textrm{apparent generation power constraints} \\
+    & \sqrt{g^2+h^2} \le \Re(S) & \textrm{apparent generation power constraints} \\
     & 0 \le c \le C & \textrm{capacity setting constraints} \\
     & d \ge 0 & \textrm{real power load shedding cannot be negative} \\
-    & |d+ej| \le |D| & \textrm{load shedding magnitude constraint}
+    & \sqrt{d^2+e^2} \le |D| & \textrm{load shedding magnitude constraint}
 \end{array}$
 
 where
