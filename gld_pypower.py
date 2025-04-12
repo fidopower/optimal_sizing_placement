@@ -23,7 +23,10 @@ import json
 import io
 import subprocess
 import numpy as np
-np.Inf = np.inf
+try:
+    from numpy import Inf
+except:
+    np.Inf = np.inf
 import numpy.linalg as la
 import cvxpy as cp
 from typing import Union, Any, TypeVar
