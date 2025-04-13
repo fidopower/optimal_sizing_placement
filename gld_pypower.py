@@ -887,6 +887,7 @@ class Model:
         curtailment_price=None,
         ref:int|str = None,
         angle_limit:float=10.0,
+        voltage_limit:float=0.05,
         on_invalid:callable=_problem_invalid,
         on_fail:callable=_solver_failed,
         **kwargs) -> dict:
@@ -898,6 +899,7 @@ class Model:
         * curtailment_price: price at which load is curtailed
         * ref: reference bus id or name
         * angle_limit: voltage angle accuracy limit
+        * voltage_limit: voltage magnitude violation limit
         * on_invalid: invalid problem handler
         * on_fail: solution failed handler
         * kwargs: options passed of cvxpy.Problem.solve()
@@ -977,7 +979,7 @@ class Model:
                 G.imag @ y - h - c + D.imag - e == 0,  # KCL/KVL reactive power laws
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
-                cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
+                cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
                 cp.abs(I @ x) <= F,  # line flow limits
                 g >= 0,  # generation real power limits
                 cp.abs(h) <= S.imag,  # generation reactive power limits
@@ -1029,6 +1031,7 @@ class Model:
             admittance:float|list|dict=0.1,
             ref:int|str=None,
             angle_limit:float=10.0,
+            voltage_limit:float=0.05,
             on_invalid=_problem_invalid,
             on_fail=_solver_failed,
             **kwargs) -> dict:
@@ -1048,6 +1051,7 @@ class Model:
         * admittance: capacity admittance per step
         * ref: reference bus id or name
         * angle_limit: voltage angle accuracy limit
+        * voltage_limit: voltage magnitude violation limit
         * on_invalid: invalid problem handler
         * on_fail: failed solution handler
         * kwargs: arguments passed to solver
@@ -1158,7 +1162,7 @@ class Model:
                 h - G.imag @ y + c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
-                cp.abs(y - 1) <= 0.05,  # limit voltage magnitude to 5% deviation
+                cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
                 cp.abs(I @ x) <= F,  # line flow limits
                 g >= 0, # generation must be positive
                 c >= 0, # capacitor values must be positive
@@ -1314,6 +1318,8 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         showbusdata:Union[bool,list]=False,
         showarea:str=None,
         showpopup:Union[bool,list]=False,
+        showloads:bool=True,
+        showgens:bool=True,
         ) -> str:
         """Generate network diagram in Mermaid
 
@@ -1326,6 +1332,8 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
         * showbusdata: enable display of bus data (or list of properties to display)
         * showarea: limit display to area
         * showpopup: include popup data
+        * showloads: include loads
+        * showgens: include generators
 
         Returns:
         * str: Mermaid diagram string
@@ -1338,6 +1346,8 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
     classDef green fill:#0f0,stroke:#000;
     classDef blue fill:#6cf,stroke:#000;
 """]
+        if showbusdata == True:
+            showbusdata = ["id","type","area","Vm","Va","zone"]
         def _node(bus,spec):
             node = spec["bus_i"]
             name = spec[label] if label else bus
@@ -1349,10 +1359,8 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
             Pg = sum([self.get_property(x,"Pg") for x in gens])
             Qg = sum([self.get_property(x,"Qg") for x in gens])
             shape = "rect" if showbusdata else "fork"
-            if isinstance(showbusdata,list):
-                busdata = "<br>".join([f"<b><u>{name}</u></b>"]+[f"{x}: {y}" for x,y in spec.items() if x in showbusdata])
-            else:
-                busdata = "<br>".join([f"<b><u>{name}</u></b>"]+[f"{x}: {y}" for x,y in spec.items() if x in ["id","type","area","Vm","Va","zone"]])
+            busdata = "".join([f"<div><b><u>{name}</u></b></div>"]+[f"<div><b>{x}</b>: {y}</div>" for x,y in spec.items() if x in showbusdata])
+            busdata = "".join([f"<table><caption><b>{name}</b><hr/></caption>"]+[f"<tr><th align=left>{x}</th><td align=center>:</td><td align=right>{y.split()[0]}</td><td align=right>{y.split(' ',1)[1] if ' ' in y else ''}</td></tr>" for x,y in spec.items() if x in showbusdata]) + "</table>"
             result = [f"""    {node}@{{shape: {shape}, label: "{busdata}"}}"""]
 
             if not undervolt is None and Vm < undervolt:
@@ -1365,11 +1373,11 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
                 color = "black"
             result.append(f"""    class {node} {color}""")
 
-            if abs(complex(Pg,Qg)) > 0 or len(loads)>0:
-                result.append(f"""    G{node}@{{shape: circle, label: "{name}"}} --{Pg:.1f}{Qg:+.1f}j MVA--> {node}""")
+            if abs(complex(Pg,Qg)) > 0 and showgens:
+                result.append(f"""    G{node}@{{shape: circle, label: "<div>{name}</div>"}} --{Pg:.1f}{Qg:+.1f}j MVA--> {node}""")
                 result.append(f"""    class G{node} white""")
-            if abs(complex(Pd,Qd)) > 0:
-                result.append(f"""    {node} --{Pd:.1f}{Qd:+.1f}j MVA--> L{node}@{{shape: tri, label: "{name}"}}""")
+            if ( abs(complex(Pd,Qd)) > 0 or len(loads) > 0 ) and showloads:
+                result.append(f"""    {node} --{Pd:.1f}{Qd:+.1f}j MVA--> L{node}@{{shape: tri, label: "<div>{name}</div>"}}""")
                 result.append(f"""    class L{node} white""")
 
             return "\n".join(result)

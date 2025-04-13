@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.11.31"
-app = marimo.App(width="full")
+app = marimo.App(width="full", app_title="Optimal Powerflow/Sizing/Placement")
 
 
 @app.cell
@@ -326,6 +326,7 @@ def _(
     results,
     solver_ui,
     verbose_ui,
+    voltage_limit_ui,
 ):
     # Initial powerflow result
     if file.value:
@@ -348,6 +349,7 @@ def _(
                             curtailment_price=curtailment_ui.value,
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
+                            voltage_limit=voltage_limit_ui.value/100,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -395,6 +397,7 @@ def _(
     results,
     solver_ui,
     verbose_ui,
+    voltage_limit_ui,
 ):
     # Optimal sizing and placement
     if file.value:
@@ -422,6 +425,7 @@ def _(
                             solver=solver_ui.value,
                             margin=demand_margin_ui.value / 100,
                             angle_limit=angle_limit_ui.value,
+                            voltage_limit=voltage_limit_ui.value/100,
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -475,6 +479,7 @@ def _(
     set_optimal,
     solver_ui,
     verbose_ui,
+    voltage_limit_ui,
 ):
     # Final powerflow result
     if file.value:
@@ -497,6 +502,7 @@ def _(
                         curtailment_price=curtailment_ui.value,
                         solver=solver_ui.value,
                         angle_limit=angle_limit_ui.value,
+                        voltage_limit=voltage_limit_ui.value/100,
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(
@@ -585,14 +591,14 @@ def _(mo):
         debounce=True,
     )
     osqp_eps_abs = mo.ui.slider(
-        label="**Absolute epsilon (10^)**:",
+        label="**Absolute epsilon**: (10^)",
         steps=range(-10, 1),
         value=-5,
         debounce=True,
         show_value=True,
     )
     osqp_eps_rel = mo.ui.slider(
-        label="**Relative epsilon (10^)**:",
+        label="**Relative epsilon**: (10^)",
         steps=range(-10, 1),
         value=-5,
         debounce=True,
@@ -615,7 +621,7 @@ def _(mo):
         show_value=True,
     )
     angle_limit_ui = mo.ui.slider(
-        label="**Voltage angle accuracy limit (deg)**:",
+        label="**Voltage angle accuracy limit**: (deg)",
         start=0,
         stop=45,
         step=1,
@@ -623,9 +629,16 @@ def _(mo):
         debounce=True,
         show_value=True,
     )
+    voltage_limit_ui = mo.ui.slider(
+        label="**Voltage magnitude constraints**: (%)",
+        steps=[1,2,3,4,5,6,7,8,9,10,15,20,25,30,35,40,45,50,60,70,80,90,100],
+        value=5,
+        debounce=True,
+        show_value=True,
+    )
     solver_options = {
-        "OSQP": [osqp_max_iter, osqp_eps_abs, osqp_eps_rel, angle_limit_ui],
-        "CLARABEL": [clarabel_max_iter, clarabel_time_limit, angle_limit_ui],
+        "OSQP": [osqp_max_iter, osqp_eps_abs, osqp_eps_rel, angle_limit_ui,voltage_limit_ui],
+        "CLARABEL": [clarabel_max_iter, clarabel_time_limit, angle_limit_ui,voltage_limit_ui],
     }
     return (
         angle_limit_ui,
@@ -638,6 +651,7 @@ def _(mo):
         solver_options,
         solver_ui,
         verbose_ui,
+        voltage_limit_ui,
     )
 
 
@@ -691,14 +705,14 @@ def _(gencost_ui, mo, np):
 
 
 @app.cell
-def _(file, mo, model):
+def _(file, mo, model, voltage_limit_ui):
     # Graph settings
     voltage_ui = mo.ui.range_slider(
         label="**Voltage limits**: (pu.V)",
         start=0.5,
         stop=1.5,
         step=0.01,
-        value=[0.95, 1.05],
+        value=[max(0.5,1-voltage_limit_ui.value/100),min(1+voltage_limit_ui.value/100,1.5)],
         debounce=True,
         show_value=True,
     )
@@ -718,7 +732,16 @@ def _(file, mo, model):
         label="**Show area**:",
         options=sorted(model.get_areas()) if file.value else [],
     )
-    return current_ui, showarea_ui, showbusdata_ui, voltage_ui
+    showloads_ui = mo.ui.checkbox(label="**Show loads**")
+    showgens_ui = mo.ui.checkbox(label="**Show generators**")
+    return (
+        current_ui,
+        showarea_ui,
+        showbusdata_ui,
+        showgens_ui,
+        showloads_ui,
+        voltage_ui,
+    )
 
 
 @app.cell
@@ -731,6 +754,8 @@ def _(
     mo,
     problem_ui,
     showbusdata_ui,
+    showgens_ui,
+    showloads_ui,
     solver_options,
     solver_ui,
     verbose_ui,
@@ -755,7 +780,9 @@ def _(
                     demand_margin_ui,
                 ]
             ),
-            "**Network**": mo.vstack([voltage_ui, current_ui, showbusdata_ui]),
+            "**Network**": mo.vstack(
+                [voltage_ui, current_ui, showbusdata_ui, showloads_ui, showgens_ui]
+            ),
         },
         multiple=True,
         lazy=True,
@@ -810,6 +837,8 @@ def _(
     mo,
     showarea_ui,
     showbusdata_ui,
+    showgens_ui,
+    showloads_ui,
     voltage_ui,
 ):
     # Network graph
@@ -822,6 +851,8 @@ def _(
             highflow=current_ui.value,
             showbusdata=showbusdata_ui.value,
             showarea=showarea_ui.value,
+            showloads=showloads_ui.value,
+            showgens=showgens_ui.value,
         )
         diagram = mo.vstack(
             [
@@ -829,6 +860,7 @@ def _(
                     [
                         graph_model_ui,
                         graph_orientation_ui,
+                        voltage_ui,
                     ],
                     align="start",
                 ),
@@ -837,6 +869,8 @@ def _(
                         graph_label_ui,
                         showarea_ui,
                         showbusdata_ui,
+                        showloads_ui,
+                        showgens_ui,
                     ],
                     align="start",
                 ),
