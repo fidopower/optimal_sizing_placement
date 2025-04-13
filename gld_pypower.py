@@ -118,6 +118,8 @@ class Model:
         Returns:
         * varies: value of object property
         """
+        if isinstance(obj,list):
+            return {x:self.get_property(x,name,astype) for x in obj}
         if isinstance(name,list):
             return [self.get_property(obj,x,astype) for x in name]
         if obj != self._last_name:
@@ -1348,6 +1350,10 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
 """]
         if showbusdata == True:
             showbusdata = ["id","type","area","Vm","Va","zone"]
+        elif showbusdata == False:
+            showbusdata = []
+        elif not isinstance(showbusdata,list) :
+            raise ValueError("showbusdata is not a list or bool")
         def _node(bus,spec):
             node = spec["bus_i"]
             name = spec[label] if label else bus
@@ -1391,6 +1397,15 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
             diagram.append(_node(bus,spec))
 
         def _line(line,spec):
+            fbus = spec["tbus"]
+            tbus = spec["fbus"]
+            names = self.get_name('bus',[int(fbus)-1,int(tbus)-1])
+            voltages = self.get_property(names,["Vm","Va"])
+            def diff(x):
+                return x[1]-x[0]
+            voltage = diff([complex(*voltages[x]) for x in names])
+            # print(line,[fbus,tbus],names,voltages,voltage)
+            current = voltage / complex(float(spec['r'].split()[0]),float(spec['x'].split()[0]))
             current = self.get_property(line,"current")
             reverse = ( current.real < 0 )
             current = abs(current/1000)
@@ -1457,7 +1472,7 @@ if __name__ == "__main__":
 
 
     if runtime:
-        testEq(test.run(),"","initial run test failed")
+        testEq(test.run(exception=False),(0, [''], ['']),"initial run test failed")
 
     bus_3 = test.get_object("bus_3")
 
