@@ -6,7 +6,7 @@ network modeled using **pypower**. The notebook is organized using 3 tabs
 
 ## Model 
 
-The **Model** tab is used load the initial model. Only GridLAB-D JSON models are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to compile the JSON file from the GLM file. 
+The **Model** tab is used load the initial model. Only GridLAB-D JSON models are accepted. If you have a GLM file, you must run the command `gridlabd -C MYFILE.glm -o MYFILE.json` to compile the JSON file from the GLM file. If you have a model from another tool or simulator you can try converting it using the command `gridlabd -C MYFILE.EXT -o MYFILE.json`.
 
 To upload a JSON file, click on **Open JSON model** button and select the file you wish to work with.  If you have already opened a model, the new one you select will be opened in its place, or you can click on **Click to clear files** to close the existing model.
 
