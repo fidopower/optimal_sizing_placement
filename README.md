@@ -72,7 +72,7 @@ You can try this notebook using the file `example.json`. If you are running an o
 The OPF is the solution to the following convex optimization problem for a network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} \sqrt{d^2+e^2}
+    \underset{x,y,g,h,c,d,e}{\min} & P \sqrt{g^2+h^2} + 100 \hat{P} \sqrt{d^2+e^2}
 \\
     \textrm{subject to} 
     & \Re(G) x - g + c + \Re(D) - d = 0 & \textrm{real power flow balance} \\
@@ -91,20 +91,22 @@ $\begin{array}{rll}
 
 where
 
-* $P \in \mathbb{R}^N$ is the generation price,
+* $x \in \mathbb{R}^N$ is the voltage angle,
+* $y \in \mathbb{R}^N$ is the voltage magnitude,
 * $g \in \mathbb{R}^N$ is the generator real power dispatch,
 * $h \in \mathbb{R}^N$ is the generator reactive power dispatch,
-* $\hat P\in \mathbb{R}$ is the maximum generation price,
 * $d \in \mathbb{R}^N$ is the real power demand curtailment,
-* $e \in \mathbb{R}^N$ is the reactive power demand curtailment,
+* $e \in \mathbb{R}^N$ is the reactive power demand curtailment, and
+* $c \in \mathbb{R}^N$ is the capacitor settings
+
+given
+
+* $P \in \mathbb{R}^N$ is the generation price,
+* $\hat P\in \mathbb{R}$ is the maximum generation price,
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
-* $x \in \mathbb{R}^N$ is the voltage angle,
-* $c \in \mathbb{R}^N$ is the capacitor settings,
 * $D \in \mathbb{C}^N$ is the total demand,
-* $y \in \mathbb{R}^N$ is the voltage magnitude,
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
-* $S \in \mathbb{C}^N$ is the generation capacity
-* $y \in \mathbb{R}^N$ is the voltage magnitude, and
+* $S \in \mathbb{C}^N$ is the generation capacity, and
 * $C \in \mathbb{R}^N$ is the capacitor capacity.
 
 ## Optimal Sizing and Placement
@@ -115,8 +117,8 @@ $\begin{array}{rll}
     \underset{x,y,g,h,c}{\min} & P g + Q |h| + R |c|
 \\
     \textrm{subject to} 
-    & \Re(G) x - g + c + \Re(D)(1+d) = 0 & \textrm{real power flow balance} \\
-    & \Im(G) y - h - c + \Im(D)(1+d) = 0 & \textrm{reactive power flow balance} \\
+    & \Re(G) x - g + c + \Re(D)(1+E) = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + \Im(D)(1+E) = 0 & \textrm{reactive power flow balance} \\
     & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
     & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
@@ -127,18 +129,20 @@ $\begin{array}{rll}
 
 where
 
-* $P \in \mathbb{R}^N$ is the generation price,
+* $x \in \mathbb{R}^N$ is the voltage angle,
+* $y \in \mathbb{R}^N$ is the voltage magnitude,
 * $g \in \mathbb{R}^N$ is the generator real power dispatch,
-* $h \in \mathbb{R}^N$ is the generator reactive power dispatch,
+* $h \in \mathbb{R}^N$ is the generator reactive power dispatch, and
+* $c \in \mathbb{R}^N$ is the capacitor settings
+
+given
+
+* $P \in \mathbb{R}^N$ is the generation price,
 * $\hat P\in \mathbb{R}$ is the maximum generation price,
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
-* $d \in \mathbb{R}$ is the demand safety margin,
-* $x \in \mathbb{R}^N$ is the voltage angle,
-* $c \in \mathbb{R}^N$ is the capacitor settings,
-* $D \in \mathbb{C}^N$ is the total demand,
-* $y \in \mathbb{R}^N$ is the voltage magnitude,
-* $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
-* $y \in \mathbb{R}^N$ is the voltage magnitude, and
+* $E \in \mathbb{R}$ is the demand safety margin,
+* $D \in \mathbb{C}^N$ is the total demand, and
+* $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix.
 
 ---- 
 
