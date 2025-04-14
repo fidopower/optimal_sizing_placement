@@ -89,7 +89,7 @@ $\begin{array}{rll}
     & \sqrt{d^2+e^2} \le |D| & \textrm{load shedding magnitude constraint}
 \end{array}$
 
-where
+with variables
 
 * $x \in \mathbb{R}^N$ is the voltage angle,
 * $y \in \mathbb{R}^N$ is the voltage magnitude,
@@ -99,7 +99,7 @@ where
 * $e \in \mathbb{R}^N$ is the reactive power demand curtailment, and
 * $c \in \mathbb{R}^N$ is the capacitor settings
 
-given
+and parameters
 
 * $P \in \mathbb{R}^N$ is the generation price,
 * $\hat P\in \mathbb{R}$ is the maximum generation price,
@@ -127,7 +127,7 @@ $\begin{array}{rll}
     & c \ge 0 & \textrm{capacity setting constraint} \\
 \end{array}$
 
-where
+with variables
 
 * $x \in \mathbb{R}^N$ is the voltage angle,
 * $y \in \mathbb{R}^N$ is the voltage magnitude,
@@ -135,7 +135,7 @@ where
 * $h \in \mathbb{R}^N$ is the generator reactive power dispatch, and
 * $c \in \mathbb{R}^N$ is the capacitor settings
 
-given
+and parameters
 
 * $P \in \mathbb{R}^N$ is the generation price,
 * $\hat P\in \mathbb{R}$ is the maximum generation price,
