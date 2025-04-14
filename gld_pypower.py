@@ -20,6 +20,7 @@ Then the OPF runs without curtailment and the simulation is run with the new mod
 import sys
 import os
 import json
+import math
 import io
 import subprocess
 import numpy as np
@@ -1396,23 +1397,31 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
 
             diagram.append(_node(bus,spec))
 
+        baseMVA = self.perunit('S')
         def _line(line,spec):
             fbus = spec["tbus"]
             tbus = spec["fbus"]
             names = self.get_name('bus',[int(fbus)-1,int(tbus)-1])
+            baseKV = self.get_property(names[0],"baseKV")
+            baseZ = baseKV**2/baseMVA
             voltages = self.get_property(names,["Vm","Va"])
-            def diff(x):
-                return x[1]-x[0]
-            voltage = diff([complex(*voltages[x]) for x in names])
-            # print(line,[fbus,tbus],names,voltages,voltage)
-            current = voltage / complex(float(spec['r'].split()[0]),float(spec['x'].split()[0]))
-            current = self.get_property(line,"current")
+            def cpdiff(x): # complex polar difference
+                a0,a1 = [y.imag*math.pi/180 for y in x]
+                v0 = x[0].real*(math.cos(a0)+math.sin(a0)*1j)
+                v1 = x[1].real*(math.cos(a1)+math.sin(a1)*1j)
+                return v1-v0
+            voltage = cpdiff([complex(*voltages[x]) for x in names]) * baseKV
+            impedance = complex(float(spec['r'].split()[0]),float(spec['x'].split()[0])) / baseZ
+            current = voltage / impedance
+            print(line,[fbus,tbus],names,baseKV,baseMVA,baseZ,voltages,voltage,impedance,current)
+            # current = self.get_property(line,"current")
+            power = voltage * current.conjugate()
             reverse = ( current.real < 0 )
             current = abs(current/1000)
             linetype = "--" if not highflow is None and current < highflow else "=="
             fbus = spec["tbus" if reverse else "fbus"]
             tbus = spec["fbus" if reverse else "tbus"]
-            return f"""    {fbus} {linetype}{current:.2f} kA{linetype}> {tbus}"""
+            return f"""    {fbus} {linetype}{current:.2f} kA<br>{power:.1f} MVA{linetype}> {tbus}"""
 
         for line,spec in self.find("branch").items():
             if self.get_name("bus",int(spec["fbus"])-1) in busses or self.get_name("bus",int(spec["tbus"])-1) in busses:
