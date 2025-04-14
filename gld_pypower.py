@@ -1406,22 +1406,30 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
             baseZ = baseKV**2/baseMVA
             voltages = self.get_property(names,["Vm","Va"])
             def cpdiff(x): # complex polar difference
+                # print(f"{x=}")
                 a0,a1 = [y.imag*math.pi/180 for y in x]
                 v0 = x[0].real*(math.cos(a0)+math.sin(a0)*1j)
                 v1 = x[1].real*(math.cos(a1)+math.sin(a1)*1j)
+                dv = v1 - v0
+                # print(f"{dv=}")
                 return v1-v0
-            voltage = cpdiff([complex(*voltages[x]) for x in names]) * baseKV
-            impedance = complex(float(spec['r'].split()[0]),float(spec['x'].split()[0])) / baseZ
+            voltage = cpdiff([complex(*voltages[x]) for x in names])
+            impedance = complex(float(spec['r'].split()[0]),float(spec['x'].split()[0]))
             current = voltage / impedance
-            print(line,[fbus,tbus],names,baseKV,baseMVA,baseZ,voltages,voltage,impedance,current)
+            # print(line,[fbus,tbus],names,baseKV,baseMVA,baseZ,voltages,voltage,impedance,current)
             # current = self.get_property(line,"current")
             power = voltage * current.conjugate()
+            # print(f"{line=}: {baseZ=}, {baseKV=}, {baseMVA=}")
+            # print(f"  {voltage=:.4f}")
+            # print(f"  {impedance=:.4f}")
+            # print(f"  {current=:.4f}")
+            # print(f"  {power=:.4f}")
             reverse = ( current.real < 0 )
             current = abs(current/1000)
             linetype = "--" if not highflow is None and current < highflow else "=="
             fbus = spec["tbus" if reverse else "fbus"]
             tbus = spec["fbus" if reverse else "tbus"]
-            return f"""    {fbus} {linetype}{current:.2f} kA<br>{power:.1f} MVA{linetype}> {tbus}"""
+            return f"""    {fbus} {linetype}{current:.2f} kA<br>{power*baseMVA:.1f} MVA{linetype}> {tbus}"""
 
         for line,spec in self.find("branch").items():
             if self.get_name("bus",int(spec["fbus"])-1) in busses or self.get_name("bus",int(spec["tbus"])-1) in busses:
