@@ -626,7 +626,7 @@ class Model:
         R = self.impedance(refresh)
         G = np.zeros((N,N),dtype=complex)
         for n, l in enumerate(B):
-            G[l[0], l[1]] = G[l[1], l[0]] = ( 1 / R[n] ) if abs(R[n]) > 0 else 0
+            G[l[0], l[1]] = G[l[1], l[0]] = ( 1 / R[n] ) if abs(R[n]) > 0 else 1e6
         self.results["graphLaplacian"] = np.diag(sum(G)) - G # graph Laplacian
         return self.results["graphLaplacian"]
 
@@ -1415,7 +1415,7 @@ def {os.path.splitext(os.path.basename(self.name))[0]}():
                 return v1-v0
             voltage = cpdiff([complex(*voltages[x]) for x in names])
             impedance = complex(float(spec['r'].split()[0]),float(spec['x'].split()[0]))
-            current = voltage / impedance
+            current = voltage / ( impedance if abs(impedance) > 0 else 1e-6 )
             # print(line,[fbus,tbus],names,baseKV,baseMVA,baseZ,voltages,voltage,impedance,current)
             # current = self.get_property(line,"current")
             power = voltage * current.conjugate()
