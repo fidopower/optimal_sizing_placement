@@ -626,7 +626,7 @@ class Model:
         R = self.impedance(refresh)
         G = np.zeros((N,N),dtype=complex)
         for n, l in enumerate(B):
-            G[l[0], l[1]] = G[l[1], l[0]] = 1 / R[n]
+            G[l[0], l[1]] = G[l[1], l[0]] = ( 1 / R[n] ) if abs(R[n]) > 0 else 0
         self.results["graphLaplacian"] = np.diag(sum(G)) - G # graph Laplacian
         return self.results["graphLaplacian"]
 
