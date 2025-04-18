@@ -774,7 +774,7 @@ class Model:
         puS = self.perunit("S",refresh)
         shunts = self.shunts(refresh)
         if kind == 'installed':
-            cap = [(self.get_property(x,"bus_i"),shunts[x]["capacity"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
+            cap = [(self.get_property(x,"bus_i"),max(0,shunts[x]["capacity"])/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
         elif kind == 'setting':
             cap = [(self.get_property(x,"bus_i"),shunts[x]["setting"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
         else:
@@ -783,6 +783,35 @@ class Model:
         for bus,value in cap:
             result[bus-1] += value
         return self.set_result(f"capacitors.{kind}",result)
+
+    def condensers(self,kind:str='installed',refresh:bool=False) -> np.array:
+        """Get synchronous condenser array
+
+        Arguments:
+        * kind: 'installed' or 'setting'
+        * refresh: force recalculation of previous results
+
+        Returns:
+        * np.array: synchronous condenser array
+        """
+        try:
+            if not refresh:
+                return self.get_result(f"condensers.{kind}")
+        except:
+            pass
+        puS = self.perunit("S",refresh)
+        shunts = self.shunts(refresh)
+        if kind == 'installed':
+            cap = [(self.get_property(x,"bus_i"),max(0,-shunts[x]["capacity"])/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
+        elif kind == 'setting':
+            cap = [(self.get_property(x,"bus_i"),shunts[x]["setting"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
+        else:
+            raise ValueError(f"kind '{kind}' is invalid")
+        result = np.zeros(len(self.nodes(refresh)))
+        for bus,value in cap:
+            result[bus-1] += value
+        return self.set_result(f"condensers.{kind}",result)
+
 
     def lineratings(self,rating:str="A",refresh:bool=False) -> np.array:
         """Get line ratings array
@@ -945,6 +974,7 @@ class Model:
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
             C = self.capacitors('installed',refresh)
+            R = self.condensers('installed',refresh)
             N = len(self.nodes(refresh))
         except Exception as err:
             return on_invalid(err)
@@ -970,16 +1000,17 @@ class Model:
         c = cp.Variable(N)  # capacitor bank settings
         d = cp.Variable(N)  # demand real power curtailment
         e = cp.Variable(N)  # demand reactive power curtailment
+        r = cp.Variable(N)  # synchronous condenser settings
 
         try:
-            cost = P @ cp.abs(g + h * 1j)
+            cost = P @ ( cp.abs(g + h * 1j) + c + r )
             if curtailment_price is None:
                 curtailment_price = 100*max(P)
             shed = np.ones(N)*curtailment_price @ cp.abs(d+e*1j) # load shedding 100x maximum generator price
             objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
             constraints = [
-                G.real @ x - g + c + D.real - d == 0,  # KCL/KVL real power laws
-                G.imag @ y - h - c + D.imag - e == 0,  # KCL/KVL reactive power laws
+                G.real @ x - g + c + r + D.real - d == 0,  # KCL/KVL real power laws
+                G.imag @ y - h - c - r + D.imag - e == 0,  # KCL/KVL reactive power laws
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
                 cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
@@ -988,6 +1019,7 @@ class Model:
                 cp.abs(h) <= S.imag,  # generation reactive power limits
                 cp.abs(g+h*1j) <= S.real, # generation apparent power limit
                 c >= 0, c <= C,  # capacitor bank settings
+                cp.abs(r) <= R,  # synchronous condenser settings
                 d >= 0, cp.abs(d+e*1j) <= cp.abs(D),  # demand curtailment constraint with flexible reactive power
                 ]
             problem = cp.Problem(objective, constraints)
@@ -1009,9 +1041,11 @@ class Model:
         puS = self.perunit("S")
         result = {
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
+                "magnitudes": self.linevoltage('Vm'),
                 "angles": self.linevoltage('Va'),
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array(c.value).round(3)*puS,
+                "condensers": np.array(r.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
                 "cost" : problem.value.round(2),
                 "status": status,
@@ -1027,6 +1061,7 @@ class Model:
             margin:float=0.2,
             gen_cost:float|list|dict=None,
             cap_cost:float|list|dict=None,
+            con_cost:float|list|dict=None,
             min_power_ratio:float|list|dict=0.1,
             voltage_high:float|list|dict=1.05,
             voltage_low:float|list|dict=0.95,
@@ -1047,6 +1082,7 @@ class Model:
         * margin: load capacity margin
         * gen_cost: generation addition cost data
         * cap_cost: capacitor addition cost data
+        * con_cost: synchronous condensor cost data
         * min_power_ratio: new generation minimum reactive power ratio relative to real power
         * voltage_high: upper voltage constraint
         * voltage_low: lower voltage constraint
@@ -1122,6 +1158,16 @@ class Model:
             elif isinstance(gen_cost,list):
                 cap_cost = np.array(cap_cost)
 
+            # normalize condenser cost argument
+            if con_cost is None:
+                con_cost = np.zeros(N)
+            elif isinstance(con_cost,float) or isinstance(con_cost,int):
+                con_cost = np.full(N,con_cost)
+            elif isinstance(cap_cost,dict):
+                con_cost = np.array([con_cost[n] if n in con_cost else 0 for n in range(N)])
+            elif isinstance(gen_cost,list):
+                con_cost = np.array(con_cost)
+
             # normalize minimum reactive power argument
             if isinstance(min_power_ratio,float):
                 min_power_ratio = np.full(N,min_power_ratio)
@@ -1135,7 +1181,7 @@ class Model:
             return on_invalid(err)
 
         if verbose:
-            print(f"\ngld('{self.name}').optimal_sizing(gen_cost={repr(gen_cost)},cap_cost={repr(cap_cost)},refresh={repr(refresh)},update_model={repr(update_model)},margin={repr(margin)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=verbose)
+            print(f"\ngld('{self.name}').optimal_sizing(gen_cost={repr(gen_cost)},cap_cost={repr(cap_cost)},con_cost={repr(con_cost)},refresh={repr(refresh)},update_model={repr(update_model)},margin={repr(margin)},verbose={repr(verbose)}{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",file=verbose)
             print("\nN:",N,sep="\n",file=verbose)
             print("\nG:",G,sep="\n",file=verbose)
             print("\nD:",D,sep="\n",file=verbose)
@@ -1153,16 +1199,17 @@ class Model:
         g = cp.Variable(N)  # generation real power dispatch
         h = cp.Variable(N)  # generation reactive power dispatch
         c = cp.Variable(N)  # capacitor bank settings
+        r = cp.Variable(N)  # synchronous condenser settings
 
         try:
 
             # construct problem
             puS = self.perunit("S")
-            costs = gen_cost.real @ cp.abs(g) + gen_cost.imag @ cp.abs(h) + cap_cost @ cp.abs(c)
+            costs = gen_cost.real @ cp.abs(g) + gen_cost.imag @ cp.abs(h) + cap_cost @ cp.abs(c) + con_cost @ cp.abs(r)
             objective = cp.Minimize(costs)  # minimum cost (generation + demand response)
             constraints = [
-                g - G.real @ x - c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
-                h - G.imag @ y + c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+                g - G.real @ x - c - r - D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                h - G.imag @ y + c + r - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
                 cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
@@ -1243,9 +1290,11 @@ class Model:
         puV = self.perunit("V")
         result = {
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
+                "magnitudes": self.linevoltage('Vm'),
                 "angles": self.linevoltage('Va'),
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array(c.value).round(3)*puS,
+                "condensers": -np.array(r.value).round(3)*puS,
                 "flows": cp.abs(I @ x).value.round(3)*puS,
                 "cost" : problem.value.round(2),
                 "status": status,
@@ -1544,9 +1593,9 @@ if __name__ == "__main__":
     # optimization tests
     print("TEST: testing optimizations",file=sys.stderr,flush=True)
     testEq(test.optimal_powerflow()["curtailment"].round(1).tolist(),[0.0, 0.0, 6.8, 6.8],"optimal powerflow failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500})["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500)["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500)["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
+    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500,update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")
     testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),[0,0,0,0],"optimal powerflow failed")
     if runtime:
         test.data["globals"]["savefile"] = ""
