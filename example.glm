@@ -97,27 +97,32 @@ object branch
 // capacity expansion data
 class capacity {
 	complex generator[$/MW];
-	double capacitor[$/MW];
+	double capacitor[$/MVAr];
+	double condenser[$/MVAr];
 }
 object capacity {
 	parent "bus_0";
 	generator 100+10j;
 	capacitor 1000;
+	condenser 500;
 }
 object capacity {
 	parent "bus_1";
 	generator 500+500j;
 	capacitor 100;
+	condenser 500;
 }
 object capacity {
 	parent "bus_2";
 	generator 1000+1000j;
 	capacitor 10;
+	condenser 500;
 }
 object capacity {
 	parent "bus_3";
 	generator 1000+1000j;
 	capacitor 10;
+	condenser 500;
 }
 
 #set savefile=example.json
