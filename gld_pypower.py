@@ -32,12 +32,16 @@ import numpy.linalg as la
 import cvxpy as cp
 from typing import Union, Any, TypeVar
 import warnings
+import random
 try:
     from pypower.api import runpf, runopf, ppoption, printpf
 except ModuleNotFoundError as err:
     def pypower_api(*args,**kwargs):
         raise RuntimeError(f"pypower not available ({err})")
     runpf = runopf = ppoption = printpf = pypower_api
+
+def guid():
+    return hex(random.randint(0,2**63-1))[2:]
 
 np.set_printoptions(linewidth=np.inf,formatter={float:lambda x:f"{x:8.4f}"})
 
@@ -332,6 +336,7 @@ class Model:
         Returns:
         * dict: object data
         """
+        # print("Adding object",obj,"class",oclass,kwargs)
         if oclass not in self.data["classes"]:
             raise ValueError(f"class '{oclass}' not found")
         if obj in self.data["objects"]:
@@ -883,7 +888,7 @@ class Model:
         # update model
         for name,angle in result.items():
             n = int(abs(angle)//angle_limit) + 1
-            print("\nsplitting line",name,"in",n,"parts",file=sys.stderr)
+            # print("\nsplitting line",name,"in",n,"parts",file=sys.stderr)
             fbus,tbus = self.get_property(name,["fbus","tbus"])
             data = self.get_object(name)
             values = {
@@ -896,7 +901,7 @@ class Model:
             }
             # print("before",data,file=sys.stderr)
             self.set_property(name,**values)
-            print("after",data,file=sys.stderr)
+            # print("after",data,file=sys.stderr)
             # self.mod_object(name,data)
             
 
@@ -1136,6 +1141,7 @@ class Model:
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
             C = self.capacitors('installed',refresh)
+            R = self.condensers('installed',refresh)
             N = len(self.nodes(refresh))
 
             # normalize generation cost argument
@@ -1232,6 +1238,7 @@ class Model:
         # update model with new values
         new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value.round(3) + cp.abs(h).value.round(3)*1j - S) ]
         new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value - C)]
+        new_cons = [round(max(round(x,3)*puS,0),9) for x in (r.value - R)]
         if update_model:
 
             if verbose:
@@ -1244,7 +1251,7 @@ class Model:
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}    Bus       Pg       Qg      Pmax     Qmax     Qmin  ",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- -------- --------",file=verbose)
             for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_gens) if abs(x)>0}.items():
-                gen = f"gen:{len(self.data['objects'])}"
+                gen = f"gen_{guid()}"
                 n = int(self.data['objects'][bus]['bus_i'])-1
                 obj = self.add_object("gen",gen,
                     parent=bus,
@@ -1258,7 +1265,7 @@ class Model:
                     )
                 if verbose:
                     print(' ',' '.join([self.format(self.get_property(gen,x)) for x in ['parent','bus','Pg','Qg','Pmax','Qmax','Qmin']]),file=verbose)
-                self.add_object("gencost",f"gencost_{len(self.find('gencost'))}",
+                self.add_object("gencost",f"gencost_{guid()}",
                     parent=gen,
                     model="POLYNOMIAL",
                     costs="0.01,100,0", # TODO: where to get this data from (maybe from the lowest cost unit already present if any)
@@ -1269,18 +1276,41 @@ class Model:
                 print("\nNew capacitors:",file=verbose)
                 print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
                 print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
-            for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if abs(x)>0}.items():
-                shunt = f"shunt:{len(self.data['objects'])}"
+            for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if x > 0}.items():
+                shunt = f"cap_{guid()}"
                 self.add_object("shunt",shunt,
                     parent=bus,
+                    control_mode="DISCRETE_V",
                     voltage_high=voltage_high,
                     voltage_low=voltage_low,
-                    admittance=spec[1],
-                    steps_1=steps,
-                    admittance_1=admittance,
+                    admittance=spec[1]/2,
+                    steps_1=20,
+                    admittance_1=spec[1]/10,
                     )
                 if verbose:
                     print(' ',' '.join([self.format(self.get_property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
+
+            # add capacitors
+            if verbose:
+                print("\nNew condensers:",file=verbose)
+                print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
+                print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
+            for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_cons) if x < 0}.items():
+                shunt = f"con_{guid()}"
+                self.add_object("shunt",shunt,
+                    parent=bus,
+                    control_mode="CONTINUOUS_V",
+                    voltage_high=voltage_high,
+                    voltage_low=voltage_low,
+                    admittance=-spec[1],
+                    steps_1=0,
+                    admittance_1=-spec[1],
+                    )
+                if verbose:
+                    print(' ',' '.join([self.format(self.get_property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
+
+            # print(dict(zip(self.get_name("bus"),self.capacitors('installed'))))
+            # print(dict(zip(self.get_name("bus"),self.condensers('installed'))))
 
         status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:
@@ -1592,10 +1622,35 @@ if __name__ == "__main__":
 
     # optimization tests
     print("TEST: testing optimizations",file=sys.stderr,flush=True)
-    testEq(test.optimal_powerflow()["curtailment"].round(1).tolist(),[0.0, 0.0, 6.8, 6.8],"optimal powerflow failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500)["generation"].round(1).tolist() , [(26.4+0j), 0j, 0j, 0j], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500)["capacitors"].round(1).tolist() , [0,0,1.2,1.2], "optimal sizing failed")
-    testEq(test.optimal_sizing(refresh=True,gen_cost=np.array([100,500,1000,1000])+1000j,cap_cost={0:1000,1:500},con_cost=500,update_model=True)["additions"] , {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , "optimal sizing failed")
+    testEq(
+        test.optimal_powerflow()["curtailment"].round(1).tolist(),
+        [0.0, 0.0, 6.8, 6.8],
+        "optimal powerflow failed")
+    testEq(test.optimal_sizing(
+            refresh=True,
+            gen_cost=np.array([100,500,1000,1000])+1000j,
+            cap_cost={0:1000,1:500},
+            con_cost=500,
+            )["generation"].round(1).tolist(),
+        [(26.4+0j), 0j, 0j, 0j], 
+        "optimal sizing failed")
+    testEq(test.optimal_sizing(
+            refresh=True,
+            gen_cost=np.array([100,500,1000,1000])+1000j,
+            cap_cost={0:1000,1:500},
+            con_cost=500,
+            )["capacitors"].round(1).tolist(), 
+        [0,0,1.2,1.2], 
+        "optimal sizing failed")
+    testEq(test.optimal_sizing(
+            refresh=True,
+            gen_cost=np.array([100,500,1000,1000])+1000j,
+            cap_cost={0:1000,1:500},
+            con_cost=500,
+            update_model=True,
+            )["additions"], 
+        {'generation': {0: (16.4+0j)}, 'capacitors': {2: 1.2, 3: 1.2}} , 
+        "optimal sizing failed")
     testEq(test.optimal_powerflow(refresh=True)["curtailment"].tolist(),[0,0,0,0],"optimal powerflow failed")
     if runtime:
         test.data["globals"]["savefile"] = ""
@@ -1632,9 +1687,11 @@ if __name__ == "__main__":
                 test.optimal_powerflow(verbose=True,on_fail=lambda x: print(test.problem,file=sys.stderr))
                 failed += 1
             tested += 1
-            split = test.linesplit()
-            if split:
-                print(file,test.linesplit(update_model=True),file=sys.stderr)
+
+            # line splitting text
+            # split = test.linesplit()
+            # if split:
+            #     print(file,test.linesplit(update_model=True),file=sys.stderr)
 
             # OSP test
             testIn(test.optimal_sizing(refresh=True,angle_limit=10,update_model=True)["status"],["optimal","inaccurate/approximation"],f"{file} sizing failed")
