@@ -2056,12 +2056,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "933877664"
+			"value" : "-724224120"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "933877664"
+			"value" : "-724224120"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2765,7 +2765,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.186341, \"stime\" : 0.248070, \"maxrss\" : 39243776, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11834, \"majflt\" : 0, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 3325}"
+			"value" : "{\"utime\" : 1.172863, \"stime\" : 0.306499, \"maxrss\" : 39669760, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11702, \"majflt\" : 245, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 23, \"nivcsw\" : 12599}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -3000,7 +3000,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "701EA694B63CB99E550878A04BD06DD5",
+			"guid" : "1FEBDE11C18E25782DF2543CEAAFB804",
 			"flags" : "0x100",
 			"bus": "1",
 			"Pg": "20.0711 MW",
@@ -3035,7 +3035,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "10DBB7D1BAD5D1C0412BF1B131161EB3",
+			"guid" : "2AC8CCC8BD14684B658B67B893AB31E1",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -3048,7 +3048,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "3AED925EB0C5EB035B90C2D108AA75A1",
+			"guid" : "8EEDC1A07E5C5CC495B9C8B65670B29",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "0+0j MVA",
@@ -3085,7 +3085,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "729F3F4D602E5BBC1218CB4143B2F7C0",
+			"guid" : "6620A3EDF0BD0BB94BBC198548E92BBE",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -3122,7 +3122,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "1430622050C2E9AF755F0E1B503A4A74",
+			"guid" : "2C66D58C6F7BE3097D4464A96357E69D",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "10+1j MVA",
@@ -3159,7 +3159,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "5EE1158568512E2F7F39E631ECA77CCC",
+			"guid" : "675049C0D6D280D64940D22D6DB2830",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "10+1j MVA",
@@ -3196,7 +3196,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "66B861CC0790E7F63FDF027BD79392B8",
+			"guid" : "798BBC4F5DA3C48A755D371DBA999F5E",
 			"flags" : "0x100",
 			"from": "bus_0",
 			"to": "bus_1",
@@ -3222,7 +3222,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "13342135B25D7F9155B535C72F62FC85",
+			"guid" : "2D3772198E9DEB7A7113E68BB102571",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_2",
@@ -3248,7 +3248,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1458777923",
-			"guid" : "52760F7C350781BD787E767BC93774C5",
+			"guid" : "73923EA5102B0E8817C55D20057DCBD5",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_3",
@@ -3275,7 +3275,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "1221CAE7C373B127DEDED0F9AACB6D1",
+			"guid" : "406EDE4436AA2C2733C03B18CFD29F22",
 			"flags" : "0x100",
 			"generator": "100+10j $/MW",
 			"capacitor": "1000 $/MW"
@@ -3287,7 +3287,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823564440",
-			"guid" : "786B64D4F8FAA40D5260221C05E758E7",
+			"guid" : "79EB51A936448527643832DFF851E8F",
 			"flags" : "0x100",
 			"generator": "500+500j $/MW",
 			"capacitor": "100 $/MW"
@@ -3299,7 +3299,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1115438165",
-			"guid" : "7CA0E8446E3B51EC2DB3BEB26B63973F",
+			"guid" : "69029012BFE376F563F7137621171386",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
 			"capacitor": "10 $/MW"
@@ -3311,7 +3311,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1784484492",
-			"guid" : "279BCA696946272C110D63B0D9447B12",
+			"guid" : "C8113CCF9A4E6C7B8E156B12561857",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
 			"capacitor": "10 $/MW"
