@@ -121,7 +121,11 @@ def _(
                 cap_cost[_bus] = model.get_property(x, "capacitor")
                 con_cost[_bus] = model.get_property(x, "condenser")
             _showcost = pd.DataFrame(
-                {"Generator ($/MVA)": gen_cost, "Capacitor ($/MVAr)": cap_cost},
+                {
+                    "Generator ($/MVA)": gen_cost, 
+                    "Capacitor ($/MVAr)": cap_cost,
+                    "Condenser ($/MVAr)": con_cost,
+                },
                 bus_name,
             )
         else:
