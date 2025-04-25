@@ -10,6 +10,7 @@ def _(
     diagram,
     file,
     get_main,
+    help_view,
     input_data,
     mo,
     results_view,
@@ -24,7 +25,7 @@ def _(
             "Results": results_view,
             "Network": diagram,
             "Settings": settings_view,
-            "Help": mo.md(open("README.md", "r").read()),
+            "Help": help_view,
         },
         value=get_main(),
         on_change=set_main,
@@ -104,42 +105,33 @@ def _(
     model,
     np,
     pd,
-    sys,
 ):
     # Optimal sizing result
     if file.value:
-        gen_cost = gencost_ui.value
-        cap_cost = capcost_ui.value
-        con_cost = concost_ui.value
-        try:
-            _costdata = model.find("capacity", dict)
+        _costdata = model.find("capacity", dict)
+        if _costdata:
             gen_cost = np.zeros(N, dtype=complex)
             cap_cost = np.zeros(N)
             con_cost = np.zeros(N)
             bus_name = []
             for x, y in _costdata.items():
-                print(x,y)
                 bus_name.append(y["parent"])
                 _bus = model.get_property(y["parent"], "bus_i") - 1
                 gen_cost[_bus] = model.get_property(x, "generator")
                 cap_cost[_bus] = model.get_property(x, "capacitor")
                 con_cost[_bus] = model.get_property(x, "condenser")
             _showcost = pd.DataFrame(
-                {
-                    "Generator ($/MVA)": gen_cost,
-                    "Capacitor ($/MVAr)": cap_cost,
-                    "Condenser ($/MVAr)": con_cost,
-                },
+                {"Generator ($/MVA)": gen_cost, "Capacitor ($/MVAr)": cap_cost},
                 bus_name,
             )
-        except:
-            import traceback
-            e_type,e_value,e_trace = sys.exc_info()
-            traceback.print_tb(e_trace)
+        else:
+            gen_cost = gencost_ui.value
+            cap_cost = capcost_ui.value
+            con_cost = concost_ui.value
             _showcost = mo.vstack(
                 [
                     mo.md(
-                        f"No bus-level cost data found. Using the following settings instead ({e_type.__name__} {e_value}):"
+                        "No bus-level cost data found. Using the following settings instead:"
                     ),
                     gencost_ui,
                     capcost_ui,
@@ -150,19 +142,7 @@ def _(
         capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
     else:
         capacity_costs = mo.vstack([file, hint("open your JSON model")])
-    return (
-        bus_name,
-        cap_cost,
-        capacity_costs,
-        con_cost,
-        e_trace,
-        e_type,
-        e_value,
-        gen_cost,
-        traceback,
-        x,
-        y,
-    )
+    return bus_name, cap_cost, capacity_costs, con_cost, gen_cost, x, y
 
 
 @app.cell
@@ -222,7 +202,7 @@ def _(K, N, message, mo, np, pd, warning):
             return f"{prefix} {x.real:.2f}{x.imag:+.2f}j {suffix}"
         return f"{prefix} {x:.2f} {suffix}"
 
-    line_results = ["flows","angle","magnitude"]
+
     def results(model, result):
         if "curtailment" not in result:
             result["curtailment"] = np.zeros(N)
@@ -236,17 +216,23 @@ def _(K, N, message, mo, np, pd, warning):
                 pd.DataFrame(
                     data={
                         "Total": [
+                            format(abs(result["demand"].sum()), suffix="MW"),
                             format(abs(result["curtailment"].sum()), suffix="MW"),
                             format(
                                 sum([abs(x) for x in result["generation"]]),
                                 suffix="MVA",
                             ),
                             format(abs(result["capacitors"].sum()), suffix="MVAr"),
+                            format(abs(result["condensers"].sum()), suffix="MVAr"),
                             format(abs(result["flows"]).sum(), suffix="MVA"),
+                            "-",
                             "-",
                             "-",
                         ],
                         "Mean": [
+                            format(
+                                abs(result["demand"].sum()) / N, suffix="MW"
+                            ),
                             format(
                                 abs(result["curtailment"].sum()) / N, suffix="MW"
                             ),
@@ -257,10 +243,17 @@ def _(K, N, message, mo, np, pd, warning):
                             format(
                                 abs(result["capacitors"].sum()) / N, suffix="MVAr"
                             ),
+                            format(
+                                abs(result["condensers"].sum()) / N, suffix="MVAr"
+                            ),
                             format(abs(result["flows"]).mean(), suffix="MVA"),
                             format(
                                 abs(sum([x for x, y in result["voltage"]]) / N),
                                 suffix="kV",
+                            ),
+                            format(
+                                sum(result["magnitude"]) / K,
+                                suffix="pu.V",
                             ),
                             format(
                                 sum(result["angle"]) / K,
@@ -268,16 +261,22 @@ def _(K, N, message, mo, np, pd, warning):
                             ),
                         ],
                         "Minimum": [
+                            format(abs(result["demand"].min()), suffix="MW"),
                             format(abs(result["curtailment"].min()), suffix="MW"),
                             format(
                                 min([abs(x) for x in result["generation"]]),
                                 suffix="MVA",
                             ),
                             format(abs(result["capacitors"].min()), suffix="MVAr"),
+                            format(abs(result["condensers"].min()), suffix="MVAr"),
                             format(abs(result["flows"].min()), suffix="MVA"),
                             format(
                                 abs(min([x for x, y in result["voltage"]])),
                                 suffix="kV",
+                            ),
+                            format(
+                                min(result["magnitude"]),
+                                suffix="pu.V",
                             ),
                             format(
                                 min(result["angle"]),
@@ -285,16 +284,22 @@ def _(K, N, message, mo, np, pd, warning):
                             ),
                         ],
                         "Maximum": [
+                            format(abs(result["demand"].max()), suffix="MW"),
                             format(abs(result["curtailment"].max()), suffix="MW"),
                             format(
                                 max([abs(x) for x in result["generation"]]),
                                 suffix="MVA",
                             ),
                             format(abs(result["capacitors"].max()), suffix="MVAr"),
+                            format(abs(result["condensers"].max()), suffix="MVAr"),
                             format(abs(result["flows"].max()), suffix="MVA"),
                             format(
                                 abs(max([x for x, y in result["voltage"]])),
                                 suffix="kV",
+                            ),
+                            format(
+                                max(result["magnitude"]),
+                                suffix="deg",
                             ),
                             format(
                                 max(result["angle"]),
@@ -303,22 +308,25 @@ def _(K, N, message, mo, np, pd, warning):
                         ],
                     },
                     index=[
+                        "Demand",
                         "Curtailment",
                         "Generation",
                         "Capacitors",
+                        "Condensers",
                         "Line flow",
-                        "Voltage magnitude",
-                        "Voltage angle",
+                        "Voltage",
+                        "  Magnitude",
+                        "  Angle",
                     ],
                 ),
-                mo.md("# Network Data"),
+                mo.md("# "),
                 mo.hstack(
                     [
                         pd.DataFrame(
                             data={
                                 x: [format(z) for z in y.tolist()]
                                 for x, y in result.items()
-                                if x not in line_results and isinstance(y, np.ndarray) and len(y) == N
+                                if x in ["voltage","generation","capacitors","condensers","demand","curtailment"] and isinstance(y, np.ndarray) and len(y) == N
                             },
                             index=model.get_name("bus"),
                         ),
@@ -326,7 +334,7 @@ def _(K, N, message, mo, np, pd, warning):
                             data={
                                 x: [format(z) for z in y.tolist()]
                                 for x, y in result.items()
-                                if x in line_results and isinstance(y, np.ndarray) and len(y) == K
+                                if x in ["flows"] and isinstance(y, np.ndarray) and len(y) == K
                             },
                             index=model.get_name("branch"),
                         ),
@@ -334,7 +342,7 @@ def _(K, N, message, mo, np, pd, warning):
                 ),
             ],
         )
-    return format, line_results, results
+    return format, results
 
 
 @app.cell
@@ -409,7 +417,6 @@ def _(
 def _(
     angle_limit_ui,
     cap_cost,
-    con_cost,
     copy,
     demand_margin_ui,
     error,
@@ -446,7 +453,6 @@ def _(
                         osp_model.optimal_sizing(
                             gen_cost=gen_cost,
                             cap_cost=cap_cost,
-                            con_cost=con_cost,
                             refresh=True,
                             update_model=True,
                             verbose=verbose_ui.value,
@@ -700,7 +706,7 @@ def _(mo):
         start=0,
         stop=1000,
         step=10,
-        value=50,
+        value=100,
         show_value=True,
         debounce=True,
     )
@@ -709,7 +715,7 @@ def _(mo):
         start=0,
         stop=10000,
         step=100,
-        value=500,
+        value=1000,
         show_value=True,
         debounce=True,
     )
@@ -761,22 +767,20 @@ def _(file, mo, model, voltage_limit_ui):
         show_value=True,
     )
     showbusdata_ui = mo.ui.multiselect(
-        label="**Bus data**:",
+        label="**Show bus data**:",
         options=["id", "type", "area", "Vm", "Va", "zone"],
         value=None,
     )
     showarea_ui = mo.ui.dropdown(
-        label="**Area**:",
+        label="**Show area**:",
         options=sorted(model.get_areas()) if file.value else [],
     )
-    showloads_ui = mo.ui.checkbox(label="**Loads**")
-    showgens_ui = mo.ui.checkbox(label="**Generators**")
-    showcaps_ui = mo.ui.checkbox(label="**Capacitors/Condensers**")
+    showloads_ui = mo.ui.checkbox(label="**Show loads**")
+    showgens_ui = mo.ui.checkbox(label="**Show generators**")
     return (
         current_ui,
         showarea_ui,
         showbusdata_ui,
-        showcaps_ui,
         showgens_ui,
         showloads_ui,
         voltage_ui,
@@ -794,7 +798,6 @@ def _(
     mo,
     problem_ui,
     showbusdata_ui,
-    showcaps_ui,
     showgens_ui,
     showloads_ui,
     solver_options,
@@ -823,7 +826,7 @@ def _(
                 ]
             ),
             "**Network**": mo.vstack(
-                [voltage_ui, current_ui, showbusdata_ui, showloads_ui, showgens_ui, showcaps_ui]
+                [voltage_ui, current_ui, showbusdata_ui, showloads_ui, showgens_ui]
             ),
         },
         multiple=True,
@@ -879,7 +882,6 @@ def _(
     mo,
     showarea_ui,
     showbusdata_ui,
-    showcaps_ui,
     showgens_ui,
     showloads_ui,
     voltage_ui,
@@ -896,7 +898,6 @@ def _(
             showarea=showarea_ui.value,
             showloads=showloads_ui.value,
             showgens=showgens_ui.value,
-            showcaps=showcaps_ui.value,
         )
         diagram = mo.vstack(
             [
@@ -915,7 +916,6 @@ def _(
                         showbusdata_ui,
                         showloads_ui,
                         showgens_ui,
-                        showcaps_ui,
                     ],
                     align="start",
                 ),
@@ -925,6 +925,13 @@ def _(
     else:
         diagram = mo.vstack([file, hint("open your JSON model")])
     return (diagram,)
+
+
+@app.cell
+def _(gld, mo):
+    gld
+    help_view = mo.md(open("README.md", "r").read())
+    return (help_view,)
 
 
 @app.cell
