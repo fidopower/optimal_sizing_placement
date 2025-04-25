@@ -149,47 +149,59 @@ and parameters
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
 * $D \in \mathbb{C}^N$ is the total demand,
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
-* $S \in \mathbb{C}^N$ is the generation capacity, and
-* $C \in \mathbb{R}^N$ is the capacitor capacity.
+* $S \in \mathbb{C}^N$ is the generation capacity,
+* $C \in \mathbb{R}^N$ is the capacitor capacity, and
 * $R \in \mathbb{R}^N$ is the synchronous condenser capacity.
 
 ## Optimal Sizing and Placement
 
-The OSP is the solution to the following convex optimization problem for a
-network having $N$ busses and $M$ branches.
+Optimal sizing and placement (OSP) seeks to identify the lowest cost
+configuration of generators, capacitors, and condensers that guarantees
+demand can be met. The OSP is the solution to the following convex
+optimization problem for a network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c}{\min} & P g + Q |h| + R |c| + S |r|
+    \underset{x,y,g,h,c}{\min} & P \sqrt{g^2+h^2} + Q |h| + \frac12 (R+S) |c| + \frac12(R-S) c
 \\
     \textrm{subject to} 
-    & \Re(G) x - g + c + \Re(D)(1+E) = 0 & \textrm{real power flow balance} \\
-    & \Im(G) y - h - c + \Im(D)(1+E) = 0 & \textrm{reactive power flow balance} \\
+    & \Re(G) x - g + c + (\Re D)(1+E) = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + (\Im D)(1+E) = 0 & \textrm{reactive power flow balance} \\
     & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
     & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
     & |Ix| \le F & \textrm{line flow constraints} \\
-    & g \ge 0 & \textrm{real generation power constraint} \\
-    & c \ge 0 & \textrm{capacity setting constraint} \\
+    & |h| < 0.2 g & \textrm{constrain reactive power generation to 20\% of real power}
 \end{array}$
 
 with variables
 
 * $x \in \mathbb{R}^N$ is the voltage angle,
 * $y \in \mathbb{R}^N$ is the voltage magnitude,
-* $g \in \mathbb{R}^N$ is the generator real power dispatch,
-* $h \in \mathbb{R}^N$ is the generator reactive power dispatch, and
-* $c \in \mathbb{R}^N$ is the capacitor settings
+* $g \in \mathbb{R}^N$ is the generator real power capacity,
+* $h \in \mathbb{R}^N$ is the generator reactive power capacity, and
+* $c \in \mathbb{R}^N$ is the capacitor/condenser size
 
 and parameters
 
-* $P \in \mathbb{R}^N$ is the generation price,
-* $\hat P\in \mathbb{R}$ is the maximum generation price,
+* $P \in \mathbb{R}^N$ is the generation energy price,
+* $Q \in \mathbb{R}^N$ is the price of reactive power control (not including energy),
+* $R \in \mathbb{R}^N$ is the price of installing capacitors,
+* $S \in \mathbb{R}^N$ is the price of installing synchronous condensers, and
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
 * $E \in \mathbb{R}$ is the demand safety margin,
 * $D \in \mathbb{C}^N$ is the total demand,
-* $Q \in \mathbb{R}^N$ is the price of capacitors,
-* $S \in \mathbb{R}^N$ is the price of synchronous condensers, and
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix.
+
+An additional constraint can be imposed if we wish to limit where generators can be placed to only locations where generators exist, and limit how much generation is located there to some factor, say 2x existing existing capacity, e.g.,
+
+$\qquad 0 \le \sqrt{g^2+h^2} \le 2 \Re H \qquad \textrm{generation total power constraint}$
+
+where
+
+* $H \in \mathbb{R}^N$ is the intalled generation capacity.
+
+However, this constraint can result in an infeasible problem, and should not be included if feasibility must be assured.
+
 
 ---- 
 

@@ -10,6 +10,7 @@ def _(
     diagram,
     file,
     get_main,
+    help_view,
     input_data,
     mo,
     results_view,
@@ -24,7 +25,7 @@ def _(
             "Results": results_view,
             "Network": diagram,
             "Settings": settings_view,
-            "Help": mo.md(open("README.md", "r").read()),
+            "Help": help_view,
         },
         value=get_main(),
         on_change=set_main,
@@ -102,7 +103,6 @@ def _(
     hint,
     mo,
     model,
-    no,
     np,
     pd,
 ):
@@ -112,7 +112,7 @@ def _(
         if _costdata:
             gen_cost = np.zeros(N, dtype=complex)
             cap_cost = np.zeros(N)
-            con_cost = no.zeros(N)
+            con_cost = np.zeros(N)
             bus_name = []
             for x, y in _costdata.items():
                 bus_name.append(y["parent"])
@@ -197,10 +197,10 @@ def _(K, N, message, mo, np, pd, warning):
     # Result formatting
     def format(x, prefix="", suffix=""):
         if isinstance(x, list):
-            return f"{prefix} {x[0]:.1f}<{x[1]:.1f} {suffix}"
+            return f"{prefix} {x[0]:.2f}<{x[1]:.2f} {suffix}"
         if isinstance(x, complex):
-            return f"{prefix} {x.real:.1f}{x.imag:+.1f}j {suffix}"
-        return f"{prefix} {x:.1f} {suffix}"
+            return f"{prefix} {x.real:.2f}{x.imag:+.2f}j {suffix}"
+        return f"{prefix} {x:.2f} {suffix}"
 
 
     def results(model, result):
@@ -216,6 +216,7 @@ def _(K, N, message, mo, np, pd, warning):
                 pd.DataFrame(
                     data={
                         "Total": [
+                            format(abs(result["demand"].sum()), suffix="MW"),
                             format(abs(result["curtailment"].sum()), suffix="MW"),
                             format(
                                 sum([abs(x) for x in result["generation"]]),
@@ -226,8 +227,12 @@ def _(K, N, message, mo, np, pd, warning):
                             format(abs(result["flows"]).sum(), suffix="MVA"),
                             "-",
                             "-",
+                            "-",
                         ],
                         "Mean": [
+                            format(
+                                abs(result["demand"].sum()) / N, suffix="MW"
+                            ),
                             format(
                                 abs(result["curtailment"].sum()) / N, suffix="MW"
                             ),
@@ -247,11 +252,16 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                sum(result["angles"]) / K,
+                                sum(result["magnitude"]) / K,
+                                suffix="pu.V",
+                            ),
+                            format(
+                                sum(result["angle"]) / K,
                                 suffix="deg",
                             ),
                         ],
                         "Minimum": [
+                            format(abs(result["demand"].min()), suffix="MW"),
                             format(abs(result["curtailment"].min()), suffix="MW"),
                             format(
                                 min([abs(x) for x in result["generation"]]),
@@ -265,11 +275,16 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                min(result["angles"]),
+                                min(result["magnitude"]),
+                                suffix="pu.V",
+                            ),
+                            format(
+                                min(result["angle"]),
                                 suffix="deg",
                             ),
                         ],
                         "Maximum": [
+                            format(abs(result["demand"].max()), suffix="MW"),
                             format(abs(result["curtailment"].max()), suffix="MW"),
                             format(
                                 max([abs(x) for x in result["generation"]]),
@@ -283,19 +298,25 @@ def _(K, N, message, mo, np, pd, warning):
                                 suffix="kV",
                             ),
                             format(
-                                max(result["angles"]),
+                                max(result["magnitude"]),
+                                suffix="deg",
+                            ),
+                            format(
+                                max(result["angle"]),
                                 suffix="deg",
                             ),
                         ],
                     },
                     index=[
+                        "Demand",
                         "Curtailment",
                         "Generation",
                         "Capacitors",
                         "Condensers",
                         "Line flow",
-                        "Voltage magnitude",
-                        "Voltage angle",
+                        "Voltage",
+                        "  Magnitude",
+                        "  Angle",
                     ],
                 ),
                 mo.md("# "),
@@ -305,7 +326,7 @@ def _(K, N, message, mo, np, pd, warning):
                             data={
                                 x: [format(z) for z in y.tolist()]
                                 for x, y in result.items()
-                                if x in ["voltage","generation","capacitors","condensers"] and isinstance(y, np.ndarray) and len(y) == N
+                                if x in ["voltage","generation","capacitors","condensers","demand","curtailment"] and isinstance(y, np.ndarray) and len(y) == N
                             },
                             index=model.get_name("bus"),
                         ),
@@ -904,6 +925,13 @@ def _(
     else:
         diagram = mo.vstack([file, hint("open your JSON model")])
     return (diagram,)
+
+
+@app.cell
+def _(gld, mo):
+    gld
+    help_view = mo.md(open("README.md", "r").read())
+    return (help_view,)
 
 
 @app.cell
