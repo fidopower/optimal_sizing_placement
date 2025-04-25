@@ -1817,7 +1817,7 @@
 			}
 		},
 		"capacity" : {
-			"object_size" : "32",
+			"object_size" : "40",
 			"trl" : "0",
 			"profiler.numobjs" : "4",
 			"profiler.clocks" : "0",
@@ -1832,7 +1832,13 @@
 				"type" : "double",
 				"access" : "PUBLIC",
 				"flags" : "EXTENDED",
-				"unit" : "$/MW"
+				"unit" : "$/MVAr"
+			},
+			"condenser" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "EXTENDED",
+				"unit" : "$/MVAr"
 			}
 		}
 	},
@@ -1870,7 +1876,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250423-develop_fix_pypower_shunt-darwin_23-x86_64/bin/gridlabd.bin /Users/david/GitHub/fidopower/optimal_sizing_placement/example.glm"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -2036,7 +2042,7 @@
 		"execdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250423-develop_fix_pypower_shunt-darwin_23-x86_64/bin"
 		},
 		"strictnames" : {
 			"type" : "bool",
@@ -2056,12 +2062,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1249477047"
+			"value" : "-1818091751"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1249477047"
+			"value" : "-1818091751"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2502,7 +2508,7 @@
 		"exename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.14-250423-develop_fix_pypower_shunt-darwin_23-x86_64/bin/gridlabd.bin"
 		},
 		"wget_options" : {
 			"type" : "char1024",
@@ -2765,7 +2771,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{\"utime\" : 1.195682, \"stime\" : 0.278273, \"maxrss\" : 39665664, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 11736, \"majflt\" : 203, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 18, \"nivcsw\" : 6302}"
+			"value" : "{\"utime\" : 1.240869, \"stime\" : 0.334130, \"maxrss\" : 39481344, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 9631, \"majflt\" : 2182, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 427, \"nivcsw\" : 9491}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -3000,7 +3006,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "39D142247173DC4829B3E4D2634C1B54",
+			"guid" : "327643DAEA943D544CB55EF72723DAA",
 			"flags" : "0x100",
 			"bus": "1",
 			"Pg": "20.0711 MW",
@@ -3035,7 +3041,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "4DB0611165CBBD583DEB4B786ABFB71A",
+			"guid" : "76602DB2B014028D767B92B9354A26B8",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -3048,7 +3054,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "736258FE6E1C67E96E14EC06C32CAC7C",
+			"guid" : "3FF1493AB3E1C8A918BD9C52AA50CAB3",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "0+0j MVA",
@@ -3085,7 +3091,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "224F7668A2EEAD4A18082E9F4DBE7C50",
+			"guid" : "6E6DBD98D8BBF2F97A8639D854F8B1FF",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -3122,7 +3128,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "4EC55976E7F85FAB286BAD1AF74A8010",
+			"guid" : "76D815A4960E9EB4637E03F6015324D",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "10+1j MVA",
@@ -3159,7 +3165,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "77CF9BFCB9AC3F0B4BB19D1E50B5736A",
+			"guid" : "7FBAF4AC755635EF352F56CCD7FE4367",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "10+1j MVA",
@@ -3196,7 +3202,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "45618C3C895911F6584B3CFD9F64477A",
+			"guid" : "435324ECEA57634540B29E227F25BAAF",
 			"flags" : "0x100",
 			"from": "bus_0",
 			"to": "bus_1",
@@ -3222,7 +3228,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "19B81D3317D07073344FAF506351548E",
+			"guid" : "55853C26D317F2F95A6EF8199DE7DAE7",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_2",
@@ -3248,7 +3254,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1458777923",
-			"guid" : "5CA0F27D1AC61B81A0DDB02B414B4EF",
+			"guid" : "58BB9EFBE4F0FC205CCE2B2306D3881F",
 			"flags" : "0x100",
 			"from": "bus_1",
 			"to": "bus_3",
@@ -3275,10 +3281,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "15B5E545A5162EC117E37F679A8DE47A",
+			"guid" : "6B0657668358FB505971F798A057EE95",
 			"flags" : "0x100",
 			"generator": "100+10j $/MW",
-			"capacitor": "1000 $/MW"
+			"capacitor": "1000 $/MVAr",
+			"condenser": "500 $/MVAr"
 		},
 		"capacity:10" : {
 			"id" : "10",
@@ -3287,10 +3294,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823564440",
-			"guid" : "26F2FF071C335F0438B83651B09CFDEC",
+			"guid" : "22B3FEFAF597FA5971F031661CB90830",
 			"flags" : "0x100",
 			"generator": "500+500j $/MW",
-			"capacitor": "100 $/MW"
+			"capacitor": "100 $/MVAr",
+			"condenser": "500 $/MVAr"
 		},
 		"capacity:11" : {
 			"id" : "11",
@@ -3299,10 +3307,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1115438165",
-			"guid" : "2F4A9E1CBBF3BEAE2B7817C9D466378D",
+			"guid" : "4F96E939A846D3A17D3F0CC6218C3073",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
-			"capacitor": "10 $/MW"
+			"capacitor": "10 $/MVAr",
+			"condenser": "500 $/MVAr"
 		},
 		"capacity:12" : {
 			"id" : "12",
@@ -3311,10 +3320,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1784484492",
-			"guid" : "48574398BAB599BF40F69D2DA0A78B45",
+			"guid" : "644FC6A91FEBBA0121E5E84EF75AE65D",
 			"flags" : "0x100",
 			"generator": "1000+1000j $/MW",
-			"capacitor": "10 $/MW"
+			"capacitor": "10 $/MVAr",
+			"condenser": "500 $/MVAr"
 		}
 	}
 }
