@@ -1171,7 +1171,7 @@ class Model:
                 "status": status,
             }
 
-        return self.set_result("optimal_sizing",result)
+        return self.set_result("optimal_powerflow",result) #NOTE: original was - self.set_result("optimal_sizing",result)
 
     def optimal_sizing(self,            
             refresh:bool=False,
