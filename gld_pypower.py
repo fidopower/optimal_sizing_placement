@@ -988,7 +988,10 @@ class Model:
                 steps_1=10,
                 admittance_1=spec[1]/10,
                 )
-            self.set_property(bus,Bs=self.get_property(bus,"Bs")+spec[1])
+            
+            #TODO: Test this and then remove
+            #self.set_property(bus,Bs=self.get_property(bus,"Bs")+spec[1])
+            self.set_property(bus,Qd=self.get_property(bus,"Qd")+spec[1])
             # print("New shunt:",shunt,self.data["objects"][shunt])
             if verbose:
                 print(' ',' '.join([self.format(self.get_property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
@@ -998,6 +1001,7 @@ class Model:
             print("\nNew condensers:",file=verbose)
             print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
             print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
+        
         for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if x<0}.items():
             shunt = f"S_{guid()}"
             self.add_object("shunt",shunt,
@@ -1008,7 +1012,10 @@ class Model:
                 steps_1=0,
                 admittance_1=spec[1]
                 )
-            self.set_property(bus,Bs=self.get_property(bus,"Bs")+spec[1])
+            
+            #TODO: Remove 
+            #self.set_property(bus,Bs=self.get_property(bus,"Bs")+spec[1])
+            self.set_property(bus,Qd=self.get_property(bus,"Qd")+spec[1])
             # print("New shunt:",shunt,self.data["objects"][shunt])
             if verbose:
                 print(' ',' '.join([self.format(self.get_property(shunt,x)) for x in ['parent','voltage_high','voltage_low','admittance','steps_1','admittance_1']]),file=verbose)
