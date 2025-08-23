@@ -17,7 +17,9 @@ def _(
     set_main,
     settings_view,
 ):
-    # Main UI
+    #Main UI
+
+
     main_tab = mo.ui.tabs(
         {
             "Model": mo.vstack([file, input_data]),
@@ -31,6 +33,7 @@ def _(
         on_change=set_main,
     )
     main_tab
+
     return
 
 
@@ -81,7 +84,10 @@ def _(file, header_ui, hint, mo, model, os, pd):
             ],
         )
     else:
+    
         input_data = hint("open your JSON model")
+   
+
     return (input_data,)
 
 
@@ -383,7 +389,8 @@ def _(
                     _result = results(
                         model,
                         model.optimal_powerflow(
-                            verbose=verbose_ui.value,
+                            #verbose=verbose_ui.value,
+                            verbose= True,
                             curtailment_price=curtailment_ui.value,
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
@@ -962,7 +969,7 @@ def _():
     else:
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
-    import gld_pypower as gld
+    import gld_pypower_corrected as gld
     return copy, gld, json, mo, np, os, pd
 
 
