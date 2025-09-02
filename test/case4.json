@@ -2047,7 +2047,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin -C py_case4.glm -o case4.json"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin py_case4.glm -o case4.json"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -2233,12 +2233,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1913730682"
+			"value" : "493496348"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1913730682"
+			"value" : "493496348"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2345,7 +2345,7 @@
 		"compileonly" : {
 			"type" : "bool",
 			"access" : "PROTECTED",
-			"value" : "TRUE"
+			"value" : "FALSE"
 		},
 		"initializeonly" : {
 			"type" : "bool",
@@ -2458,7 +2458,7 @@
 				"LOCKED" : "0x4"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "DONE"
 		},
 		"pauseat" : {
 			"type" : "timestamp",
@@ -2619,7 +2619,7 @@
 				"ERROR" : "0xff"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "EVENT"
 		},
 		"deltamode_allowed" : {
 			"type" : "bool",
@@ -2942,7 +2942,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{}"
+			"value" : "{\"utime\" : 1.166191, \"stime\" : 0.312935, \"maxrss\" : 39522304, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12639, \"majflt\" : 0, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 14923}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -3124,7 +3124,7 @@
 				"INIT" : "0x0"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "SUCCESS"
 		},
 		"pypower::enforce_q_limits" : {
 			"type" : "bool",
@@ -3149,12 +3149,12 @@
 		"pypower::total_loss" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0 MW"
+			"value" : "+4.7655 MW"
 		},
 		"pypower::generation_shortfall" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0 MW"
+			"value" : "+186.809 MW"
 		},
 		"pypower::with_emissions" : {
 			"type" : "bool",
@@ -3196,7 +3196,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "4188AFD2107FA8B6424FD9EADCEFA6D",
+			"guid" : "56A45B81D9435CB53891EAFDF59C7570",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "50+30.99j MVA",
@@ -3233,7 +3233,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "760DDF449697B0F21E9F4356B24698FC",
+			"guid" : "3258BFDFE3F2AC6E76C82C885A996575",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "170+105.35j MVA",
@@ -3244,8 +3244,8 @@
 			"Bs": "0 MVAr",
 			"area": "1",
 			"baseKV": "230 kV",
-			"Vm": "1 pu.kV",
-			"Va": "0 deg",
+			"Vm": "0.982421 pu.kV",
+			"Va": "-0.976122 deg",
 			"zone": "1",
 			"Vmax": "1.1 pu.kV",
 			"Vmin": "0.9 pu.kV",
@@ -3270,7 +3270,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "3630AD2BF8245BBC71B6A9BFC9B85234",
+			"guid" : "6A1A1D8E17D62CE95137E1218C69A9F3",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "200+123.94j MVA",
@@ -3281,8 +3281,8 @@
 			"Bs": "0 MVAr",
 			"area": "1",
 			"baseKV": "230 kV",
-			"Vm": "1 pu.kV",
-			"Va": "0 deg",
+			"Vm": "0.969005 pu.kV",
+			"Va": "-1.87218 deg",
 			"zone": "1",
 			"Vmax": "1.1 pu.kV",
 			"Vmin": "0.9 pu.kV",
@@ -3307,7 +3307,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "1A7D580D99947970BF52A1C0AFC044B",
+			"guid" : "3E430EDD233AAF0E62BF021DE2A499F4",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "80+49.58j MVA",
@@ -3318,8 +3318,8 @@
 			"Bs": "0 MVAr",
 			"area": "1",
 			"baseKV": "230 kV",
-			"Vm": "1 pu.kV",
-			"Va": "0 deg",
+			"Vm": "1.02 pu.kV",
+			"Va": "1.52306 deg",
 			"zone": "1",
 			"Vmax": "1.1 pu.kV",
 			"Vmin": "0.9 pu.kV",
@@ -3345,11 +3345,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "6A1DA3A44816C01DFFE5405F1421BF2",
+			"guid" : "5760D6B9A197A7F14E180CA3E4B328D0",
 			"flags" : "0x100",
 			"bus": "4",
 			"Pg": "318 MW",
-			"Qg": "0 MVAr",
+			"Qg": "181.43 MVAr",
 			"Qmax": "100 MVAr",
 			"Qmin": "-100 MVAr",
 			"Vg": "1.02 pu.kV",
@@ -3380,11 +3380,11 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "49418B2250EF00681D8B8472D697AF58",
+			"guid" : "2EF58BD329B76E177200AFAC44440458",
 			"flags" : "0x100",
 			"bus": "1",
-			"Pg": "0 MW",
-			"Qg": "0 MVAr",
+			"Pg": "186.809 MW",
+			"Qg": "114.501 MVAr",
 			"Qmax": "100 MVAr",
 			"Qmin": "-100 MVAr",
 			"Vg": "1 pu.kV",
@@ -3414,7 +3414,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "4ED01AFAAB8406467C29C5BE217C60B",
+			"guid" : "6875D29C9D52AAC93D0B454D09253D58",
 			"flags" : "0x100",
 			"from": "pp_bus_1",
 			"to": "pp_bus_2",
@@ -3431,8 +3431,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "1724.08-547.267j A",
+			"loss": "0.168172 MW"
 		},
 		"pp_branch_2" : {
 			"id" : "7",
@@ -3440,7 +3440,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "35B6AD2AA33C6F3A74EDEBF596558C84",
+			"guid" : "6118F454C0A7C1643E44F6527EAC6B09",
 			"flags" : "0x100",
 			"from": "pp_bus_1",
 			"to": "pp_bus_3",
@@ -3457,8 +3457,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "3057.43-2849.91j A",
+			"loss": "0.662748 MW"
 		},
 		"pp_branch_3" : {
 			"id" : "8",
@@ -3466,7 +3466,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1458777923",
-			"guid" : "72219D8F9FFFEFF21EC4B60F386D3E00",
+			"guid" : "3431E7691C5646AB2BD85CDDF58A4DD",
 			"flags" : "0x100",
 			"from": "pp_bus_2",
 			"to": "pp_bus_4",
@@ -3483,8 +3483,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-4477.53-2244.2j A",
+			"loss": "0.951629 MW"
 		},
 		"pp_branch_4" : {
 			"id" : "9",
@@ -3492,7 +3492,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "7040A9303C65961E4D662C787438886B",
+			"guid" : "5097B388C86CF5844B202F5647267101",
 			"flags" : "0x100",
 			"from": "pp_bus_3",
 			"to": "pp_bus_4",
@@ -3509,8 +3509,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-3040.99-79.3995j A",
+			"loss": "0.600204 MW"
 		}
 	}
 }

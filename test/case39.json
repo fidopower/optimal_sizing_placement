@@ -2047,7 +2047,7 @@
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin -C py_case39.glm -o case39.json"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin py_case39.glm -o case39.json"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -2233,12 +2233,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1788092304"
+			"value" : "1188474371"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "1788092304"
+			"value" : "1188474371"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2345,7 +2345,7 @@
 		"compileonly" : {
 			"type" : "bool",
 			"access" : "PROTECTED",
-			"value" : "TRUE"
+			"value" : "FALSE"
 		},
 		"initializeonly" : {
 			"type" : "bool",
@@ -2458,7 +2458,7 @@
 				"LOCKED" : "0x4"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "DONE"
 		},
 		"pauseat" : {
 			"type" : "timestamp",
@@ -2619,7 +2619,7 @@
 				"ERROR" : "0xff"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "EVENT"
 		},
 		"deltamode_allowed" : {
 			"type" : "bool",
@@ -2942,7 +2942,7 @@
 		"rusage" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "{}"
+			"value" : "{\"utime\" : 1.178556, \"stime\" : 0.303791, \"maxrss\" : 40120320, \"ixrss\" : 0, \"idrss\" : 0, \"isrss\" : 0, \"minflt\" : 12805, \"majflt\" : 0, \"nswap\" : 0, \"inblock\" : 0, \"oublock\" : 0, \"msgsnd\" : 0, \"msgrcv\" : 0, \"nsignals\" : 0, \"nvcsw\" : 0, \"nivcsw\" : 12861}"
 		},
 		"echo" : {
 			"type" : "bool",
@@ -3124,7 +3124,7 @@
 				"INIT" : "0x0"
 			},
 			"access" : "PUBLIC",
-			"value" : "INIT"
+			"value" : "SUCCESS"
 		},
 		"pypower::enforce_q_limits" : {
 			"type" : "bool",
@@ -3149,12 +3149,12 @@
 		"pypower::total_loss" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0 MW"
+			"value" : "+103.909 MW"
 		},
 		"pypower::generation_shortfall" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0 MW"
+			"value" : "+31.8711 MW"
 		},
 		"pypower::with_emissions" : {
 			"type" : "bool",
@@ -3196,7 +3196,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "1EA10F81C247B27C5FBF18E1258FE381",
+			"guid" : "56A45B81D9435CB53891EAFDF59C7570",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "97.6+44.2j MVA",
@@ -3233,7 +3233,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "45397F548D5EF53162849F173736E674",
+			"guid" : "3258BFDFE3F2AC6E76C82C885A996575",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -3270,7 +3270,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "759D53A596A7B5725F9F68AF8F9277E8",
+			"guid" : "6A1A1D8E17D62CE95137E1218C69A9F3",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "322+2.4j MVA",
@@ -3307,7 +3307,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "38C06EA370B9C33473ADE65D0187430B",
+			"guid" : "3E430EDD233AAF0E62BF021DE2A499F4",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "500+184j MVA",
@@ -3344,7 +3344,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "34A78C9FD6B929377EAEF3ACBAD4AB03",
+			"guid" : "5760D6B9A197A7F14E180CA3E4B328D0",
 			"flags" : "0x100",
 			"bus_i": "5",
 			"S": "0+0j MVA",
@@ -3381,7 +3381,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "70B5DAE5A67CD1C37A0B9BC6D5E73F45",
+			"guid" : "2EF58BD329B76E177200AFAC44440458",
 			"flags" : "0x100",
 			"bus_i": "6",
 			"S": "0+0j MVA",
@@ -3418,7 +3418,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "2D442BB916F86C3421B88753875CD6B",
+			"guid" : "6875D29C9D52AAC93D0B454D09253D58",
 			"flags" : "0x100",
 			"bus_i": "7",
 			"S": "233.8+84j MVA",
@@ -3455,7 +3455,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "215405DE7B0FA84F25FB3F0A328C5992",
+			"guid" : "6118F454C0A7C1643E44F6527EAC6B09",
 			"flags" : "0x100",
 			"bus_i": "8",
 			"S": "522+176.6j MVA",
@@ -3492,7 +3492,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1458777923",
-			"guid" : "3F23AE23E413E0DF2267C2905894608B",
+			"guid" : "3431E7691C5646AB2BD85CDDF58A4DD",
 			"flags" : "0x100",
 			"bus_i": "9",
 			"S": "6.5-66.6j MVA",
@@ -3529,7 +3529,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "72381597E909FE406E5B86BDDB7868D1",
+			"guid" : "5097B388C86CF5844B202F5647267101",
 			"flags" : "0x100",
 			"bus_i": "10",
 			"S": "0+0j MVA",
@@ -3566,7 +3566,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823564440",
-			"guid" : "6DDE70AD43DB456E7244D34329EF0848",
+			"guid" : "42D3016BFAA9AEF2677C41CB2108C595",
 			"flags" : "0x100",
 			"bus_i": "11",
 			"S": "0+0j MVA",
@@ -3603,7 +3603,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1115438165",
-			"guid" : "54B1C81866A93985646BCAFAEDE8AB54",
+			"guid" : "46A81CCF0ECC31585250AD4D10372C14",
 			"flags" : "0x100",
 			"bus_i": "12",
 			"S": "8.53+88j MVA",
@@ -3640,7 +3640,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1784484492",
-			"guid" : "FF8338D2F73CA9E17773E40812C67A1",
+			"guid" : "4991B4B93B53FA25370B1A12416BA429",
 			"flags" : "0x100",
 			"bus_i": "13",
 			"S": "0+0j MVA",
@@ -3677,7 +3677,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "74243042",
-			"guid" : "342D6B34DB508F339AC443FBBECF427",
+			"guid" : "6E2BC5B411D87A22B0FCB361D00388D",
 			"flags" : "0x100",
 			"bus_i": "14",
 			"S": "0+0j MVA",
@@ -3714,7 +3714,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "114807987",
-			"guid" : "446EE91DC859A5C675B84A738898066E",
+			"guid" : "D2674CC2093CA55436D0EA97E4D080D",
 			"flags" : "0x100",
 			"bus_i": "15",
 			"S": "320+153j MVA",
@@ -3751,7 +3751,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1137522503",
-			"guid" : "6091D83E3D10A4727C3DE13EFD71280",
+			"guid" : "B4D5DD83A95330C1C61C9A6E06E7A34",
 			"flags" : "0x100",
 			"bus_i": "16",
 			"S": "329+32.3j MVA",
@@ -3788,7 +3788,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1441282327",
-			"guid" : "13A77298D4889DC86B8EE6B4577B5523",
+			"guid" : "7B671229401F6A771ABC4EEE5D7ECD87",
 			"flags" : "0x100",
 			"bus_i": "17",
 			"S": "0+0j MVA",
@@ -3825,7 +3825,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16531729",
-			"guid" : "129F33D0561F3C562A555DD377BE134E",
+			"guid" : "5F6C6909EE8B313E6A6499DCE86BEA9A",
 			"flags" : "0x100",
 			"bus_i": "18",
 			"S": "158+30j MVA",
@@ -3862,7 +3862,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823378840",
-			"guid" : "44D669E5A7D6C99F4136C29611988A04",
+			"guid" : "BCD1DF6D377196A3FF2C7CBD5E8450A",
 			"flags" : "0x100",
 			"bus_i": "19",
 			"S": "0+0j MVA",
@@ -3899,7 +3899,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "143542612",
-			"guid" : "6A50318332540DA27AEA9D77B90D0F44",
+			"guid" : "2A5534602EA33F166EA4B6E6953A7E8F",
 			"flags" : "0x100",
 			"bus_i": "20",
 			"S": "680+103j MVA",
@@ -3936,7 +3936,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "896544303",
-			"guid" : "1D55CF47758762B8697B5B200ED116D8",
+			"guid" : "770CD3A3840CABB136BC8FBB64F3A191",
 			"flags" : "0x100",
 			"bus_i": "21",
 			"S": "274+115j MVA",
@@ -3973,7 +3973,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1474833169",
-			"guid" : "47389BB4B4C3A73C5ECC9A408BE92475",
+			"guid" : "77B9EDAC8D2FCAEBB652CBDDCA4D430",
 			"flags" : "0x100",
 			"bus_i": "22",
 			"S": "0+0j MVA",
@@ -4010,7 +4010,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1264817709",
-			"guid" : "6A095B2789BF6D3A749DBB898A829968",
+			"guid" : "559A287FF38C9161324B50FE4F99FCEE",
 			"flags" : "0x100",
 			"bus_i": "23",
 			"S": "247.5+84.6j MVA",
@@ -4047,7 +4047,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1998097157",
-			"guid" : "5AE7DF4DD507960616E6178E7EC8DEA7",
+			"guid" : "4FFCB8B39B53461349F8ED6A594524FC",
 			"flags" : "0x100",
 			"bus_i": "24",
 			"S": "308.6-92.2j MVA",
@@ -4084,7 +4084,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1817129560",
-			"guid" : "32C333D2EB116F30152DB1FB5B12F847",
+			"guid" : "3549A167402DE65C3724D1AE4FDCA8C2",
 			"flags" : "0x100",
 			"bus_i": "25",
 			"S": "224+47.2j MVA",
@@ -4121,7 +4121,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1131570933",
-			"guid" : "55455B7304FD92791A8958DE1E9638B",
+			"guid" : "2F3DA3C7C352509874099425E5BD7C25",
 			"flags" : "0x100",
 			"bus_i": "26",
 			"S": "139+17j MVA",
@@ -4158,7 +4158,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "197493099",
-			"guid" : "779CC73CE3F89B8C16ED385B3170420A",
+			"guid" : "35CD8E5AC4C953647FECB9E8EDDBB9CC",
 			"flags" : "0x100",
 			"bus_i": "27",
 			"S": "281+75.5j MVA",
@@ -4195,7 +4195,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1404280278",
-			"guid" : "AF435513E2A14527EE05BFE1ACD4522",
+			"guid" : "6B6E127DFEC8D24677EDB67303F9BA49",
 			"flags" : "0x100",
 			"bus_i": "28",
 			"S": "206+27.6j MVA",
@@ -4232,7 +4232,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "893351816",
-			"guid" : "585688BBF458F60C27B2D0FBE09B2290",
+			"guid" : "3C564C1F555242E9753FB7E4C51AADB5",
 			"flags" : "0x100",
 			"bus_i": "29",
 			"S": "283.5+26.9j MVA",
@@ -4269,7 +4269,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1505795335",
-			"guid" : "75B06FD7372ACBBF55A158FCBFBD9ACF",
+			"guid" : "195D3E32A8F170EF67F6E34850790D20",
 			"flags" : "0x100",
 			"bus_i": "30",
 			"S": "0+0j MVA",
@@ -4306,7 +4306,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1954899097",
-			"guid" : "5C052C4AAF40ED7524497642D095D89",
+			"guid" : "4E172BDE36DFE4828782215F5DC02D7",
 			"flags" : "0x100",
 			"bus_i": "31",
 			"S": "9.2+4.6j MVA",
@@ -4343,7 +4343,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1636807826",
-			"guid" : "6EAF0776414DDE117C1E93AFFB4F4E61",
+			"guid" : "C86CC8ACE6022C64C070224187E36D",
 			"flags" : "0x100",
 			"bus_i": "32",
 			"S": "0+0j MVA",
@@ -4380,7 +4380,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "563613512",
-			"guid" : "5D102CBDE7059887B3AC515A447A8A9",
+			"guid" : "21DBA0CC140DCE074188375302442DCB",
 			"flags" : "0x100",
 			"bus_i": "33",
 			"S": "0+0j MVA",
@@ -4417,7 +4417,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101929267",
-			"guid" : "303D1EC4E0ACA99218DF317B7D91F90",
+			"guid" : "2F6D7D2F4FD7CE15428234347268B41E",
 			"flags" : "0x100",
 			"bus_i": "34",
 			"S": "0+0j MVA",
@@ -4454,7 +4454,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1580723810",
-			"guid" : "D4834A001A1DF362FE16A3CFC5F159C",
+			"guid" : "789753BE2D35D18C4FC01CED57A40EA9",
 			"flags" : "0x100",
 			"bus_i": "35",
 			"S": "0+0j MVA",
@@ -4491,7 +4491,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "704877633",
-			"guid" : "41F5E1F29C7D05C55A0718C51309A1CE",
+			"guid" : "3B176A08D7539C723960517BBACCBA7E",
 			"flags" : "0x100",
 			"bus_i": "36",
 			"S": "0+0j MVA",
@@ -4528,7 +4528,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1358580979",
-			"guid" : "26946CD65F49CDA357141A817B6F8F29",
+			"guid" : "4CF2BCD404B1E5176DA8BAD4C3BBA0BF",
 			"flags" : "0x100",
 			"bus_i": "37",
 			"S": "0+0j MVA",
@@ -4565,7 +4565,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1624379149",
-			"guid" : "656B2F068EEF36334C640FA19940F325",
+			"guid" : "42B162544B7E608070B52BDE51D4991F",
 			"flags" : "0x100",
 			"bus_i": "38",
 			"S": "0+0j MVA",
@@ -4602,7 +4602,7 @@
 			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2128236579",
-			"guid" : "73A92DEAE965871C54244DB8E713D979",
+			"guid" : "69DEE313C708D62367C895B715EB5D25",
 			"flags" : "0x100",
 			"bus_i": "39",
 			"S": "1104+250j MVA",
@@ -4640,7 +4640,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "784558821",
-			"guid" : "3441412E2847B4DB42228EA5C93B25AD",
+			"guid" : "3E57180695655344356BAE5D3D7ED6AA",
 			"flags" : "0x100",
 			"bus": "30",
 			"Pg": "250 MW",
@@ -4675,7 +4675,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "530511967",
-			"guid" : "7D25FC48EFCA0E1C4BAF34B37BF26D07",
+			"guid" : "7822E1FFAF53FCFB167CC7232C8DB52D",
 			"flags" : "0x100",
 			"bus": "31",
 			"Pg": "677.871 MW",
@@ -4710,7 +4710,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2110010672",
-			"guid" : "7EB1A0B1B19E5760793D8FA05F6D55DD",
+			"guid" : "2E5FE4A5392B392B2B44FE164DC7D1C9",
 			"flags" : "0x100",
 			"bus": "32",
 			"Pg": "650 MW",
@@ -4745,7 +4745,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1551901393",
-			"guid" : "16F48202F232F0E53A8AC1EF6D3F99C8",
+			"guid" : "12EDD54CA74AF5771AC2339EAE210845",
 			"flags" : "0x100",
 			"bus": "33",
 			"Pg": "632 MW",
@@ -4780,7 +4780,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1617819336",
-			"guid" : "14ADC9D807B4F4ED1816F9F7E9A22648",
+			"guid" : "397463EEEC498DEF4930BB87E402E791",
 			"flags" : "0x100",
 			"bus": "34",
 			"Pg": "508 MW",
@@ -4815,7 +4815,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1399125485",
-			"guid" : "57A76C8ED1B97C444E9AA6616C298853",
+			"guid" : "7365CA6E63BF85B22E0C1ED5AE9BB4CD",
 			"flags" : "0x100",
 			"bus": "35",
 			"Pg": "650 MW",
@@ -4850,7 +4850,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "156091745",
-			"guid" : "164164B7106A75F1234E215E225C5B88",
+			"guid" : "499B247A47DF4B537097F18DC6046F6A",
 			"flags" : "0x100",
 			"bus": "36",
 			"Pg": "560 MW",
@@ -4885,7 +4885,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1356425228",
-			"guid" : "59DCEE87EA6C812271B40235B77ACA98",
+			"guid" : "433558433CA6E861550F3DAB808BD323",
 			"flags" : "0x100",
 			"bus": "37",
 			"Pg": "540 MW",
@@ -4920,7 +4920,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1899894091",
-			"guid" : "7DF480E1D851ED4D55AAD8A094750FD3",
+			"guid" : "384B0E50D6DF9E306FAED29A3D837838",
 			"flags" : "0x100",
 			"bus": "38",
 			"Pg": "830 MW",
@@ -4955,7 +4955,7 @@
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "585640194",
-			"guid" : "279CA56894BC8E306683898332F6A833",
+			"guid" : "26227CA80186B4E445946665F27A6A44",
 			"flags" : "0x100",
 			"bus": "39",
 			"Pg": "1000 MW",
@@ -4989,7 +4989,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "937186357",
-			"guid" : "4526952BD81FBCF339EFD85C06870B33",
+			"guid" : "19791F92C05A75B53EC363D0C31D6929",
 			"flags" : "0x100",
 			"from": "pp_bus_1",
 			"to": "pp_bus_2",
@@ -5006,8 +5006,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-2642.1-4041.22j A",
+			"loss": "0.961596 MW"
 		},
 		"pp_branch_2" : {
 			"id" : "50",
@@ -5015,7 +5015,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1646035001",
-			"guid" : "2FB6A3548F065BB05761DD1E06E96C10",
+			"guid" : "A9560280995DF614F44FEC4381D07CA",
 			"flags" : "0x100",
 			"from": "pp_bus_1",
 			"to": "pp_bus_39",
@@ -5032,8 +5032,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "524.821-3925.62j A",
+			"loss": "0.392461 MW"
 		},
 		"pp_branch_3" : {
 			"id" : "51",
@@ -5041,7 +5041,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1025921153",
-			"guid" : "2720372E22C0F5866C539C62E741658",
+			"guid" : "35A91F174DC590324892361D75E54DF7",
 			"flags" : "0x100",
 			"from": "pp_bus_2",
 			"to": "pp_bus_3",
@@ -5058,8 +5058,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-620.438+12984.8j A",
+			"loss": "2.5612 MW"
 		},
 		"pp_branch_4" : {
 			"id" : "52",
@@ -5067,7 +5067,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "510616708",
-			"guid" : "25265CD1CF061859373AD74F47AC77EF",
+			"guid" : "51329F93C0064C6B177E482CBF8E99B2",
 			"flags" : "0x100",
 			"from": "pp_bus_2",
 			"to": "pp_bus_25",
@@ -5084,8 +5084,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "6405.54+10561.7j A",
+			"loss": "1.69193 MW"
 		},
 		"pp_branch_5" : {
 			"id" : "53",
@@ -5093,7 +5093,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "590357944",
-			"guid" : "620BE0593806C4993C96C5652CEBA6AE",
+			"guid" : "42FDE50A8D24F154D904D569E5AAAC5",
 			"flags" : "0x100",
 			"from": "pp_bus_2",
 			"to": "pp_bus_30",
@@ -5110,8 +5110,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "7178.93+8117.05j A",
+			"loss": "2.12537 MW"
 		},
 		"pp_branch_6" : {
 			"id" : "54",
@@ -5119,7 +5119,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "771515668",
-			"guid" : "28733A893B6AA461546E8C8725200B77",
+			"guid" : "5B5FBB97EC47BA6F7822A9B93291DAAD",
 			"flags" : "0x100",
 			"from": "pp_bus_3",
 			"to": "pp_bus_4",
@@ -5136,8 +5136,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "1657.69+171.396j A",
+			"loss": "0.059267 MW"
 		},
 		"pp_branch_7" : {
 			"id" : "55",
@@ -5145,7 +5145,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "357571490",
-			"guid" : "5821BEFF47D0EF2F56ED5D050DA51C4",
+			"guid" : "6D49D98E4F5E41A2723C55697DD84C3B",
 			"flags" : "0x100",
 			"from": "pp_bus_3",
 			"to": "pp_bus_18",
@@ -5162,8 +5162,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-1944.96-1100.08j A",
+			"loss": "0.0666344 MW"
 		},
 		"pp_branch_8" : {
 			"id" : "56",
@@ -5171,7 +5171,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1044788124",
-			"guid" : "1B0A8F08CD40487A7DAEC0372233BC84",
+			"guid" : "10DE4E71F6436FFF51641865E3E6BFFC",
 			"flags" : "0x100",
 			"from": "pp_bus_4",
 			"to": "pp_bus_5",
@@ -5188,8 +5188,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-7757.34-6781.39j A",
+			"loss": "1.36155 MW"
 		},
 		"pp_branch_9" : {
 			"id" : "57",
@@ -5197,7 +5197,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1927702196",
-			"guid" : "6D3B40CE91EBB55556DB8E7BA3038248",
+			"guid" : "3D1D495EC27AA866873456DA9C53703",
 			"flags" : "0x100",
 			"from": "pp_bus_4",
 			"to": "pp_bus_14",
@@ -5214,8 +5214,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-7365.99-10399.9j A",
+			"loss": "2.0992 MW"
 		},
 		"pp_branch_10" : {
 			"id" : "58",
@@ -5223,7 +5223,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1952509530",
-			"guid" : "7CA6B084998177E018DC8D81D44490CB",
+			"guid" : "6C53A77F66A84AD51E9BBD2BE86757FD",
 			"flags" : "0x100",
 			"from": "pp_bus_5",
 			"to": "pp_bus_6",
@@ -5240,8 +5240,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "7852.62-28445.9j A",
+			"loss": "2.27085 MW"
 		},
 		"pp_branch_11" : {
 			"id" : "59",
@@ -5249,7 +5249,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "130060903",
-			"guid" : "49C2933364A9B1F15CC2665B966E82E",
+			"guid" : "6DD93066E7D1E4CD23BA90C432CA2673",
 			"flags" : "0x100",
 			"from": "pp_bus_5",
 			"to": "pp_bus_8",
@@ -5266,8 +5266,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "14601.6+5686.52j A",
+			"loss": "2.75709 MW"
 		},
 		"pp_branch_12" : {
 			"id" : "60",
@@ -5275,7 +5275,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1942727722",
-			"guid" : "32AAF68E4296FAEFBEE03F5AAD8F70B",
+			"guid" : "1EDD6CE8E316A0711E12F9251C6336BB",
 			"flags" : "0x100",
 			"from": "pp_bus_6",
 			"to": "pp_bus_7",
@@ -5292,8 +5292,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "10030.8+17384.6j A",
+			"loss": "3.71401 MW"
 		},
 		"pp_branch_13" : {
 			"id" : "61",
@@ -5301,7 +5301,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1083454666",
-			"guid" : "7CA1B55BAA182EC27C7406E552CCA4C9",
+			"guid" : "42BD1A6F265DF61F8930645D8246CF3",
 			"flags" : "0x100",
 			"from": "pp_bus_6",
 			"to": "pp_bus_11",
@@ -5318,8 +5318,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "16259.8-2716.34j A",
+			"loss": "2.23652 MW"
 		},
 		"pp_branch_14" : {
 			"id" : "62",
@@ -5327,7 +5327,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1108728549",
-			"guid" : "19845BE251BF2AD057CA78603EECD8BC",
+			"guid" : "5AA1E338E673F1DA5BD3E7A754D0B5AF",
 			"flags" : "0x100",
 			"from": "pp_bus_6",
 			"to": "pp_bus_31",
@@ -5344,8 +5344,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "3357.27+6162.51j A",
+			"loss": "1.23119 MW"
 		},
 		"pp_branch_15" : {
 			"id" : "63",
@@ -5353,7 +5353,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "685118024",
-			"guid" : "91FF7FA152379A12267E663A4EE1FE",
+			"guid" : "6AF6B9AC38FAA6E76CA7D4F86DC2806",
 			"flags" : "0x100",
 			"from": "pp_bus_7",
 			"to": "pp_bus_8",
@@ -5370,8 +5370,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "11422.1-4742.02j A",
+			"loss": "0.706235 MW"
 		},
 		"pp_branch_16" : {
 			"id" : "64",
@@ -5379,7 +5379,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2118797801",
-			"guid" : "400A841CF8B0B9134528497FAA8700EA",
+			"guid" : "545A7AFE7511C5706F817E67FC9B1EC1",
 			"flags" : "0x100",
 			"from": "pp_bus_8",
 			"to": "pp_bus_9",
@@ -5396,8 +5396,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "1073.65-2024.52j A",
+			"loss": "0.191008 MW"
 		},
 		"pp_branch_17" : {
 			"id" : "65",
@@ -5405,7 +5405,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1060806853",
-			"guid" : "27C8F90AD75E120C539C72AF2C55EDE",
+			"guid" : "4B1D372B895B9344EC770F06504F2DB",
 			"flags" : "0x100",
 			"from": "pp_bus_9",
 			"to": "pp_bus_39",
@@ -5422,8 +5422,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-294.459-1437.55j A",
+			"loss": "0.0538744 MW"
 		},
 		"pp_branch_18" : {
 			"id" : "66",
@@ -5431,7 +5431,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "571540977",
-			"guid" : "2CDEE581BB04E43C375D8BF68322C29",
+			"guid" : "BEA44740D13DF073D1C6B975DCEDCBB",
 			"flags" : "0x100",
 			"from": "pp_bus_10",
 			"to": "pp_bus_11",
@@ -5448,8 +5448,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-10108.5-14382.4j A",
+			"loss": "1.33459 MW"
 		},
 		"pp_branch_19" : {
 			"id" : "67",
@@ -5457,7 +5457,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "194847408",
-			"guid" : "E855985B664121916E321FEAA52CB6A",
+			"guid" : "4F2A22CB8283F4F551DCA908A9030DEA",
 			"flags" : "0x100",
 			"from": "pp_bus_10",
 			"to": "pp_bus_13",
@@ -5474,8 +5474,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-9950.97-14320.9j A",
+			"loss": "1.31332 MW"
 		},
 		"pp_branch_20" : {
 			"id" : "68",
@@ -5483,7 +5483,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2035308228",
-			"guid" : "DCBD6B57FC3917119AD77083A8DDCF1",
+			"guid" : "6BEBE9191287A93D8DCD204D6EADEB2",
 			"flags" : "0x100",
 			"from": "pp_bus_10",
 			"to": "pp_bus_32",
@@ -5500,8 +5500,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-3914.09+6419.28j A",
+			"loss": "1.13054 MW"
 		},
 		"pp_branch_21" : {
 			"id" : "69",
@@ -5509,7 +5509,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "158374933",
-			"guid" : "73DA3B2D330573254920C50EF5E7AD77",
+			"guid" : "1BBDD10D3AA3AE187D9511607CB79619",
 			"flags" : "0x100",
 			"from": "pp_bus_12",
 			"to": "pp_bus_11",
@@ -5526,8 +5526,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "139.685+42.3836j A",
+			"loss": "0.000927532 MW"
 		},
 		"pp_branch_22" : {
 			"id" : "70",
@@ -5535,7 +5535,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1075260298",
-			"guid" : "312740808AC5236893E05729BB62081",
+			"guid" : "503ECB4DF7BFB73D2DF803413C1782E5",
 			"flags" : "0x100",
 			"from": "pp_bus_12",
 			"to": "pp_bus_13",
@@ -5552,8 +5552,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "155.63+47.5971j A",
+			"loss": "0.00115292 MW"
 		},
 		"pp_branch_23" : {
 			"id" : "71",
@@ -5561,7 +5561,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "824938981",
-			"guid" : "11472C4386A4D98A5E8A5E92D4AF7BFA",
+			"guid" : "DF4248F29C38043220CDED22CDA8BAE",
 			"flags" : "0x100",
 			"from": "pp_bus_13",
 			"to": "pp_bus_14",
@@ -5578,8 +5578,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-14827.2+4749.46j A",
+			"loss": "2.45798 MW"
 		},
 		"pp_branch_24" : {
 			"id" : "72",
@@ -5587,7 +5587,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "595028635",
-			"guid" : "2932B393DE6F01132EA0A0934D3BC85",
+			"guid" : "39BEBFB61852611487D57B6A46B9C90",
 			"flags" : "0x100",
 			"from": "pp_bus_14",
 			"to": "pp_bus_15",
@@ -5604,8 +5604,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-155.334+2882.57j A",
+			"loss": "0.181454 MW"
 		},
 		"pp_branch_25" : {
 			"id" : "73",
@@ -5613,7 +5613,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1962408013",
-			"guid" : "3FA4D74EC8DD64413C41EB9A7BAB4A34",
+			"guid" : "3A970537B7C08E5953342264E434BE34",
 			"flags" : "0x100",
 			"from": "pp_bus_15",
 			"to": "pp_bus_16",
@@ -5630,8 +5630,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "5047.42-12234.1j A",
+			"loss": "1.65393 MW"
 		},
 		"pp_branch_26" : {
 			"id" : "74",
@@ -5639,7 +5639,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1137623865",
-			"guid" : "7973A23D84EF6966DA3F88EDD90F22B",
+			"guid" : "441F363487661B94221A44CEE3275D77",
 			"flags" : "0x100",
 			"from": "pp_bus_16",
 			"to": "pp_bus_17",
@@ -5656,8 +5656,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-5726.85+10469.2j A",
+			"loss": "1.27128 MW"
 		},
 		"pp_branch_27" : {
 			"id" : "75",
@@ -5665,7 +5665,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "997389814",
-			"guid" : "D8236DDBCE9339F7DC3A2C7691EDCDD",
+			"guid" : "35BFF726C1E31E16152BEA6F32D4A728",
 			"flags" : "0x100",
 			"from": "pp_bus_16",
 			"to": "pp_bus_19",
@@ -5682,8 +5682,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-1728.41+7662.2j A",
+			"loss": "1.20713 MW"
 		},
 		"pp_branch_28" : {
 			"id" : "76",
@@ -5691,7 +5691,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2020739063",
-			"guid" : "2E207E3541E90E8D7F6E6F37A3AF0BCF",
+			"guid" : "5EE0D0CB0FE3E0B531F0D115ECF5A125",
 			"flags" : "0x100",
 			"from": "pp_bus_16",
 			"to": "pp_bus_21",
@@ -5708,8 +5708,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "11313.4+8653.4j A",
+			"loss": "2.7436 MW"
 		},
 		"pp_branch_29" : {
 			"id" : "77",
@@ -5717,7 +5717,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "107554536",
-			"guid" : "2F8F0D3EC72EC41AAD2B31240127E92",
+			"guid" : "1FE32B4E0CF9D943238A11B0A1556FFA",
 			"flags" : "0x100",
 			"from": "pp_bus_16",
 			"to": "pp_bus_24",
@@ -5734,8 +5734,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "1795.86-1081.77j A",
+			"loss": "0.025966 MW"
 		},
 		"pp_branch_30" : {
 			"id" : "78",
@@ -5743,7 +5743,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1635339425",
-			"guid" : "3D757A552BE83E182843276A5A6299C5",
+			"guid" : "727B15FEA8B9059C7F64864B69347A3C",
 			"flags" : "0x100",
 			"from": "pp_bus_17",
 			"to": "pp_bus_18",
@@ -5760,8 +5760,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "4820.79+9412.29j A",
+			"loss": "0.92035 MW"
 		},
 		"pp_branch_31" : {
 			"id" : "79",
@@ -5769,7 +5769,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1654001669",
-			"guid" : "2AF160448ABB99B3F539683EBDB6189",
+			"guid" : "41E8461C13C09A5A23B6DC7D901ED087",
 			"flags" : "0x100",
 			"from": "pp_bus_17",
 			"to": "pp_bus_27",
@@ -5786,8 +5786,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "222.668+1447.2j A",
+			"loss": "0.0371952 MW"
 		},
 		"pp_branch_32" : {
 			"id" : "80",
@@ -5795,7 +5795,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1777724115",
-			"guid" : "131AB05BADDD1FD1EEA5A8631F959DE",
+			"guid" : "68A4D10E9B2D279137EE0198AF27B86B",
 			"flags" : "0x100",
 			"from": "pp_bus_19",
 			"to": "pp_bus_20",
@@ -5812,8 +5812,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "9422.07+1756.08j A",
+			"loss": "1.26929 MW"
 		},
 		"pp_branch_33" : {
 			"id" : "81",
@@ -5821,7 +5821,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "269220094",
-			"guid" : "19A8B90BAEC5A133352BB8FB8B954A2A",
+			"guid" : "48347C13710B69BB122E83D2A2A1E813",
 			"flags" : "0x100",
 			"from": "pp_bus_19",
 			"to": "pp_bus_33",
@@ -5838,8 +5838,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "6892.98+2480.76j A",
+			"loss": "0.763001 MW"
 		},
 		"pp_branch_34" : {
 			"id" : "82",
@@ -5847,7 +5847,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "34075629",
-			"guid" : "25806AA6709E45F31FDE5A9DD74097F7",
+			"guid" : "36B561E39C2FE83F47E9419E6F3C9F4D",
 			"flags" : "0x100",
 			"from": "pp_bus_20",
 			"to": "pp_bus_34",
@@ -5864,8 +5864,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "3038.26-4915.01j A",
+			"loss": "0.601742 MW"
 		},
 		"pp_branch_35" : {
 			"id" : "83",
@@ -5873,7 +5873,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1478446501",
-			"guid" : "68EEE7A94C29F8A82232ECA5A74806",
+			"guid" : "2CBCA46326021C6C3ADCCE7EF69ECB21",
 			"flags" : "0x100",
 			"from": "pp_bus_21",
 			"to": "pp_bus_22",
@@ -5890,8 +5890,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-6953.8-9538.73j A",
+			"loss": "1.95398 MW"
 		},
 		"pp_branch_36" : {
 			"id" : "84",
@@ -5899,7 +5899,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1864546517",
-			"guid" : "75425201AC724C3B2E2B1F2F9B11C7D7",
+			"guid" : "753F66A818B5FA3D4663D29D4856F39E",
 			"flags" : "0x100",
 			"from": "pp_bus_22",
 			"to": "pp_bus_23",
@@ -5916,8 +5916,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-2144.11+219.844j A",
+			"loss": "0.0446842 MW"
 		},
 		"pp_branch_37" : {
 			"id" : "85",
@@ -5925,7 +5925,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1351934195",
-			"guid" : "71980B0182F09A982BC2581F23306D49",
+			"guid" : "6011E19DFC771BC4C66D83C675C77EC",
 			"flags" : "0x100",
 			"from": "pp_bus_22",
 			"to": "pp_bus_35",
@@ -5942,8 +5942,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-6878.86+5838.35j A",
+			"loss": "1.16409 MW"
 		},
 		"pp_branch_38" : {
 			"id" : "86",
@@ -5951,7 +5951,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1581030105",
-			"guid" : "56863F51627EFF19265285F821CC3BB0",
+			"guid" : "5E9B8B753DF651143ECF89088F702AE",
 			"flags" : "0x100",
 			"from": "pp_bus_23",
 			"to": "pp_bus_24",
@@ -5968,8 +5968,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-699.183+238.645j A",
+			"loss": "0.019141 MW"
 		},
 		"pp_branch_39" : {
 			"id" : "87",
@@ -5977,7 +5977,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1557810404",
-			"guid" : "4A749C75B7C60ECB6B37DA6893B7502A",
+			"guid" : "41768043450B11B0167B26D71CFCE37C",
 			"flags" : "0x100",
 			"from": "pp_bus_23",
 			"to": "pp_bus_36",
@@ -5994,8 +5994,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "4653.87+2873.66j A",
+			"loss": "0.813864 MW"
 		},
 		"pp_branch_40" : {
 			"id" : "88",
@@ -6003,7 +6003,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2146319451",
-			"guid" : "645B7165FE562F8E532107A71AD456C3",
+			"guid" : "44791FDEFD97CB51C68F7565C9BC550",
 			"flags" : "0x100",
 			"from": "pp_bus_25",
 			"to": "pp_bus_26",
@@ -6020,8 +6020,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-2705.5-1912.86j A",
+			"loss": "0.35635 MW"
 		},
 		"pp_branch_41" : {
 			"id" : "89",
@@ -6029,7 +6029,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1908194298",
-			"guid" : "34AB3FAFF97BF6236B2F407E386789A0",
+			"guid" : "75ECAB6D317E1B2C3282D41A7999F4C",
 			"flags" : "0x100",
 			"from": "pp_bus_25",
 			"to": "pp_bus_37",
@@ -6046,8 +6046,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "404.498+2203.32j A",
+			"loss": "0.116462 MW"
 		},
 		"pp_branch_42" : {
 			"id" : "90",
@@ -6055,7 +6055,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "500782188",
-			"guid" : "7E1BE6AFDF776C8E149EA099802021CE",
+			"guid" : "C7012A94E0247756BDE98CAA4E2D60A",
 			"flags" : "0x100",
 			"from": "pp_bus_26",
 			"to": "pp_bus_27",
@@ -6072,8 +6072,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-7350.4+8991.29j A",
+			"loss": "1.99158 MW"
 		},
 		"pp_branch_43" : {
 			"id" : "91",
@@ -6081,7 +6081,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "657821123",
-			"guid" : "21F16590E91F5AD75BA709F57C6C85C",
+			"guid" : "2E4497690AF7DDBB5B235CC2E6A55560",
 			"flags" : "0x100",
 			"from": "pp_bus_26",
 			"to": "pp_bus_28",
@@ -6098,8 +6098,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-1119.54+4196.75j A",
+			"loss": "0.897925 MW"
 		},
 		"pp_branch_44" : {
 			"id" : "92",
@@ -6107,7 +6107,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "753799505",
-			"guid" : "2EC99B074AB9350D68DBADA4DDA05740",
+			"guid" : "438CF358E6981A2F64710E3BED7051B",
 			"flags" : "0x100",
 			"from": "pp_bus_26",
 			"to": "pp_bus_29",
@@ -6124,8 +6124,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "-24.1516+2.21865j A",
+			"loss": "3.69164e-05 MW"
 		},
 		"pp_branch_45" : {
 			"id" : "93",
@@ -6133,7 +6133,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1102246882",
-			"guid" : "55CC57E2AAAD049018290F635924153C",
+			"guid" : "6C2CC25F8428EC9F651CE40EFC1CAC39",
 			"flags" : "0x100",
 			"from": "pp_bus_28",
 			"to": "pp_bus_29",
@@ -6150,8 +6150,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "3439.81-13155.5j A",
+			"loss": "2.80396 MW"
 		},
 		"pp_branch_46" : {
 			"id" : "94",
@@ -6159,7 +6159,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1269406752",
-			"guid" : "5E72696243ED5F0B26E17CD120D9E88A",
+			"guid" : "58E399D7B801C04152625FD67430BBF1",
 			"flags" : "0x100",
 			"from": "pp_bus_29",
 			"to": "pp_bus_38",
@@ -6176,8 +6176,8 @@
 			"status": "IN",
 			"angmin": "-360 deg",
 			"angmax": "360 deg",
-			"current": "0+0j A",
-			"loss": "0 MW"
+			"current": "4571.05+2154.12j A",
+			"loss": "0.398865 MW"
 		},
 		"pp_gencost_1" : {
 			"id" : "95",
@@ -6186,7 +6186,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1816731566",
-			"guid" : "1E29ED414C1EA2CB2AF07275281AB26D",
+			"guid" : "5642EAE567AD5EC170103C668BC1A002",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6200,7 +6200,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "884936716",
-			"guid" : "2D8D51A1CF4299424B88521A704C8AC6",
+			"guid" : "F1F14176057703F477D523858994AA2",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6214,7 +6214,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1807130337",
-			"guid" : "2986D0AB415969091B86E7535FF978AE",
+			"guid" : "2B245CAEE23089CA5897A4B9866F28A2",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6228,7 +6228,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "578354438",
-			"guid" : "5A5DE2461AD06015385BA0348B11F179",
+			"guid" : "351579B1DB69A9D14E4B3F1DD2E572A8",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6242,7 +6242,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "892053144",
-			"guid" : "346EF15C567ADBEE58420E0EBF65D2E1",
+			"guid" : "637D3321A8CF50C71933AAC2C13EA4C2",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6256,7 +6256,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1153851501",
-			"guid" : "104C8635101E97F1447735433035FC5A",
+			"guid" : "354C4582AF1856624B2A433124BAF47",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6270,7 +6270,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1004844897",
-			"guid" : "52045B57AAC501093E3D081063D3C53B",
+			"guid" : "131831FA3B221BE035A1E22F98DDDC36",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6284,7 +6284,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "616783871",
-			"guid" : "1507678CD91E1157F6A1B9F0E65F563",
+			"guid" : "C96D54CD36F9F06249CBFE72FB153D0",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6298,7 +6298,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "382955828",
-			"guid" : "E6863192E2DFACA69353AD54CE97ABA",
+			"guid" : "18F0D3EC81BA03F95129E9B6E0C1D40D",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
@@ -6312,7 +6312,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "330111137",
-			"guid" : "2948100187FBD5C4616EE92BB3CFD0D",
+			"guid" : "379AAF5D96F742175DC24988BAF4899E",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "0 $",
