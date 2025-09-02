@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.11.31"
+__generated_with = "0.14.10"
 app = marimo.App(width="full", app_title="Optimal Powerflow/Sizing/Placement")
 
 
@@ -17,7 +17,9 @@ def _(
     set_main,
     settings_view,
 ):
-    # Main UI
+    #Main UI
+
+
     main_tab = mo.ui.tabs(
         {
             "Model": mo.vstack([file, input_data]),
@@ -31,7 +33,8 @@ def _(
         on_change=set_main,
     )
     main_tab
-    return (main_tab,)
+
+    return
 
 
 @app.cell
@@ -81,7 +84,10 @@ def _(file, header_ui, hint, mo, model, os, pd):
             ],
         )
     else:
+
         input_data = hint("open your JSON model")
+
+
     return (input_data,)
 
 
@@ -146,7 +152,7 @@ def _(
         capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
     else:
         capacity_costs = mo.vstack([file, hint("open your JSON model")])
-    return bus_name, cap_cost, capacity_costs, con_cost, gen_cost, x, y
+    return cap_cost, capacity_costs, gen_cost
 
 
 @app.cell
@@ -346,12 +352,13 @@ def _(K, N, message, mo, np, pd, warning):
                 ),
             ],
         )
-    return format, results
+    return (results,)
 
 
 @app.cell
 def _(
     angle_limit_ui,
+    complex_flows_ui,
     curtailment_ui,
     error,
     file,
@@ -388,6 +395,7 @@ def _(
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
+                            complex_flows = complex_flows_ui.value
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -398,7 +406,9 @@ def _(
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
+    
         except Exception as err:
+            raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             original = mo.vstack(
                 [
@@ -414,7 +424,7 @@ def _(
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(model.problem)
-    return initial_download_ui, original
+    return (original,)
 
 
 @app.cell
@@ -490,7 +500,7 @@ def _(
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(osp_model.problem)
-    return osp_download_ui, osp_model, sizing
+    return osp_model, sizing
 
 
 @app.cell
@@ -503,6 +513,7 @@ def _(mo):
 @app.cell
 def _(
     angle_limit_ui,
+    complex_flows_ui,
     copy,
     curtailment_ui,
     error,
@@ -521,7 +532,8 @@ def _(
 ):
     # Final powerflow result
     if file.value:
-        opf_model = copy.deepcopy(osp_model)
+        opf_model = copy.deepcopy(osp_model) #NOTE: should this be a deep copy of model or osp_model 
+        #opf_model = copy.deepcopy(model) #NOTE: suggested fix, maybe not necessary might go back to initial power flow 
         try:
             _name = os.path.split(opf_model.name)[1]
             _name = os.path.splitext(_name)
@@ -534,22 +546,34 @@ def _(
             )
             with mo.capture_stderr() as _stderr:
                 with mo.capture_stdout() as _stdout:
-                    _result = opf_model.optimal_powerflow(
+                    #TODO: commenting below for testing, will 
+                    # _result = opf_model.optimal_powerflow(
+                    #     refresh=True,
+                    #     verbose=verbose_ui.value,
+                    #     curtailment_price=curtailment_ui.value,
+                    #     solver=solver_ui.value,
+                    #     angle_limit=angle_limit_ui.value,
+                    #     voltage_limit=voltage_limit_ui.value/100,
+                    # )
+
+                    #TODO: Test below 
+                    _result = results(
+                        opf_model,
+                        opf_model.optimal_powerflow(
                         refresh=True,
                         verbose=verbose_ui.value,
                         curtailment_price=curtailment_ui.value,
                         solver=solver_ui.value,
                         angle_limit=angle_limit_ui.value,
                         voltage_limit=voltage_limit_ui.value/100,
-                    )
+                        complex_flows = complex_flows_ui.value
+                        ),
+                        )
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(
                 mo.vstack(
                     [
-                        results(
-                            opf_model,
-                            _result,
-                        ),
+                       _result,
                         final_download_ui,
                         mo.md(
                             f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""
@@ -577,7 +601,7 @@ def _(
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(opf_model.problem)
-    return final_download_ui, opf_model
+    return (opf_model,)
 
 
 @app.cell
@@ -615,6 +639,8 @@ def _(mo):
 def _(mo):
     # Solver settings
     verbose_ui = mo.ui.checkbox(label="**Enable verbose output**")
+
+
     solver_ui = mo.ui.dropdown(
         label="**Preferred solver**:",
         options=["CLARABEL", "OSQP"],
@@ -622,6 +648,8 @@ def _(mo):
         allow_select_none=False,
     )
     problem_ui = mo.ui.checkbox(label="**Show problem data**")
+    complex_flows_ui = mo.ui.checkbox(label="**Enable Complex Flows in Optimizer Solution**")
+
     osqp_max_iter = mo.ui.slider(
         label="**Maximum iterations**:",
         steps=[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
@@ -680,11 +708,7 @@ def _(mo):
     }
     return (
         angle_limit_ui,
-        clarabel_max_iter,
-        clarabel_time_limit,
-        osqp_eps_abs,
-        osqp_eps_rel,
-        osqp_max_iter,
+        complex_flows_ui,
         problem_ui,
         solver_options,
         solver_ui,
@@ -794,6 +818,7 @@ def _(file, mo, model, voltage_limit_ui):
 @app.cell
 def _(
     capcost_ui,
+    complex_flows_ui,
     concost_ui,
     current_ui,
     curtailment_ui,
@@ -813,7 +838,7 @@ def _(
     settings_view = mo.accordion(
         {
             "**Optimizer**": mo.vstack(
-                [solver_ui, verbose_ui, problem_ui]
+                [solver_ui, verbose_ui, problem_ui, complex_flows_ui]
                 + solver_options[solver_ui.value]
             ),
             "**Capacity costs**": mo.vstack(
@@ -956,7 +981,7 @@ def _():
         import subprocess
         subprocess.run([sys.executable,"-m","pip","install","-r","requirements.txt"],capture_output=True)
     import gld_pypower as gld
-    return copy, cvxpy, gld, json, mo, np, os, pd, pypower, subprocess, sys
+    return copy, gld, json, mo, np, os, pd
 
 
 if __name__ == "__main__":
