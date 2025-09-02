@@ -682,12 +682,13 @@ class Model:
             G[l[0], l[1]] = G[l[1], l[0]] = ( 1 / R[n] ) if abs(R[n]) > 0 else 1e6
         self.results["graphLaplacian"] = np.diag(sum(G)) - G # graph Laplacian
         return self.results["graphLaplacian"]
-
-    def graphIncidence(self,refresh:bool=False,weighted:bool=True) -> np.array:
+ 
+    def graphIncidence(self,refresh:bool=False, complex_flows:bool = True, weighted:bool=True) -> np.array:
         """Get network indicidence matrix
 
         Arguments:
         * refresh: force recalculation of previous results
+        * complex: if true produces a complex incidence matrix 
 
         Returns:
         * np.array: incidence matrix
@@ -700,13 +701,18 @@ class Model:
         N = len(self.find("bus",list))
         L = len(lines)
         B = np.array([[int(x["fbus"])-1,int(x["tbus"])-1] for x in lines.values()])
-        R = [self.get_property(x,"r")+self.get_property(x,"x")*1j for x in lines] if weighted else np.ones(L,dtype=complex)
-        I = np.zeros((L, N))  # link-node incidence matrix
+        Y = [1/(self.get_property(x,"r")+self.get_property(x,"x")*1j) for x in lines] if weighted else np.ones(L,dtype=complex)
+        I = np.zeros((L, N),dtype=complex)  # link-node incidence matrix
+        
         for n, l in enumerate(B):
-            I[n][l[0]] = -R[n].real
-            I[n][l[1]] = R[n].real
+            I[n][l[0]] = -Y[n] 
+            I[n][l[1]] = Y[n]
+        
+        I =  I if complex_flows else I.real
         self.results[cachename] = I
+
         return self.results[cachename]
+    
 
     def graphSpectral(self,refresh:bool=False) -> tuple[float]:
         """Get spectral analysis results
@@ -788,7 +794,8 @@ class Model:
         if "prices" in self.results and not refresh:
             if not refresh:
                 return self.results["prices"]
-        costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()}
+        #costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()} #TODO: check after testing - 
+        costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
         self.results[f"prices"] = np.array([costs[n+1] if n+1 in costs else 0 for n in range(len(self.nodes(refresh)))])
         return self.results[f"prices"]
 
@@ -809,7 +816,7 @@ class Model:
         result = {y["parent"]:{'setting':self.get_property(x,"admittance"),'capacity':self.get_property(x,"admittance_1")*self.get_property(x,"steps_1")} for x,y in self.find("shunt").items()}
         return self.set_result(f"shunts",result)
 
-    def capacitors(self,kind:str='installed',refresh:bool=False) -> np.array:
+    def capacitors(self,kind:str='installed',refresh:bool=False, verbose = False ) -> np.array:
         """Get capacitor array
 
         Arguments:
@@ -821,11 +828,13 @@ class Model:
         """
         try:
             if not refresh:
-                return self.get_result(f"capacitors.{kind}")
+                return self.get_result(f"capacitors.{kind}") #TODO: this reference is incorrect should be -
+                #return self.get_result(f"capacitor")
         except:
             pass
         puS = self.perunit("S",refresh)
         shunts = self.shunts(refresh)
+
         if kind == 'installed':
             cap = [(self.get_property(x,"bus_i"),shunts[x]["capacity"]/puS if x in shunts else 0.0) for x in self.nodes(refresh)]
         elif kind == 'setting':
@@ -876,10 +885,7 @@ class Model:
             result[bus - 1] += val_mvar / puS  # bus_i assumed 1-based
 
         return self.set_result(f"condensers.{kind}", result)
-
-
-
-
+    
     def lineratings(self,rating:str="A",refresh:bool=False) -> np.array:
         """Get line ratings array
 
@@ -897,7 +903,7 @@ class Model:
         self.results[f"lineratings.{rating}"] = np.array([self.get_property(x,f"rate{rating}") for x in self.lines()])/self.perunit('S',refresh) 
         return self.results[f"lineratings.{rating}"]
 
-    def lineflow(self,refresh:bool=False) -> np.array:
+    def lineflow(self,refresh:bool=False, complex_flows:bool=True) -> np.array:
         """Get line flows
 
         Arguments:
@@ -906,7 +912,7 @@ class Model:
         Returns:
         * np.array: line flows pu.MVA
         """
-        I = self.graphIncidence(refresh=refresh,weighted=True)
+        I = self.graphIncidence(refresh=refresh,complex_flows = complex_flows,weighted=True)
         x = [self.get_property(x,'Va') for x in self.find('bus')]
         return I@x
 
@@ -1081,6 +1087,7 @@ class Model:
         ref:int|str = None,
         angle_limit:float=10.0,
         voltage_limit:float=0.05,
+        complex_flows:bool = True, 
         on_invalid:callable=_problem_invalid,
         on_fail:callable=_solver_failed,
         **kwargs) -> dict:
@@ -1128,13 +1135,14 @@ class Model:
                     ref = 0
             elif isinstance(ref,str):
                 ref = self.get_bus(ref)
+           
             P = self.prices(refresh)
             G = self.graphLaplacian(refresh)
             D = self.demand('actual',refresh)
-            I = self.graphIncidence(refresh)
+            I = self.graphIncidence(refresh,complex_flows)
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
-            C = self.capacitors('installed',refresh)
+            C = self.capacitors('installed',refresh, verbose)
             R = self.condensers("installed", refresh)
             N = len(self.nodes(refresh))
         except Exception as err:
@@ -1166,6 +1174,7 @@ class Model:
             print("\nTotal S:",sum(S),sep="\n",file=verbose)
             print("\nTotal C:",sum(C),sep="\n",file=verbose)
 
+   
         # setup problem
         x = cp.Variable(N)  # nodal voltage angles
         y = cp.Variable(N)  # nodal voltage magnitudes
@@ -1177,7 +1186,6 @@ class Model:
         #TODO: checking if adding synchronous condensor settins work 
         r = cp.Variable(N)
 
-        #NOTE: original 
         try:
             cost = P @ ( cp.abs(g + h * 1j))
             if curtailment_price is None:
@@ -1187,18 +1195,14 @@ class Model:
             constraints = [
                 #NOTE: original constraint
                 G.real @ x - g + c + D.real - d - r == 0,  # KCL/KVL real power laws
-                #NOTE: test constraint
-                #G.real @ x - g + D.real - d == 0,  # KCL/KVL real power laws
-
                 G.imag @ y - h - c + D.imag - e + r == 0,  # KCL/KVL reactive power laws
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
                 cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
-                cp.abs(I @ x) <= F,  # line flow limits
+                cp.abs(I.real@x + I.imag@y) <= F,  # line flow limits,
                 g >= 0,  # generation real power limits
                 cp.abs(h) <= S.imag,  # generation reactive power limits
                 cp.abs(g+h*1j) <= S.real, # generation apparent power limit
-                #cp.abs(c) <= C,  # capacitor bank settings
                 0 <= c, c <= C, # capacitor bank settings
                 r <= cp.abs(R), 
                 d >= 0, cp.abs(d+e*1j) <= cp.abs(D),  # demand curtailment constraint with flexible reactive power
@@ -1207,69 +1211,9 @@ class Model:
             problem.solve(verbose=(verbose!=False),**kwargs)
             self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
 
-        #NOTE: Test 
-        # try:
-           
-        #     GH = cp.vstack([g, h])                # shape: (2, N)
-        #     gen_mva = cp.norm(GH, 2, axis=0)      # per-bus ||(g_i, h_i)||_2
-
-        #     if curtailment_price is None:
-        #         curtailment_price = 100 * float(np.max(P))  # default shedding price
-
-        #     DE = cp.vstack([d, e])                # shape: (2, N)
-        #     shed_mag = cp.norm(DE, 2, axis=0)     # per-bus ||(d_i, e_i)||_2
-
-        #     cost = cp.sum(cp.multiply(P, gen_mva + c))  # assumes P >= 0
-        #     shed = curtailment_price * cp.sum(shed_mag)
-
-        #     objective = cp.Minimize(cost + shed)
-
-        #     constraints = [
-        #         G.real @ x - g + c + D.real - d == 0,
-        #         G.imag @ y - h - c + D.imag - e == 0,
-
-        #         # Reference bus
-        #         x[ref] == 0,
-        #         y[ref] == 1,
-
-        #         # Operating limits
-        #         cp.abs(y - 1) <= voltage_limit,  # voltage magnitude bounds
-        #         cp.abs(I @ x) <= F,              # angle-difference flow proxy
-
-        #         # Generator limits
-        #         g >= 0,
-        #         cp.abs(h) <= S.imag,             # reactive power limit (MVAr)
-        #         gen_mva <= S.real,               # apparent power limit (MVA)
-
-        #         # Capacitor bounds (injective; use |c| <= C if bi-directional)
-        #         0 <= c, c <= C,
-        #         # Curtailment bounds
-        #         d >= 0,
-        #         shed_mag <= np.abs(D)            # cannot curtail beyond demand magnitude
-        #     ]
-
-        #     # Build problem
-        #     problem = cp.Problem(objective, constraints)
-
-        #     # Save problem data before solving so Marimo can display it even on failure
-        #     try:
-        #         solver_name = kwargs.get("solver", None)
-        #         if solver_name is not None:
-        #             self.problem = problem.get_problem_data(solver=solver_name)
-        #         else:
-        #             # Default to a known solver for extracting problem data
-        #             self.problem = problem.get_problem_data(solver=cp.SCS)
-        #     except Exception:
-        #         self.problem = None  # fallback if extraction fails
-
-        #     # Solve
-        #     problem.solve(verbose=(verbose != False), **kwargs)
-
         except Exception as err:
             return on_invalid(err)
 
-
-       
         if x.value is None:
             return on_fail(problem.status)
         
@@ -1284,9 +1228,12 @@ class Model:
             print("\nr (condenser settings):", r.value.round(4), file=verbose)
             print("\nd (real demand curtailment):", d.value.round(4), file=verbose)
             print("\ne (reactive demand curtailment):", e.value.round(4), file=verbose)
+            print("\nIx (real):", cp.abs(I.real@x).value, file=verbose)
+            print("\nIy (imag):", cp.abs(I.imag@y).value, file=verbose)
 
         puV = self.perunit("V")
         puS = self.perunit("S")
+
         result = {
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
                 "magnitude": y.value.round(3),
@@ -1294,7 +1241,7 @@ class Model:
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array([max(x,0) for x in c.value]).round(3)*puS,
                 "condensers": np.array([max(-x,0) for x in c.value]).round(3)*puS,
-                "flows": cp.abs(I @ x).value.round(3)*puS, #NOTE: should this be puV 
+                "flows": cp.abs(I.real@x + I.imag@y).value.round(3)*puS, 
                 "cost" : problem.value.round(2),
                 "curtailment":np.array(d.value).round(3)*puS,
                 "demand":D.round(3)*puS,
@@ -1321,6 +1268,7 @@ class Model:
             voltage_limit:float=0.05,
             generator_expansion_limit=None,
             reactive_power_constraint=0.2,
+            complex_flows:bool= True, 
             on_invalid=_problem_invalid,
             on_fail=_solver_failed,
             **kwargs) -> dict:
@@ -1346,6 +1294,7 @@ class Model:
         * reactive_power_constraint: limits generation reactive power to fraction of real power
         * on_invalid: invalid problem handler
         * on_fail: failed solution handler
+        * complex_flows: if true creates a complex graph incidence matrix
         * kwargs: arguments passed to solver
 
         Returns:
@@ -1385,7 +1334,7 @@ class Model:
 
             G = self.graphLaplacian(refresh)
             D = self.demand('actual',refresh)
-            I = self.graphIncidence(refresh)
+            I = self.graphIncidence(refresh,complex_flows)
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
             C = self.capacitors('installed',refresh)

@@ -123,7 +123,30 @@ There might be value having some debug scripts
 ### Long-term but not immediate Fixes 
 1. Update the notebook so it automatically opens the pypower example by default
 
-
 #### Findings
 
-So the primary reason that the condenser and the capacitor is set to 0 is because the code is looking for a "shunts" key in ``` lines 795 - 810```, it relies on a ```self.find("shunt")``` which is not a valid "key" in the "objects" dictionary - the correct key is "capacity".
+#### 2. 
+
+So the primary reason that the condenser and the capacitor is set to 0 is because the code is looking for a "shunts" key in ``` lines 795 - 810```, it relies on a ```self.find("shunt")``` which is not a valid "key" in the "objects" dictionary - the correct key is "capacity". However, "shunt" only gets defined when we setup the optimal sizing problem and then run the initial powerflow problem without refresh. In the first run of the model with initial powerflow, the condenser and the capacitor settings are 0. 
+
+
+#### 1. 
+
+Solved the issue, the code was looking at the cost of reactive power output instead of the real power output, which is $100. 
+
+
+#### 3. Flows 
+
+##### Graph Incidence Matrix
+- **Old approach**: Weighted incidence used `±R` (resistance) as edge weights.  
+- **Problem**: For AC/DC power flow, branch **susceptance** (\(b = 1/x\)) is what relates voltage angle differences to line real-power flows, not resistance.  
+- **Fix**:
+  ```python
+  I_unw = self.graphIncidence(refresh, weighted=False)
+  x_lines = np.array([...])     # branch reactances parsed from JSON
+  b_lines = 1.0 / np.clip(x_lines, 1e-9, None)
+  I_w = b_lines[:, None] * I_unw   # row-scale incidence
+
+
+### Questions 
+1. Since were are working with pypower test cases and if I remember correctly dealing with the transmission network we should be working with the AC network correct? 
