@@ -17,7 +17,9 @@ def _(
     set_main,
     settings_view,
 ):
-    # Main UI
+    #Main UI
+
+
     main_tab = mo.ui.tabs(
         {
             "Model": mo.vstack([file, input_data]),
@@ -31,6 +33,7 @@ def _(
         on_change=set_main,
     )
     main_tab
+
     return
 
 
@@ -81,7 +84,10 @@ def _(file, header_ui, hint, mo, model, os, pd):
             ],
         )
     else:
+
         input_data = hint("open your JSON model")
+
+
     return (input_data,)
 
 
@@ -352,6 +358,7 @@ def _(K, N, message, mo, np, pd, warning):
 @app.cell
 def _(
     angle_limit_ui,
+    complex_flows_ui,
     curtailment_ui,
     error,
     file,
@@ -388,6 +395,7 @@ def _(
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
+                            complex_flows = complex_flows_ui.value
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -398,7 +406,9 @@ def _(
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
+    
         except Exception as err:
+            raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             original = mo.vstack(
                 [
@@ -503,6 +513,7 @@ def _(mo):
 @app.cell
 def _(
     angle_limit_ui,
+    complex_flows_ui,
     copy,
     curtailment_ui,
     error,
@@ -555,6 +566,7 @@ def _(
                         solver=solver_ui.value,
                         angle_limit=angle_limit_ui.value,
                         voltage_limit=voltage_limit_ui.value/100,
+                        complex_flows = complex_flows_ui.value
                         ),
                         )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -627,6 +639,8 @@ def _(mo):
 def _(mo):
     # Solver settings
     verbose_ui = mo.ui.checkbox(label="**Enable verbose output**")
+
+
     solver_ui = mo.ui.dropdown(
         label="**Preferred solver**:",
         options=["CLARABEL", "OSQP"],
@@ -634,6 +648,8 @@ def _(mo):
         allow_select_none=False,
     )
     problem_ui = mo.ui.checkbox(label="**Show problem data**")
+    complex_flows_ui = mo.ui.checkbox(label="**Enable Complex Flows in Optimizer Solution**")
+
     osqp_max_iter = mo.ui.slider(
         label="**Maximum iterations**:",
         steps=[10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000],
@@ -692,6 +708,7 @@ def _(mo):
     }
     return (
         angle_limit_ui,
+        complex_flows_ui,
         problem_ui,
         solver_options,
         solver_ui,
@@ -801,6 +818,7 @@ def _(file, mo, model, voltage_limit_ui):
 @app.cell
 def _(
     capcost_ui,
+    complex_flows_ui,
     concost_ui,
     current_ui,
     curtailment_ui,
@@ -820,7 +838,7 @@ def _(
     settings_view = mo.accordion(
         {
             "**Optimizer**": mo.vstack(
-                [solver_ui, verbose_ui, problem_ui]
+                [solver_ui, verbose_ui, problem_ui, complex_flows_ui]
                 + solver_options[solver_ui.value]
             ),
             "**Capacity costs**": mo.vstack(
