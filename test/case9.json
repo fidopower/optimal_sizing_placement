@@ -1,5 +1,5 @@
 {	"application": "gridlabd",
-	"version" : "4.3.14",
+	"version" : "4.3.17",
 	"modules" : {
 		"pypower" : {
 			"major" : "4",
@@ -560,7 +560,7 @@
 	},
 	"classes" : {
 		"bus" : {
-			"object_size" : "3464",
+			"object_size" : "3488",
 			"trl" : "9",
 			"module" : "pypower",
 			"profiler.numobjs" : "9",
@@ -630,21 +630,21 @@
 				"access" : "PUBLIC",
 				"flags" : "REQUIRED",
 				"unit" : "kV",
-				"description" : "voltage magnitude (per unit)"
+				"description" : "base voltage (kV)"
 			},
 			"Vm" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "pu.kV",
 				"default" : "1 pu.V",
-				"description" : "voltage angle (degrees)"
+				"description" : "voltage magnitude (per unit)"
 			},
 			"Va" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "deg",
 				"default" : "0 deg",
-				"description" : "base voltage (kV)"
+				"description" : "voltage angle (degrees)"
 			},
 			"zone" : {
 				"type" : "int32",
@@ -773,7 +773,7 @@
 			}
 		},
 		"branch" : {
-			"object_size" : "152",
+			"object_size" : "216",
 			"trl" : "9",
 			"module" : "pypower",
 			"profiler.numobjs" : "9",
@@ -782,42 +782,43 @@
 			"from" : {
 				"type" : "object",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"description" : "from bus name"
 			},
 			"to" : {
 				"type" : "object",
 				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
 				"description" : "to bus name"
 			},
 			"fbus" : {
 				"type" : "int32",
 				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
 				"description" : "from bus number"
 			},
 			"tbus" : {
 				"type" : "int32",
 				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
 				"description" : "to bus number"
 			},
 			"r" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"flags" : "REQUIRED",
 				"unit" : "pu.Ohm",
 				"description" : "resistance (per unit)"
 			},
 			"x" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"flags" : "REQUIRED",
 				"unit" : "pu.Ohm",
 				"description" : "reactance (per unit)"
 			},
 			"b" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"flags" : "REQUIRED",
-				"unit" : "pu./Ohm",
+				"unit" : "pu.S",
 				"description" : "total line charging susceptance (per unit)"
 			},
 			"rateA" : {
@@ -831,19 +832,21 @@
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "MVA",
+				"default" : "0 MVA",
 				"description" : "MVA rating B (short term rating)"
 			},
 			"rateC" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "MVA",
+				"default" : "0 MVA",
 				"description" : "MVA rating C (emergency term rating)"
 			},
 			"ratio" : {
 				"type" : "double",
 				"access" : "PUBLIC",
 				"unit" : "pu",
-				"default" : "1 pu",
+				"default" : "0 pu",
 				"description" : "transformer off nominal turns ratio"
 			},
 			"angle" : {
@@ -892,8 +895,178 @@
 				"description" : "line loss (MW)"
 			}
 		},
-		"gen" : {
+		"dcline" : {
 			"object_size" : "216",
+			"trl" : "9",
+			"module" : "pypower",
+			"profiler.numobjs" : "0",
+			"profiler.clocks" : "0",
+			"profiler.count" : "0",
+			"from" : {
+				"type" : "object",
+				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
+				"description" : "'from' bus name"
+			},
+			"to" : {
+				"type" : "object",
+				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
+				"description" : "'to' bus name"
+			},
+			"fbus" : {
+				"type" : "int32",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"description" : "'from' bus number"
+			},
+			"tbus" : {
+				"type" : "int32",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"description" : "'to' bus number"
+			},
+			"status" : {
+				"type" : "enumeration",
+				"access" : "PUBLIC",
+				"keywords" : {
+					"OUT" : "0x0",
+					"IN" : "0x1"
+				},
+				"default" : "IN",
+				"description" : "initial branch status, IN=1 - in service, OUT=0 - out of service"
+			},
+			"Sfrom" : {
+				"type" : "complex",
+				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
+				"unit" : "MVA",
+				"description" : "MVA flow in at 'from' bus"
+			},
+			"Sto" : {
+				"type" : "complex",
+				"access" : "PUBLIC",
+				"flags" : "REQUIRED",
+				"unit" : "MVA",
+				"description" : "MW flow in at 'to' bus"
+			},
+			"Vfrom" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "pu.V",
+				"default" : "1 pu.V",
+				"description" : "voltage setpoint at 'from' bus (p.u.)"
+			},
+			"Vto" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "pu.V",
+				"default" : "1 pu.V",
+				"description" : "voltage setpoint at  'to'  bus (p.u.)"
+			},
+			"Pmin" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW",
+				"description" : "lower limit on PF (MW flow at 'from' end)"
+			},
+			"Pmax" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW",
+				"description" : "upper limit on PF (MW flow at 'from' end)"
+			},
+			"Qminf" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MVAr",
+				"description" : "lower limit on MVAr injection at 'from' bus"
+			},
+			"Qmaxf" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MVAr",
+				"description" : "upper limit on MVAr injection at 'from' bus"
+			},
+			"Qmint" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MVAr",
+				"description" : "lower limit on MVAr injection at  'to'  bus"
+			},
+			"Qmaxt" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MVAr",
+				"description" : "upper limit on MVAr injection at  'to'  bus"
+			},
+			"loss0" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW",
+				"description" : "constant term of linear loss function (MW) on Sfrom"
+			},
+			"loss1" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW/MW",
+				"description" : "linear term of linear loss function (MW/MW) w.r.t Sfrom"
+			},
+			"mu_Pmin" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on lower flow limit at 'from' bus"
+			},
+			"mu_Pmax" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on upper flow limit at 'from' bus"
+			},
+			"mu_Qminf" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on lower VAr limit at 'from' bus"
+			},
+			"mu_Qmaxf" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on upper VAr limit at 'from' bus"
+			},
+			"mu_Qmint" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on lower VAr limit at 'to' bus"
+			},
+			"mu_Qmaxt" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"flags" : "OUTPUT",
+				"unit" : "$/MW",
+				"description" : "Kuhn-Tucker multiplier on upper VAr limit at 'to' bus"
+			},
+			"control" : {
+				"type" : "enumeration",
+				"access" : "PUBLIC",
+				"keywords" : {
+					"TO" : "0x0",
+					"FROM" : "0x1"
+				},
+				"default" : "TO",
+				"description" : "Control point at which power flow is regulated"
+			}
+		},
+		"gen" : {
+			"object_size" : "232",
 			"trl" : "9",
 			"module" : "pypower",
 			"profiler.numobjs" : "3",
@@ -1125,19 +1298,19 @@
 				"type" : "complex",
 				"access" : "PUBLIC",
 				"unit" : "MVA",
-				"description" : "power demand (MVA)"
+				"description" : "total load (MVA)"
 			},
 			"Z" : {
 				"type" : "complex",
 				"access" : "PUBLIC",
-				"unit" : "Ohm",
-				"description" : "constant impedance load (Ohm)"
+				"unit" : "MVA",
+				"description" : "constant impedance load (MVA)"
 			},
 			"I" : {
 				"type" : "complex",
 				"access" : "PUBLIC",
-				"unit" : "A",
-				"description" : "constant current load (A)"
+				"unit" : "MVA",
+				"description" : "constant current load (MVA)"
 			},
 			"P" : {
 				"type" : "complex",
@@ -1180,7 +1353,7 @@
 			}
 		},
 		"powerplant" : {
-			"object_size" : "1480",
+			"object_size" : "1568",
 			"trl" : "9",
 			"module" : "pypower",
 			"profiler.numobjs" : "0",
@@ -1334,7 +1507,7 @@
 				"type" : "complex",
 				"access" : "PUBLIC",
 				"unit" : "MVA",
-				"description" : "power generation (MVA)"
+				"description" : "power generation setpoint (MVA)"
 			},
 			"controller" : {
 				"type" : "char256",
@@ -1377,6 +1550,12 @@
 				"unit" : "MWh/unit",
 				"description" : "generator heat rate/fuel efficiency (MWh/unit)"
 			},
+			"ramp_rate" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW/min",
+				"description" : "generator ramp rate (MWH/min)"
+			},
 			"total_cost" : {
 				"type" : "double",
 				"access" : "PUBLIC",
@@ -1394,6 +1573,41 @@
 				"access" : "PUBLIC",
 				"unit" : "tonne",
 				"description" : "generator total operating cost (tonne)"
+			},
+			"Pg" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW",
+				"description" : "generator actual real power output (MW)"
+			},
+			"Qg" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MW",
+				"description" : "generator actual reactive power output (MW)"
+			},
+			"Tnominal" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "degC",
+				"description" : "powerplant nominal operating temperature (degC)"
+			},
+			"derating" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "pu/degC",
+				"description" : "powerplant temperature derating constant (pu/degC)"
+			},
+			"Tcutoff" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "degC",
+				"description" : "powerplant cutoff temperature (degC)"
+			},
+			"weather" : {
+				"type" : "object",
+				"access" : "PUBLIC",
+				"description" : "weather object"
 			}
 		},
 		"powerline" : {
@@ -1491,7 +1705,7 @@
 			}
 		},
 		"shunt" : {
-			"object_size" : "184",
+			"object_size" : "224",
 			"trl" : "7",
 			"module" : "pypower",
 			"profiler.numobjs" : "0",
@@ -1519,18 +1733,35 @@
 				},
 				"description" : "shunt status"
 			},
+			"input" : {
+				"type" : "enumeration",
+				"access" : "PUBLIC",
+				"keywords" : {
+					"MAGNITUDE" : "0x0",
+					"ANGLE" : "0x1"
+				},
+				"description" : "voltage control input"
+			},
+			"output" : {
+				"type" : "enumeration",
+				"access" : "PUBLIC",
+				"keywords" : {
+					"REACTIVE" : "0x0",
+					"REAL" : "0x1"
+				},
+				"default" : "REACTIVE",
+				"description" : "voltage control output"
+			},
 			"voltage_high" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"unit" : "pu",
-				"default" : "1 pu",
+				"flags" : "REQUIRED",
 				"description" : "controlled voltage upper limit"
 			},
 			"voltage_low" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"unit" : "pu",
-				"default" : "1 pu",
+				"flags" : "REQUIRED",
 				"description" : "controlled voltage lower limit"
 			},
 			"remote_bus" : {
@@ -1631,6 +1862,18 @@
 				"access" : "PUBLIC",
 				"unit" : "MVAr",
 				"description" : "control block 8 shunt admittance step at unity voltage"
+			},
+			"dwell_time" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "s",
+				"description" : "control lockout"
+			},
+			"control_gain" : {
+				"type" : "double",
+				"access" : "PUBLIC",
+				"unit" : "MVAr/pu.V",
+				"description" : "proportional feedback control gain"
 			}
 		},
 		"transformer" : {
@@ -1735,8 +1978,8 @@
 			"Ws" : {
 				"type" : "double",
 				"access" : "PUBLIC",
-				"unit" : "m/2",
-				"description" : "Wind speed (m/2)"
+				"unit" : "m/s",
+				"description" : "Wind speed (m/s)"
 			},
 			"Td" : {
 				"type" : "double",
@@ -1784,27 +2027,27 @@
 		"version.patch" : {
 			"type" : "int32",
 			"access" : "REFERENCE",
-			"value" : "14"
+			"value" : "17"
 		},
 		"version.build" : {
 			"type" : "int32",
 			"access" : "REFERENCE",
-			"value" : "250401"
+			"value" : "250804"
 		},
 		"version.branch" : {
 			"type" : "char256",
 			"access" : "REFERENCE",
-			"value" : "develop_fix_pypower_solver"
+			"value" : "develop"
 		},
 		"version" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "4.3.14-250401-develop_fix_pypower_solver"
+			"value" : "4.3.17-250804-develop"
 		},
 		"command_line" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/bin/gridlabd.bin -C case9.glm -o case9.json"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin -C py_case9.glm -o case9.json"
 		},
 		"environment" : {
 			"type" : "char1024",
@@ -1854,7 +2097,7 @@
 		"workdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/examples"
+			"value" : "/Users/david/GitHub/fidopower/optimal_sizing_placement/test"
 		},
 		"dumpfile" : {
 			"type" : "char1024",
@@ -1960,17 +2203,17 @@
 		"kmlhost" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : "https://code.arras.energy/develop_fix_pypower_solver/runtime"
+			"value" : "https://code.arras.energy/develop/runtime"
 		},
 		"modelname" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "case9.glm"
+			"value" : "py_case9.glm"
 		},
 		"execdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin"
 		},
 		"strictnames" : {
 			"type" : "bool",
@@ -1990,12 +2233,12 @@
 		"randomstate" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-24704228"
+			"value" : "907355568"
 		},
 		"randomseed" : {
 			"type" : "int32",
 			"access" : "PUBLIC",
-			"value" : "-24704228"
+			"value" : "907355568"
 		},
 		"include" : {
 			"type" : "char1024",
@@ -2436,7 +2679,7 @@
 		"exename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/bin/gridlabd.bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/gridlabd.bin"
 		},
 		"wget_options" : {
 			"type" : "char1024",
@@ -2627,37 +2870,37 @@
 		"pythonpath" : {
 			"type" : "char1024",
 			"access" : "PUBLIC",
-			"value" : ".:/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/share:/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/lib/gridlabd/python3.10/site-packages"
+			"value" : ".:/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/share:/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/lib/python3.10/site-packages"
 		},
 		"pythonexec" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/bin/python3"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin/python3"
 		},
 		"datadir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/share/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/share/gridlabd"
 		},
 		"bindir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/bin"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/bin"
 		},
 		"vardir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/var/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/var/gridlabd"
 		},
 		"libdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/lib/gridlabd"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/lib/gridlabd"
 		},
 		"incdir" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/include"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/include"
 		},
 		"logfile" : {
 			"type" : "char1024",
@@ -2672,7 +2915,7 @@
 		"configpath" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "/usr/local/opt/gridlabd/4.3.14-250401-develop_fix_pypower_solver-darwin_23-x86_64/share/gridlabd/solver_py.conf"
+			"value" : "/usr/local/opt/gridlabd/4.3.17-250804-develop-darwin_23-x86_64/share/gridlabd/solver_py.conf"
 		},
 		"json_complex_format" : {
 			"type" : "set",
@@ -2709,7 +2952,7 @@
 		"filename" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "case9.glm"
+			"value" : "py_case9.glm"
 		},
 		"country" : {
 			"type" : "char8",
@@ -2749,7 +2992,12 @@
 		"gitbranch" : {
 			"type" : "char1024",
 			"access" : "REFERENCE",
-			"value" : "develop-fix-pypower-solver"
+			"value" : "develop"
+		},
+		"py_load_options" : {
+			"type" : "char1024",
+			"access" : "PUBLIC",
+			"value" : "-t pypower"
 		},
 		"pypower::message_flags" : {
 			"type" : "set",
@@ -2762,15 +3010,35 @@
 			"access" : "PUBLIC",
 			"value" : ""
 		},
+		"pypower::autosize_angle" : {
+			"type" : "double",
+			"access" : "PUBLIC",
+			"value" : "+0 rad"
+		},
+		"pypower::default_dcline_loss0" : {
+			"type" : "double",
+			"access" : "PUBLIC",
+			"value" : "+0 MW"
+		},
+		"pypower::default_dcline_loss1" : {
+			"type" : "double",
+			"access" : "PUBLIC",
+			"value" : "+0.05 MW/MW"
+		},
 		"pypower::default_reactive_power_fraction" : {
 			"type" : "double",
 			"access" : "PUBLIC",
 			"value" : "+0.2 pu"
 		},
-		"pypower::minimum_voltage_deadband" : {
+		"pypower::minimum_voltage_magnitude_deadband" : {
 			"type" : "double",
 			"access" : "PUBLIC",
-			"value" : "+0.002 pu"
+			"value" : "+0.002 pu.kV"
+		},
+		"pypower::minimum_voltage_angle_deadband" : {
+			"type" : "double",
+			"access" : "PUBLIC",
+			"value" : "+0.01 deg"
 		},
 		"pypower::timestamp_format" : {
 			"type" : "char256",
@@ -2807,6 +3075,11 @@
 			"type" : "bool",
 			"access" : "PUBLIC",
 			"value" : "FALSE"
+		},
+		"pypower::opf_update_interval" : {
+			"type" : "double",
+			"access" : "PUBLIC",
+			"value" : "+0 s"
 		},
 		"pypower::stop_on_failure" : {
 			"type" : "bool",
@@ -2920,10 +3193,10 @@
 		"pp_bus_1" : {
 			"id" : "0",
 			"class" : "bus",
-			"rank" : "0",
+			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16807",
-			"guid" : "7E0C26CB95EABFBA31DDE62B729F6897",
+			"guid" : "758F076ACF2EA634CEFC71BBE50EE0D",
 			"flags" : "0x100",
 			"bus_i": "1",
 			"S": "0+0j MVA",
@@ -2957,10 +3230,10 @@
 		"pp_bus_2" : {
 			"id" : "1",
 			"class" : "bus",
-			"rank" : "0",
+			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "282475249",
-			"guid" : "606EFDB257FA891D6B64C36C326F1A71",
+			"guid" : "57B59F26A9052F8D16D58BDBA8671FEC",
 			"flags" : "0x100",
 			"bus_i": "2",
 			"S": "0+0j MVA",
@@ -2994,10 +3267,10 @@
 		"pp_bus_3" : {
 			"id" : "2",
 			"class" : "bus",
-			"rank" : "0",
+			"rank" : "2",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1622650073",
-			"guid" : "F04A5CC6F6C10F961183C5F84BAF0B5",
+			"guid" : "37566034BB219F9115E32BDC3E084FCD",
 			"flags" : "0x100",
 			"bus_i": "3",
 			"S": "0+0j MVA",
@@ -3034,7 +3307,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "984943658",
-			"guid" : "38917A7E421C8FFD5CE2FB7FA5E33349",
+			"guid" : "5DF72AE3EB498FF83C85B19A1DF2B3A3",
 			"flags" : "0x100",
 			"bus_i": "4",
 			"S": "0+0j MVA",
@@ -3071,7 +3344,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1144108930",
-			"guid" : "764C358C64950A5D792FAD04C242C9DC",
+			"guid" : "5507D1AF2AD21229329C14B65E197A47",
 			"flags" : "0x100",
 			"bus_i": "5",
 			"S": "90+30j MVA",
@@ -3108,7 +3381,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "470211272",
-			"guid" : "67AE956CFF1F57B71C062A1B4A5B70DC",
+			"guid" : "7A5AEB9DA5C92C31648C55CED7F16F7C",
 			"flags" : "0x100",
 			"bus_i": "6",
 			"S": "0+0j MVA",
@@ -3145,7 +3418,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "101027544",
-			"guid" : "3CE104BFC012585A54004F33DAC8B706",
+			"guid" : "91E7F99DD4A4DAD3310C425355414CB",
 			"flags" : "0x100",
 			"bus_i": "7",
 			"S": "100+35j MVA",
@@ -3182,7 +3455,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1457850878",
-			"guid" : "7503B23E8BBF30641CBCE1AEDAE54008",
+			"guid" : "5E78FBC2F395FD6812CF45CA5DE0E857",
 			"flags" : "0x100",
 			"bus_i": "8",
 			"S": "0+0j MVA",
@@ -3219,7 +3492,7 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1458777923",
-			"guid" : "48522677868D351D2F693F1E9007EBD1",
+			"guid" : "581B7C6717DFA05A17809D0AF8175B22",
 			"flags" : "0x100",
 			"bus_i": "9",
 			"S": "125+50j MVA",
@@ -3253,10 +3526,11 @@
 		"pp_gen_1" : {
 			"id" : "9",
 			"class" : "gen",
+			"parent" : "pp_bus_1",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "2007237709",
-			"guid" : "71665262A1D1065C4B167656A06A6D03",
+			"guid" : "6C4FD064E321C9D8B7B77F3A5B96B90",
 			"flags" : "0x100",
 			"bus": "1",
 			"Pg": "0 MW",
@@ -3287,10 +3561,11 @@
 		"pp_gen_2" : {
 			"id" : "10",
 			"class" : "gen",
+			"parent" : "pp_bus_2",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823564440",
-			"guid" : "B93D04A7FD47FA1F5560A8DC05A65E",
+			"guid" : "33B582A6BB96A75B11AB1887771AA31D",
 			"flags" : "0x100",
 			"bus": "2",
 			"Pg": "163 MW",
@@ -3321,10 +3596,11 @@
 		"pp_gen_3" : {
 			"id" : "11",
 			"class" : "gen",
+			"parent" : "pp_bus_3",
 			"rank" : "1",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1115438165",
-			"guid" : "479A1E174F7D8FA05ADFD76B9DB417A9",
+			"guid" : "4E2DFAA1F808489224AD169DC4A0A4B6",
 			"flags" : "0x100",
 			"bus": "3",
 			"Pg": "85 MW",
@@ -3358,19 +3634,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1784484492",
-			"guid" : "AC876672C2F98C35ED0B813336C6F02",
+			"guid" : "154BFF5A810717C652FE9DE1322812BA",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_1",
+			"to": "pp_bus_4",
 			"fbus": "1",
 			"tbus": "4",
 			"r": "0 pu.Ohm",
 			"x": "0.0576 pu.Ohm",
-			"b": "0 pu./Ohm",
+			"b": "0 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3384,19 +3660,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "74243042",
-			"guid" : "679C1B879A6557CC7E268F3277D55E96",
+			"guid" : "2FA212FC10CD732C1D2B1CF513B57DD1",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_4",
+			"to": "pp_bus_5",
 			"fbus": "4",
 			"tbus": "5",
 			"r": "0.017 pu.Ohm",
 			"x": "0.092 pu.Ohm",
-			"b": "0.158 pu./Ohm",
+			"b": "0.158 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3410,19 +3686,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "114807987",
-			"guid" : "21CE5B9E5774ABA6013F88C23CBD472",
+			"guid" : "1159B668F8093F7217C31C59BEE63332",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_5",
+			"to": "pp_bus_6",
 			"fbus": "5",
 			"tbus": "6",
 			"r": "0.039 pu.Ohm",
 			"x": "0.17 pu.Ohm",
-			"b": "0.358 pu./Ohm",
+			"b": "0.358 pu.S",
 			"rateA": "150 MVA",
 			"rateB": "150 MVA",
 			"rateC": "150 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3436,19 +3712,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1137522503",
-			"guid" : "1CF533E96F03F87012D388775A5D0784",
+			"guid" : "76C2ECE7089AABA280E65D288C453A9",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_3",
+			"to": "pp_bus_6",
 			"fbus": "3",
 			"tbus": "6",
 			"r": "0 pu.Ohm",
 			"x": "0.0586 pu.Ohm",
-			"b": "0 pu./Ohm",
+			"b": "0 pu.S",
 			"rateA": "300 MVA",
 			"rateB": "300 MVA",
 			"rateC": "300 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3462,19 +3738,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1441282327",
-			"guid" : "7F897C106C8DE1217B98E8E18DBFA1FB",
+			"guid" : "53E060E70B7C344D1F4E471C437ABF1C",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_6",
+			"to": "pp_bus_7",
 			"fbus": "6",
 			"tbus": "7",
 			"r": "0.0119 pu.Ohm",
 			"x": "0.1008 pu.Ohm",
-			"b": "0.209 pu./Ohm",
+			"b": "0.209 pu.S",
 			"rateA": "150 MVA",
 			"rateB": "150 MVA",
 			"rateC": "150 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3488,19 +3764,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "16531729",
-			"guid" : "600726A41BDA1B6557353A291793872E",
+			"guid" : "626C3F8DACC90CD15D760CA4031BF678",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_7",
+			"to": "pp_bus_8",
 			"fbus": "7",
 			"tbus": "8",
 			"r": "0.0085 pu.Ohm",
 			"x": "0.072 pu.Ohm",
-			"b": "0.149 pu./Ohm",
+			"b": "0.149 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3514,19 +3790,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "823378840",
-			"guid" : "3FAE9E34226EFEC77E273E0DBB403390",
+			"guid" : "75DBA58BC8F938E141345310C575C9F6",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_8",
+			"to": "pp_bus_2",
 			"fbus": "8",
 			"tbus": "2",
 			"r": "0 pu.Ohm",
 			"x": "0.0625 pu.Ohm",
-			"b": "0 pu./Ohm",
+			"b": "0 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3540,19 +3816,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "143542612",
-			"guid" : "72610A7298B8BE5A3592D8F9C4B3C173",
+			"guid" : "1F96BC413F32F022403500484C2BC83A",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_8",
+			"to": "pp_bus_9",
 			"fbus": "8",
 			"tbus": "9",
 			"r": "0.032 pu.Ohm",
 			"x": "0.161 pu.Ohm",
-			"b": "0.306 pu./Ohm",
+			"b": "0.306 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3566,19 +3842,19 @@
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "896544303",
-			"guid" : "1D9E8C0E2D84D63355E68BE491F017C2",
+			"guid" : "1BB0CB022CA944E74F7416C70C718617",
 			"flags" : "0x100",
-			"from": "",
-			"to": "",
+			"from": "pp_bus_9",
+			"to": "pp_bus_4",
 			"fbus": "9",
 			"tbus": "4",
 			"r": "0.01 pu.Ohm",
 			"x": "0.085 pu.Ohm",
-			"b": "0.176 pu./Ohm",
+			"b": "0.176 pu.S",
 			"rateA": "250 MVA",
 			"rateB": "250 MVA",
 			"rateC": "250 MVA",
-			"ratio": "1 pu",
+			"ratio": "0 pu",
 			"angle": "0 deg",
 			"status": "IN",
 			"angmin": "-360 deg",
@@ -3586,42 +3862,42 @@
 			"current": "0+0j A",
 			"loss": "0 MW"
 		},
-		"pp_gencost_0" : {
+		"pp_gencost_1" : {
 			"id" : "21",
 			"class" : "gencost",
 			"parent" : "pp_gen_1",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1474833169",
-			"guid" : "160D7C72D9FD751636B52F0912451FFC",
+			"guid" : "CDBF4D67B52FFB3885A7F18C5C82F0",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "1500 $",
 			"shutdown": "0 $",
 			"costs": "0.11,5.0,150.0"
 		},
-		"pp_gencost_1" : {
+		"pp_gencost_2" : {
 			"id" : "22",
 			"class" : "gencost",
 			"parent" : "pp_gen_2",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1264817709",
-			"guid" : "65ADB2C4CAF16E325E6CEBB52144FC02",
+			"guid" : "4C9B8456B0F01EA075AC6C47D8D60AD7",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "2000 $",
 			"shutdown": "0 $",
 			"costs": "0.085,1.2,600.0"
 		},
-		"pp_gencost_2" : {
+		"pp_gencost_3" : {
 			"id" : "23",
 			"class" : "gencost",
 			"parent" : "pp_gen_3",
 			"rank" : "0",
 			"clock" : "1999-12-31 16:00:00 PST",
 			"rng_state" : "1998097157",
-			"guid" : "2FDE9D596FCE9CF42B83B976A047062E",
+			"guid" : "551F6F88A85FA4B663B37A00F3D99B89",
 			"flags" : "0x100",
 			"model": "POLYNOMIAL",
 			"startup": "3000 $",
