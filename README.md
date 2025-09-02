@@ -113,23 +113,24 @@ The OPF is the solution to the following convex optimization problem for a
 network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d,e}{\min} & P (\sqrt{g^2+h^2}+c+r) + 100 \hat{P} \sqrt{d^2+e^2}
+    \underset{x,y,g,h,c,d,e}{\min} & P|g + h| + 100 \hat{P}|d +e|
 \\
     \textrm{subject to} 
-    & \Re(G) x - g + c + \Re(D) - d = 0 & \textrm{real power flow balance} \\
-    & \Im(G) y - h - c + \Im(D) - e = 0 & \textrm{reactive power flow balance} \\
+    & \Re(G) x - g + c + \Re(D) - d - r = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + \Im(D) - e + r = 0 & \textrm{reactive power flow balance} \\
     & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
-    & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
+    & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal, default 5\%, can be set based on user preference} \\
     & |Ix| \le F & \textrm{line flow constraints} \\
     & g \ge 0 & \textrm{real generation power constraints} \\
     & |h| \le \Im(S) & \textrm{reactive generation power constraints} \\
-    & \sqrt{g^2+h^2} \le \Re(S) & \textrm{apparent generation power constraints} \\
+    & |g + h| \le \Re(S) & \textrm{apparent generation power constraints} \\
     & 0 \le c \le C & \textrm{capacitor setting constraints} \\
     & |r| \le R & \textrm{synchronous condenser setting constraints} \\
     & d \ge 0 & \textrm{real power load shedding cannot be negative} \\
-    & \sqrt{d^2+e^2} \le |D| & \textrm{load shedding magnitude constraint}
+    & |d + e | \le |D| & \textrm{load shedding magnitude constraint}
 \end{array}$
+
 
 with variables
 
@@ -164,8 +165,8 @@ $\begin{array}{rll}
     \underset{x,y,g,h,c}{\min} & P \sqrt{g^2+h^2} + Q |h| + \frac12 (R+S) |c| + \frac12(R-S) c
 \\
     \textrm{subject to} 
-    & \Re(G) x - g + c + (\Re D)(1+E) = 0 & \textrm{real power flow balance} \\
-    & \Im(G) y - h - c + (\Im D)(1+E) = 0 & \textrm{reactive power flow balance} \\
+    & \Re(G) x - g + c + (\Re (D))(1+E) = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + (\Im (D))(1+E) = 0 & \textrm{reactive power flow balance} \\
     & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
     & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
     & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\

@@ -138,14 +138,7 @@ Solved the issue, the code was looking at the cost of reactive power output inst
 #### 3. Flows 
 
 ##### Graph Incidence Matrix
-- **Old approach**: Weighted incidence used `±R` (resistance) as edge weights.  
-- **Problem**: For AC/DC power flow, branch **susceptance** (\(b = 1/x\)) is what relates voltage angle differences to line real-power flows, not resistance.  
-- **Fix**:
-  ```python
-  I_unw = self.graphIncidence(refresh, weighted=False)
-  x_lines = np.array([...])     # branch reactances parsed from JSON
-  b_lines = 1.0 / np.clip(x_lines, 1e-9, None)
-  I_w = b_lines[:, None] * I_unw   # row-scale incidence
+Fixed, the admittance was the same as the impedence in the previous version, corrected now.
 
 
 ### Questions 
