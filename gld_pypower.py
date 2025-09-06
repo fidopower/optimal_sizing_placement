@@ -981,6 +981,7 @@ class Model:
             voltage_low:list,
             new_gens:list=[],
             new_caps:list=[],
+            new_conds:list=[],
             verbose:bool=False,
             ):
         """Add generation and capacitors to model
@@ -1051,7 +1052,8 @@ class Model:
             print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}   Vhigh    Vlow      Y       Steps    Yc",file=verbose,)
             print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- --------",file=verbose)
         
-        for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if x<0}.items():
+        #for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_caps) if x<0}.items():
+        for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_conds) if x<0}.items():
             shunt = f"S_{guid()}"
             self.add_object("shunt",shunt,
                 parent=bus,
@@ -1183,8 +1185,7 @@ class Model:
         c = cp.Variable(N)  # capacitor bank settings
         d = cp.Variable(N)  # demand real power curtailment
         e = cp.Variable(N)  # demand reactive power curtailment
-        #TODO: checking if adding synchronous condensor settins work 
-        r = cp.Variable(N)
+        r = cp.Variable(N)  # condenser settings
 
         try:
             cost = P @ ( cp.abs(g + h * 1j))
@@ -1338,6 +1339,7 @@ class Model:
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
             C = self.capacitors('installed',refresh)
+            R = self.condensers('installed', refresh)
             N = len(self.nodes(refresh))
 
             # normalize generation cost argument
@@ -1410,6 +1412,7 @@ class Model:
             print("\nF:",F,sep="\n",file=verbose)
             print("\nS:",S,sep="\n",file=verbose)
             print("\nC:",C,sep="\n",file=verbose)
+            print("\nR:",R,sep="\n",file=verbose)
             print("\nTotal D:",sum(D),sep="\n",file=verbose)
             print("\nTotal S:",sum(S),sep="\n",file=verbose)
             print("\nTotal C:",sum(C),sep="\n",file=verbose)
@@ -1433,11 +1436,11 @@ class Model:
                 x[ref] == 0,  # swing bus voltage angle always 0
                 y[ref] == 1,  # swing bus voltage magnitude is always 1
                 cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
-                cp.abs(I @ x) <= F,  # line flow limits
+                cp.abs(I.real@x + I.imag@y) <= F, 
                 g >= 0, # generation must be positive
                 cp.abs(h) <= reactive_power_constraint*g # limit how much reactive power a generator can produce
                 ]
-            if not generator_expansion_limit is None:
+            if not generator_expansion_limit is None: #TODO: #change this to if generator_expansion_limit
                 # limit where and how much generation can be added
                 constraints.append(cp.abs(g+h*1j) <= generator_expansion_limit*cp.abs(S))
 
@@ -1456,8 +1459,15 @@ class Model:
         # update model with new values
         new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value + cp.abs(h).value*1j - S) ]
         new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value - C)]
+        new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value - R)]
+
+        if verbose: 
+            print(f"{new_gens=} \n"
+                  f"{new_caps=} \n"
+                  f"{new_conds=} \n", file = verbose)
+
         if update_model:
-            self.update_model(min_power_ratio,voltage_high,voltage_low,new_gens,new_caps,verbose)
+            self.update_model(min_power_ratio,voltage_high,voltage_low,new_gens,new_caps,new_conds,verbose)
 
         status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:
@@ -1472,12 +1482,14 @@ class Model:
                 "generation": np.array((g+h*1j).value).round(3)*puS,
                 "capacitors": np.array([max(x,0) for x in c.value]).round(3)*puS,
                 "condensers": np.array([max(-x,0) for x in c.value]).round(3)*puS,
-                "flows": cp.abs(I @ x).value.round(3)*puS,
+                "flows": cp.abs(I.real@x + I.imag@y).value.round(3)*puS, 
                 "cost" : problem.value.round(2),
                 "demand":D.round(3)*puS,
                 "additions": {
                     "generation": {n:x for n,x in enumerate(new_gens) if abs(x)>0},
                     "capacitors": {n:x for n,x in enumerate(new_caps) if abs(x)>0},
+                    "condensers": {n:x for n,x in enumerate(new_conds) if abs(x)>0},
+
                 },
                 "status": status,
             }

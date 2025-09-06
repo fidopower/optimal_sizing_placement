@@ -143,3 +143,193 @@ Fixed, the admittance was the same as the impedence in the previous version, cor
 
 ### Questions 
 1. Since were are working with pypower test cases and if I remember correctly dealing with the transmission network we should be working with the AC network correct? 
+
+
+
+### DATE: 09/06/2025 
+
+
+#### ISSUES
+1. OSP was not taking into account condensor_costs (Resolved)
+2. There is a way to save the settings for the capacitors which is good, however, the 
+condenser bank configurations are not being saved, so I am going to be making those updates to save 
+those to the model. (resolved)
+3. Update Model is not reading the correct capacitor settings and updating itself accordingly (resolved)
+
+
+Below is the OSP problem original as mentioned in the READM.md
+
+$\begin{array}{rll}
+    \underset{x,y,g,h,c}{\min} & P \sqrt{g^2+h^2} + Q |h| + \frac12 (R+S) |c| + \frac12(R-S) c
+\\
+    \textrm{subject to} 
+    & \Re(G) x - g + c + (\Re (D))(1+E) = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + (\Im (D))(1+E) = 0 & \textrm{reactive power flow balance} \\
+    & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
+    & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
+    & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
+    & |Ix| \le F & \textrm{line flow constraints} \\
+    & |h| < 0.2 g & \textrm{constrain reactive power generation to 20\% of real power}
+\end{array}$
+
+with variables
+
+* $x \in \mathbb{R}^N$ is the voltage angle,
+* $y \in \mathbb{R}^N$ is the voltage magnitude,
+* $g \in \mathbb{R}^N$ is the generator real power capacity,
+* $h \in \mathbb{R}^N$ is the generator reactive power capacity, and
+* $c \in \mathbb{R}^N$ is the capacitor/condenser size
+
+and parameters
+
+* $P \in \mathbb{R}^N$ is the generation energy price,
+* $Q \in \mathbb{R}^N$ is the price of reactive power control (not including energy),
+* $R \in \mathbb{R}^N$ is the price of installing capacitors,
+* $S \in \mathbb{R}^N$ is the price of installing synchronous condensers, and
+* $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
+* $E \in \mathbb{R}$ is the demand safety margin,
+* $D \in \mathbb{C}^N$ is the total demand,
+* $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix.
+
+An additional constraint can be imposed if we wish to limit where generators can be placed to only locations where generators exist, and limit how much generation is located there to some factor, say 2x existing existing capacity, e.g.,
+
+$\qquad 0 \le \sqrt{g^2+h^2} \le 2 \Re H \qquad \textrm{generation total power constraint}$
+
+where
+
+* $H \in \mathbb{R}^N$ is the intalled generation capacity.
+
+However, this constraint can result in an infeasible problem, and should not be included if feasibility must be assured.
+
+#### Code Implementation - 
+
+'''
+
+$\begin{array}{rll}
+    \underset{x,y,g,h,c}{\min} & P \sqrt{g^2+h^2} + Q |h| + \frac12 (R+S) |c| + \frac12(R-S) c
+\\
+    \textrm{subject to} 
+    & \Re(G) x - g + c + (\Re (D))(1+E) = 0 & \textrm{real power flow balance} \\
+    & \Im(G) y - h - c + (\Im (D))(1+E) = 0 & \textrm{reactive power flow balance} \\
+    & x_{ref} = 0 & \textrm{reference bus voltage angle is always 0} \\
+    & y_{ref} = 1 & \textrm{reference bus voltage magnitude is always 1} \\
+    & |y-1| \le 0.05 & \textrm{bus voltages within 5\% of nominal} \\
+    & |Ix| \le F & \textrm{line flow constraints} \\
+    & |h| < 0.2 g & \textrm{constrain reactive power generation to 20\% of real power}
+\end{array}$
+
+with variables
+
+* $x \in \mathbb{R}^N$ is the voltage angle,
+* $y \in \mathbb{R}^N$ is the voltage magnitude,
+* $g \in \mathbb{R}^N$ is the generator real power capacity,
+* $h \in \mathbb{R}^N$ is the generator reactive power capacity, and
+* $c \in \mathbb{R}^N$ is the capacitor/condenser size
+
+and parameters
+
+* $P \in \mathbb{R}^N$ is the generation energy price,
+* $Q \in \mathbb{R}^N$ is the price of reactive power control (not including energy),
+* $R \in \mathbb{R}^N$ is the price of installing capacitors,
+* $S \in \mathbb{R}^N$ is the price of installing synchronous condensers, and
+* $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
+* $E \in \mathbb{R}$ is the demand safety margin,
+* $D \in \mathbb{C}^N$ is the total demand,
+* $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix.
+
+An additional constraint can be imposed if we wish to limit where generators can be placed to only locations where generators exist, and limit how much generation is located there to some factor, say 2x existing existing capacity, e.g.,
+
+$\qquad 0 \le \sqrt{g^2+h^2} \le 2 \Re H \qquad \textrm{generation total power constraint}$
+
+where
+
+* $H \in \mathbb{R}^N$ is the intalled generation capacity.
+
+However, this constraint can result in an infeasible problem, and should not be included if feasibility must be assured.'''
+
+#### Code version
+
+In the code the following optimization is implemented- 
+
+$$
+\min_{x, y, g, h, c} \;
+|P||g| + |\Im(P)||h| + \frac12 (R+S) |c| + \frac12(R-S) c
+$$
+
+**subject to:**
+
+Real power balance:
+$$
+g - \Re(G) x + c -\Re(D) (1 + E) = 0
+$$
+
+Reactive power balance:
+$$
+h - \Im(G) y - c -\Im(D)(1 + E) = 0
+$$
+
+Reference bus constraints:
+$$
+x_{\text{ref}} = 0 \quad \text{and} \quad y_{\text{ref}} = 1
+$$
+
+Voltage magnitude limits:
+$$
+|y - 1| \leq \varepsilon_V
+$$
+
+Line flow constraints:
+$$
+|I x| \leq F
+$$
+
+Real generation constraint:
+$$
+g \geq 0
+$$
+
+Reactive generation constraint:
+$$
+|h| \leq \varphi g
+$$
+
+**Optional generator siting constraint:**
+$$
+|g + h|\leq \gamma \cdot |S|
+$$
+
+---
+
+**Variables:**
+
+- \( x \in \mathbb{R}^N \) — voltage angles  
+- \( y \in \mathbb{R}^N \) — voltage magnitudes  
+- \( g \in \mathbb{R}^N \) — real power generation  
+- \( h \in \mathbb{R}^N \) — reactive power generation  
+- \( c \in \mathbb{R}^N \) — capacitor/condenser setting  
+
+**Parameters:**
+
+- \( P \in \mathbb{R}^N \) — real power cost 
+- \( Q \in \mathbb{R}^N \) — reactive power cost
+- \( R \in \mathbb{R}^N \) — capacitor installation cost  
+- \( S \in \mathbb{R}^N \) — condenser installation cost  
+- \( G \in \mathbb{C}^{N \times N} \) — Laplacian admittance matrix  
+- \( D \in \mathbb{R}^N \) —  demand  
+- \( I \in \mathbb{R}^{M \times N} \) — incidence matrix  
+- \( F \in \mathbb{R}^M \) — line flow limits  
+- \( E\varepsilon_V \in \mathbb{R} \) — voltage deviation tolerance  
+- \( \varphi \in \mathbb{R} \) — max reactive-to-real generation ratio  
+- \( \gamma \in \mathbb{R} \) — generation expansion limit (optional)
+
+
+I think the above implementation is okay, for each capacitor when are technically adding 
+a condenser at some node that only absorbs reactive power. The positive values of c are 
+reactive power injections and are associated with capacitors and the negative values are 
+associated with condensors which absorb that reactive power. 
+
+
+#### Code Issues
+
+There is a way to save the settings for the capacitors which is good, however, the 
+condenser bank configurations are not being saved, so I am going to be making those updates
