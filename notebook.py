@@ -150,9 +150,10 @@ def _(
                 ]
             )
         capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
+
     else:
         capacity_costs = mo.vstack([file, hint("open your JSON model")])
-    return cap_cost, capacity_costs, gen_cost
+    return cap_cost, capacity_costs, con_cost, gen_cost
 
 
 @app.cell
@@ -358,7 +359,6 @@ def _(K, N, message, mo, np, pd, warning):
 @app.cell
 def _(
     angle_limit_ui,
-    complex_flows_ui,
     curtailment_ui,
     error,
     file,
@@ -395,7 +395,7 @@ def _(
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
-                            complex_flows = complex_flows_ui.value
+                           # complex_flows = complex_flows_ui.value
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -406,7 +406,7 @@ def _(
                     mo.md(f"""~~~\n{_output}\n~~~""" if verbose_ui.value else ""),
                 ]
             )
-    
+
         except Exception as err:
             raise
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -431,6 +431,7 @@ def _(
 def _(
     angle_limit_ui,
     cap_cost,
+    con_cost,
     copy,
     demand_margin_ui,
     error,
@@ -465,11 +466,12 @@ def _(
                     _result = results(
                         osp_model,
                         osp_model.optimal_sizing(
+                            refresh=True,
+                            verbose=verbose_ui.value,
+                            update_model=True,
                             gen_cost=gen_cost,
                             cap_cost=cap_cost,
-                            refresh=True,
-                            update_model=True,
-                            verbose=verbose_ui.value,
+                            con_cost = con_cost,
                             solver=solver_ui.value,
                             margin=demand_margin_ui.value / 100,
                             angle_limit=angle_limit_ui.value,
@@ -582,6 +584,7 @@ def _(
                 )
             )
         except Exception as err:
+            raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(
                 mo.vstack(

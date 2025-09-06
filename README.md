@@ -113,7 +113,7 @@ The OPF is the solution to the following convex optimization problem for a
 network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d,e}{\min} & P|g + h| + 100 \hat{P}|d +e|
+    \underset{x,y,g,h,c,d,e}{\min} & P|g + h| + 100 \hat{P}|d + e|
 \\
     \textrm{subject to} 
     & \Re(G) x - g + c + \Re(D) - d - r = 0 & \textrm{real power flow balance} \\
