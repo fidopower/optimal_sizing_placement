@@ -782,7 +782,7 @@ class Model:
             result[bus-1] += value
         return self.set_result(f"generators.{kind}",result)
 
-    def prices(self,refresh:bool=False) -> np.array:
+    def prices(self,refresh:bool=False, verbose = False) -> np.array:
         """Get generation price array
 
         Arguments:
@@ -796,6 +796,8 @@ class Model:
                 return self.results["prices"]
         #costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()} #TODO: check after testing - 
         costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
+
+        if verbose: print(f"[prices]{self.costs(refresh)=}\n", file = verbose)
         self.results[f"prices"] = np.array([costs[n+1] if n+1 in costs else 0 for n in range(len(self.nodes(refresh)))])
         return self.results[f"prices"]
 
@@ -1138,7 +1140,7 @@ class Model:
             elif isinstance(ref,str):
                 ref = self.get_bus(ref)
            
-            P = self.prices(refresh)
+            P = self.prices(refresh, verbose)
             G = self.graphLaplacian(refresh)
             D = self.demand('actual',refresh)
             I = self.graphIncidence(refresh,complex_flows)
@@ -1459,7 +1461,7 @@ class Model:
         # update model with new values
         new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value + cp.abs(h).value*1j - S) ]
         new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value - C)]
-        new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value - R)]
+        new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value + R)]
 
         if verbose: 
             print(f"{new_gens=} \n"
@@ -1489,7 +1491,6 @@ class Model:
                     "generation": {n:x for n,x in enumerate(new_gens) if abs(x)>0},
                     "capacitors": {n:x for n,x in enumerate(new_caps) if abs(x)>0},
                     "condensers": {n:x for n,x in enumerate(new_conds) if abs(x)>0},
-
                 },
                 "status": status,
             }

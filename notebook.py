@@ -535,7 +535,7 @@ def _(
     # Final powerflow result
     if file.value:
         opf_model = copy.deepcopy(osp_model) #NOTE: should this be a deep copy of model or osp_model 
-        #opf_model = copy.deepcopy(model) #NOTE: suggested fix, maybe not necessary might go back to initial power flow 
+   
         try:
             _name = os.path.split(opf_model.name)[1]
             _name = os.path.splitext(_name)
