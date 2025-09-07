@@ -33,6 +33,8 @@ import cvxpy as cp
 from typing import Union, Any, TypeVar
 import random
 import warnings
+import pprint
+
 try:
     from pypower.api import runpf, runopf, ppoption, printpf
 except ModuleNotFoundError as err:
@@ -794,8 +796,12 @@ class Model:
         if "prices" in self.results and not refresh:
             if not refresh:
                 return self.results["prices"]
+       
         #costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[1]) for x,y in self.costs(refresh).items()} #TODO: check after testing - 
+        #NOTE; Float costs 
         costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
+        #costs = {self.get_property(y["parent"],"bus"):complex(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
+
 
         if verbose: print(f"[prices]{self.costs(refresh)=}\n", file = verbose)
         self.results[f"prices"] = np.array([costs[n+1] if n+1 in costs else 0 for n in range(len(self.nodes(refresh)))])
@@ -1000,10 +1006,25 @@ class Model:
             print("\nNew generation:",file=verbose)
             print(f"  Node{' '*(max([len(x) for x in self.find('bus',list)])-4)}    Bus       Pg       Qg      Pmax     Qmax     Qmin  ",file=verbose,)
             print(f"  {'-'*(max([len(x) for x in self.find('bus',list)]))} -------- -------- -------- -------- -------- --------",file=verbose)
+        
         for bus,spec in {self.get_name("bus",n):(n,x) for n,x in enumerate(new_gens) if abs(x)>0}.items():
             gen = f"G_{guid()}"
             n = int(self.data['objects'][bus]['bus_i'])-1
-            obj = self.add_object("gen",gen,
+            
+            #TODO: remove after testing the new change is correct 
+            # obj = self.add_object("gen",gen,
+            #     parent=bus,
+            #     bus=str(self.data['objects'][bus]['bus_i']),
+            #     Pg = spec[1].real,
+            #     Qg = spec[1].imag,
+            #     Pmax=spec[1].real,
+            #     Qmax=max(spec[1].imag,spec[1].real*min_power_ratio[n]),
+            #     Qmin=-max(spec[1].imag,spec[1].real*min_power_ratio[n]),
+            #     Vg=self.get_property(bus,"Vm"),
+            #     status="IN_SERVICE",
+            #     )
+            
+            self.add_object("gen",gen,
                 parent=bus,
                 bus=str(self.data['objects'][bus]['bus_i']),
                 Pg = spec[1].real,
@@ -1014,16 +1035,50 @@ class Model:
                 Vg=self.get_property(bus,"Vm"),
                 status="IN_SERVICE",
                 )
-            # print("New gen:",gen,self.data["objects"][gen])
+            
+            print("New gen:",gen,self.data["objects"][gen])
             if verbose:
                 print(' ',' '.join([self.format(self.get_property(gen,x)) for x in ['parent','bus','Pg','Qg','Pmax','Qmax','Qmin']]),file=verbose)
             gencost = f"GC_{guid()}"
+           
+            #NOTE: This information is available for example.json in the 
+            #Extracting capacity cost information from different buses
+            _costdata = self.find("capacity", dict)
+
+            costs = None
+            for x, y in _costdata.items(): 
+                if y["parent"] == bus: 
+                    costs = y["generator"]
+
+                    #NOTE: This method below takes in to account complex costs,
+                    costs = costs.split("$")[0]
+                    costs  = costs.strip()#take only the numeric magnitudes
+
+                    #NOTE: The method below only takes into account the real cost 
+                    # #components, bad but for now I am gonna test 
+                    costs = costs.split("+")[0]
+                    costs  = costs.strip()#take only the numeric magnitudes
+
+            if verbose: print(f"[update_model]{costs=}", file=verbose)
+            
+            #NOTE: these might be incorrect since some of the models specify the costs 
+            #TODO: remove the section below after testing 
+            # self.add_object("gencost",gencost,
+            #     parent=gen,
+            #     model="POLYNOMIAL",
+            #     costs="0.01,100,0", # TODO: where to get this data from (maybe from the lowest cost unit already present if any)
+            #     )
+
+            #NOTE: suggested FIX 
             self.add_object("gencost",gencost,
                 parent=gen,
                 model="POLYNOMIAL",
-                costs="0.01,100,0", # TODO: where to get this data from (maybe from the lowest cost unit already present if any)
-                )
+                costs= costs + ",", ) #TODO: Talk to Dave about how to interpret polynomial costs
+            
             # print("New gencost:",gencost,self.data["objects"][gencost])
+        
+        if verbose:
+            pprint.pprint(self.data["objects"], stream=verbose)
         
         # add capacitors
         if verbose:
@@ -1720,6 +1775,8 @@ if __name__ == "__main__":
             failed += 1
     def testIn(a,b,msg):
         import inspect
+
+
         global tested
         tested += 1
         if not a in b:

@@ -38,6 +38,15 @@ def _(
 
 
 @app.cell
+def _():
+    a = "10"
+    a = complex(a)
+
+    print(a)
+    return
+
+
+@app.cell
 def _(mo):
     # Main tab state
     get_main, set_main = mo.state("Model")
@@ -584,7 +593,6 @@ def _(
                 )
             )
         except Exception as err:
-            raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             set_optimal(
                 mo.vstack(
