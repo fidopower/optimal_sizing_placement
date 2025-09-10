@@ -292,7 +292,23 @@ condenser bank configurations are not being saved, so I am going to be making th
 ### Date Sep 7 2025 
 
 #### Issues in OSP 
-1. The new generation that is being added is being stored with the wrong "parent" key in update_model. 
+1. The new generation that is being added is being stored with the wrong "parent" key in update_model. (resolved) 
+> Parent key was fine, the gencost object associated with the gen object in the objects dictionary had the wrong price information, should be corrected now. 
 2. The new generation currently is polynomial in nature, which leads to two possible suggested fixes 
 i. Either have a more general objective function definition because that doesn't currently allow for polynomial model, and then implement the polynomial cost function, we might be stuck with this because there are some generation costs specified in the example.json, and I need to check whether those apply to new generation or are shared between the different generation units at the same bus.
- 
+3. We need to update the objective if reactive power is going to have different production costs, since the objective cannot deal with complex numbers, for now the simple fix would work but it is not a longterm solution. 
+
+
+#### Questions 
+The current code is not setup to allow for polynomial cost data and information. The polynomial costs are something like this "0.1, 100, 0" where the first might be the quadratic, the second term is the linear and the last is the constant. If that is the case then in the initial implementation of the "
+
+
+
+### Date Sep 8 2025 
+
+### DISCUSS 
+1. The OPF objective function expects that there is one generation unit per bus and is indexed based on buses, however, there could be multiple generation units at a given bus.  Maybe need to introduce another P_n for the newly added generation units on top of the existing generation. 
+2. The OPF objective also doesn't know how to deal with reactive power costs, which could be added as a different multiplication as well .
+3. Also, need to double check but the 0.1 unit in the objective and the constraints is equivalant to 10 MW so the base is 100 MWs, and the prices are technically per MW, 
+> There needs to be a 100 in front of both P and $\hat{P}$
+

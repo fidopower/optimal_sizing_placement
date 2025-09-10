@@ -990,6 +990,7 @@ class Model:
             new_gens:list=[],
             new_caps:list=[],
             new_conds:list=[],
+            gen_prod_cost: dict = {},
             verbose:bool=False,
             ):
         """Add generation and capacitors to model
@@ -1011,19 +1012,6 @@ class Model:
             gen = f"G_{guid()}"
             n = int(self.data['objects'][bus]['bus_i'])-1
             
-            #TODO: remove after testing the new change is correct 
-            # obj = self.add_object("gen",gen,
-            #     parent=bus,
-            #     bus=str(self.data['objects'][bus]['bus_i']),
-            #     Pg = spec[1].real,
-            #     Qg = spec[1].imag,
-            #     Pmax=spec[1].real,
-            #     Qmax=max(spec[1].imag,spec[1].real*min_power_ratio[n]),
-            #     Qmin=-max(spec[1].imag,spec[1].real*min_power_ratio[n]),
-            #     Vg=self.get_property(bus,"Vm"),
-            #     status="IN_SERVICE",
-            #     )
-            
             self.add_object("gen",gen,
                 parent=bus,
                 bus=str(self.data['objects'][bus]['bus_i']),
@@ -1043,40 +1031,36 @@ class Model:
            
             #NOTE: This information is available for example.json in the 
             #Extracting capacity cost information from different buses
-            _costdata = self.find("capacity", dict)
+            # _costdata = self.find("capacity", dict)
 
-            costs = None
-            for x, y in _costdata.items(): 
-                if y["parent"] == bus: 
-                    costs = y["generator"]
+            # costs = None
+            # for x, y in _costdata.items(): 
+            #     if y["parent"] == bus: 
+            #         costs = y["generator"]
 
-                    #NOTE: This method below takes in to account complex costs,
-                    costs = costs.split("$")[0]
-                    costs  = costs.strip()#take only the numeric magnitudes
+            #         #NOTE: This method below takes in to account complex costs,
+            #         costs = costs.split("$")[0]
+            #         costs  = costs.strip()#take only the numeric magnitudes
 
-                    #NOTE: The method below only takes into account the real cost 
-                    # #components, bad but for now I am gonna test 
-                    costs = costs.split("+")[0]
-                    costs  = costs.strip()#take only the numeric magnitudes
+            #         #NOTE: The method below only takes into account the real cost 
+            #         # #components, bad but for now I am gonna test 
+            #         costs = costs.split("+")[0]
+            #         costs  = costs.strip()#take only the numeric magnitudes
 
-            if verbose: print(f"[update_model]{costs=}", file=verbose)
+           # if verbose: print(f"[update_model]{costs=}", file=verbose)
             
-            #NOTE: these might be incorrect since some of the models specify the costs 
-            #TODO: remove the section below after testing 
-            # self.add_object("gencost",gencost,
-            #     parent=gen,
-            #     model="POLYNOMIAL",
-            #     costs="0.01,100,0", # TODO: where to get this data from (maybe from the lowest cost unit already present if any)
-            #     )
 
-            #NOTE: suggested FIX 
+            #NOTE: The formulation below is limited to a quadratic cost function
+            costs = f"{gen_prod_cost['x2']}," + f"{gen_prod_cost['x1']}," + f"{gen_prod_cost['c']}"
+            if verbose: print(f"{costs=}", file = verbose)
+
             self.add_object("gencost",gencost,
                 parent=gen,
                 model="POLYNOMIAL",
-                costs= costs + ",", ) #TODO: Talk to Dave about how to interpret polynomial costs
+                costs= costs
+                )
             
             # print("New gencost:",gencost,self.data["objects"][gencost])
-        
         if verbose:
             pprint.pprint(self.data["objects"], stream=verbose)
         
@@ -1245,7 +1229,7 @@ class Model:
         r = cp.Variable(N)  # condenser settings
 
         try:
-            cost = P @ ( cp.abs(g + h * 1j))
+            cost =  P @ ( cp.abs(g + h * 1j))
             if curtailment_price is None:
                 curtailment_price = 100*max(P) # default load shedding 100x maximum generator price
             shed = np.ones(N)*curtailment_price @ cp.abs(d+e*1j) 
@@ -1324,6 +1308,10 @@ class Model:
             ref:int|str=None,
             angle_limit:float=10.0,
             voltage_limit:float=0.05,
+            gen_prod_cost: dict = {"modlel": "POLYNOMIAL",
+                                    "x2": "0", 
+                                    "x1": "0",
+                                    "c": "0"},
             generator_expansion_limit=None,
             reactive_power_constraint=0.2,
             complex_flows:bool= True, 
@@ -1352,6 +1340,7 @@ class Model:
         * reactive_power_constraint: limits generation reactive power to fraction of real power
         * on_invalid: invalid problem handler
         * on_fail: failed solution handler
+        * gen_prod_cost: per unit production cost for the generator
         * complex_flows: if true creates a complex graph incidence matrix
         * kwargs: arguments passed to solver
 
@@ -1385,6 +1374,7 @@ class Model:
                         warnings.warn(f"{self.name} multiple reference busses found {ref}, using bus {ref[0]}")
                     ref = ref[list(ref)[0]]["bus_i"]
                 else:
+                    #NOTE: can fall back on the first PV bus or a PQREF 
                     warnings.warn(f"{self.name} no reference bus found, using bus 0")
                     ref = 0
             elif isinstance(ref,str):
@@ -1522,9 +1512,13 @@ class Model:
             print(f"{new_gens=} \n"
                   f"{new_caps=} \n"
                   f"{new_conds=} \n", file = verbose)
+        
+        
+
+
 
         if update_model:
-            self.update_model(min_power_ratio,voltage_high,voltage_low,new_gens,new_caps,new_conds,verbose)
+            self.update_model(min_power_ratio,voltage_high,voltage_low,new_gens,new_caps,new_conds,gen_prod_cost,verbose)
 
         status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:

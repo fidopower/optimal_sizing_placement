@@ -158,7 +158,9 @@ def _(
                     curtailment_ui,
                 ]
             )
+        
         capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
+    
 
     else:
         capacity_costs = mo.vstack([file, hint("open your JSON model")])
@@ -446,6 +448,9 @@ def _(
     error,
     file,
     gen_cost,
+    gen_prodcost_ui_c,
+    gen_prodcost_ui_x,
+    gen_prodcost_ui_x2,
     get_result,
     json,
     mo,
@@ -470,6 +475,12 @@ def _(
                 filename=_name,
                 label=f"Save optimal <U>{_name}</U>",
             )
+
+            gen_prod_cost_dict = {"model": "POLYNOMIAL",
+                                 "x2": gen_prodcost_ui_x2.value, 
+                                 "x1": gen_prodcost_ui_x.value, 
+                                 "c": gen_prodcost_ui_c.value}
+        
             with mo.capture_stderr() as _stderr:
                 with mo.capture_stdout() as _stdout:
                     _result = results(
@@ -485,6 +496,8 @@ def _(
                             margin=demand_margin_ui.value / 100,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
+                            gen_prod_cost=gen_prod_cost_dict
+                        
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -496,6 +509,7 @@ def _(
                 ]
             )
         except Exception as err:
+            raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             sizing = mo.vstack(
                 [
@@ -544,7 +558,7 @@ def _(
     # Final powerflow result
     if file.value:
         opf_model = copy.deepcopy(osp_model) #NOTE: should this be a deep copy of model or osp_model 
-   
+
         try:
             _name = os.path.split(opf_model.name)[1]
             _name = os.path.splitext(_name)
@@ -762,6 +776,47 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    #Operations Cost Slider
+    gen_prodcost_ui_x2 = mo.ui.slider(
+        label="$x^2$ quadratic coefficient: ($/MW)",
+        start=0,
+        stop=1000,
+        step=10,
+        value=0,
+        show_value=True,
+        debounce=True,
+    )
+    gen_prodcost_ui_x = mo.ui.slider(
+        label= "$x$ linear coefficient: ($/MW)",
+        start=0,
+        stop=1000,
+        step=10,
+        value=100,
+        show_value=True,
+        debounce=True,
+    )
+    gen_prodcost_ui_c = mo.ui.slider(
+        label="$c$ constant coefficient: ($/MW)",
+        start=0,
+        stop=1000,
+        step=10,
+        value=0,
+        show_value=True,
+        debounce=True,
+    )
+
+    return gen_prodcost_ui_c, gen_prodcost_ui_x, gen_prodcost_ui_x2
+
+
+@app.cell
+def _(gen_prodcost_ui_c, gen_prodcost_ui_x, gen_prodcost_ui_x2):
+
+    gen_prod_polytext_ui = f"{gen_prodcost_ui_x2.value}x^2 + {gen_prodcost_ui_x.value}x + {gen_prodcost_ui_c.value}"
+    return (gen_prod_polytext_ui,)
+
+
+@app.cell
 def _(gencost_ui, mo, np):
     # Curtailment settings
     curtailment_ui = mo.ui.slider(
@@ -834,6 +889,10 @@ def _(
     current_ui,
     curtailment_ui,
     demand_margin_ui,
+    gen_prod_polytext_ui,
+    gen_prodcost_ui_c,
+    gen_prodcost_ui_x,
+    gen_prodcost_ui_x2,
     gencost_ui,
     mo,
     problem_ui,
@@ -858,6 +917,15 @@ def _(
                     capcost_ui,
                     concost_ui,
                     curtailment_ui,
+                ]
+            ),
+            "**Added Generation Polynomial Production Cost Function**" : mo.vstack(
+                [
+                    gen_prodcost_ui_x2,
+                    gen_prodcost_ui_x, 
+                    gen_prodcost_ui_c,
+                    "Polynomial Prdouction Function:",
+                    gen_prod_polytext_ui
                 ]
             ),
             "**Loads**": mo.vstack(

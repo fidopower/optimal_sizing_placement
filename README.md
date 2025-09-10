@@ -113,7 +113,7 @@ The OPF is the solution to the following convex optimization problem for a
 network having $N$ busses and $M$ branches.
 
 $\begin{array}{rll}
-    \underset{x,y,g,h,c,d,e}{\min} & P|g + h| + 100 \hat{P}|d + e|
+    \underset{x,y,g,h,c,d,e}{\min} & P|g + h| + \hat{P}|d + e|
 \\
     \textrm{subject to} 
     & \Re(G) x - g + c + \Re(D) - d - r = 0 & \textrm{real power flow balance} \\
@@ -146,13 +146,17 @@ with variables
 and parameters
 
 * $P \in \mathbb{R}^N$ is the generation price,
-* $\hat P\in \mathbb{R}$ is the maximum generation price,
+* $\hat P\in \mathbb{R}$ is the curtailment cost,
 * $G \in \mathbb{C}^{N \times N}$ is the graph Laplacian,
 * $D \in \mathbb{C}^N$ is the total demand,
 * $I \in \mathbb{R}^{M \times N}$ is the graph incidence matrix,
 * $S \in \mathbb{C}^N$ is the generation capacity,
 * $C \in \mathbb{R}^N$ is the capacitor capacity, and
 * $R \in \mathbb{R}^N$ is the synchronous condenser capacity.
+
+
+$\hat{P}$ values can be set in the marimo notebook in ```Settings>Capacity Costs> Curtailment Cost```. In the absence of any curtailment cost value provided to the model, the OPF uses a default value of ```100 * (Max Cost among all available Generating Units)```. 
+
 
 ## Optimal Sizing and Placement
 
