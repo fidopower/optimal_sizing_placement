@@ -1,10 +1,15 @@
 import marimo
 
-__generated_with = "0.14.10"
+__generated_with = "0.16.5"
 app = marimo.App(width="full", app_title="Optimal Powerflow/Sizing/Placement")
 
 
 @app.cell
+def _():
+    return
+
+
+@app.cell(hide_code=True)
 def _(
     capacity_costs,
     diagram,
@@ -17,7 +22,7 @@ def _(
     set_main,
     settings_view,
 ):
-    #Main UI
+    1#Main UI
 
 
     main_tab = mo.ui.tabs(
@@ -33,20 +38,10 @@ def _(
         on_change=set_main,
     )
     main_tab
-
     return
 
 
-@app.cell
-def _():
-    a = "10"
-    a = complex(a)
-
-    print(a)
-    return
-
-
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     # Main tab state
     get_main, set_main = mo.state("Model")
@@ -95,8 +90,6 @@ def _(file, header_ui, hint, mo, model, os, pd):
     else:
 
         input_data = hint("open your JSON model")
-
-
     return (input_data,)
 
 
@@ -120,6 +113,8 @@ def _(
     model,
     np,
     pd,
+    substation_construction_cost_ui,
+    substation_upgrade_cost_ui,
 ):
     # Optimal sizing result
     if file.value:
@@ -128,6 +123,7 @@ def _(
             gen_cost = np.zeros(N, dtype=complex)
             cap_cost = np.zeros(N)
             con_cost = np.zeros(N)
+
             bus_name = []
             for x, y in _costdata.items():
                 bus_name.append(y["parent"])
@@ -135,6 +131,7 @@ def _(
                 gen_cost[_bus] = model.get_property(x, "generator")
                 cap_cost[_bus] = model.get_property(x, "capacitor")
                 con_cost[_bus] = model.get_property(x, "condenser")
+
             _showcost = pd.DataFrame(
                 {
                     "Generator ($/MVA)": gen_cost, 
@@ -143,10 +140,12 @@ def _(
                 },
                 bus_name,
             )
+
         else:
             gen_cost = gencost_ui.value
             cap_cost = capcost_ui.value
             con_cost = concost_ui.value
+
             _showcost = mo.vstack(
                 [
                     mo.md(
@@ -156,15 +155,40 @@ def _(
                     capcost_ui,
                     concost_ui,
                     curtailment_ui,
+                    substation_upgrade_cost_ui,
+                    substation_construction_cost_ui
                 ]
             )
-        
+
         capacity_costs = mo.vstack([mo.md("# Capacity costs"), _showcost])
-    
+
+        try: 
+            substation_upgrade_cost = float(substation_upgrade_cost_ui.value)
+        except Exception as e: 
+            print(f"Invalid value entered in textbox for {substation_upgrade_cost_ui.value=}  setting substation upgrade cost at 0 ")
+            #print(e)
+            substation_upgrade_cost = 0
+
+
+        try: 
+            substation_construction_cost= float(substation_construction_cost_ui.value)
+
+        except Exception as e: 
+            print(f"Invalid value entered in textbox for {substation_construction_cost_ui.value=} setting substation construction cost to infinity")
+            #print(e)
+
+            substation_construction_cost = np.inf  #infinite costs to construct a substation at a location without substations 
 
     else:
         capacity_costs = mo.vstack([file, hint("open your JSON model")])
-    return cap_cost, capacity_costs, con_cost, gen_cost
+    return (
+        cap_cost,
+        capacity_costs,
+        con_cost,
+        gen_cost,
+        substation_construction_cost,
+        substation_upgrade_cost,
+    )
 
 
 @app.cell
@@ -175,17 +199,98 @@ def _(mo):
 
 
 @app.cell
-def _(get_optimal, get_result, mo, original, set_result, sizing):
+def _(mo):
+    mo.md(r"""### Diagnostic View (New Code)""")
+    return
+
+
+@app.cell
+def _(
+    get_optimal,
+    get_result,
+    mo,
+    original,
+    per_component_duals_view,
+    per_component_view,
+    set_result,
+    sizing,
+    summary_view,
+):
     # Results UI
+    # results_tab = mo.ui.tabs(
+    #     {
+    #         "Initial optimal powerflow": original,
+    #         "Optimal sizing/placement solution": sizing,
+    #         "Final optimal powerflow": get_optimal(),
+    #     },
+    #     value=get_result(),
+    #     on_change=set_result,
+
+
+
+    # # Rebuild results_tab to add a Diagnostics tab (keeps your variable name)
+    # results_tab = mo.ui.tabs(
+    #     {
+    #         "Initial optimal powerflow": original,
+    #         "Optimal sizing/placement solution": sizing,
+    #         "Final optimal powerflow": get_optimal(),
+    #         "Diagnostics (constraints)": diagnostics_view,
+    #     },
+    #     value=get_result(),
+    #     on_change=set_result,
+    # )
+
+
+
+    # diagnostics_view = mo.tabs(
+    #     {
+    #         "Summary (max by constraint)": summary_view,          # from Cell 2
+    #         "Details (per component)": per_component_view,        # from Cell 3
+    #         "Duals (per component)": per_component_duals_view,    # from Cell 4
+    #     },
+    #     value="Summary (max by constraint)",
+    # )
+
+    # # Rebuild results_tab to include Diagnostics (keeps your variable name)
+    # results_tab = mo.ui.tabs(
+    #     {
+    #         "Initial optimal powerflow": original,
+    #         "Optimal sizing/placement solution": sizing,
+    #         "Final optimal powerflow": get_optimal(),
+    #         "Diagnostics (constraints)": diagnostics_view,
+    #     },
+    #     value=get_result(),
+    #     on_change=set_result,
+    # )
+
+
+    # --- Diagnostics tab + results tab (marimo 0.16.x) ---
+
+    # Build the diagnostics tabset
+    diagnostics_view = mo.ui.tabs(
+        {
+            "Summary (max by constraint)": summary_view,          # from Summary view cell
+            "Details (per component)": per_component_view,        # from Violations 3B cell
+            "Duals (per component)": per_component_duals_view,    # from Duals 4B cell
+        },
+        value="Summary (max by constraint)",   # initial tab
+
+    )
+
+    # Rebuild results_tab to include Diagnostics
     results_tab = mo.ui.tabs(
         {
             "Initial optimal powerflow": original,
             "Optimal sizing/placement solution": sizing,
             "Final optimal powerflow": get_optimal(),
+            "Diagnostics (constraints)": diagnostics_view,
         },
-        value=get_result(),
-        on_change=set_result,
+        value=get_result(),        # keep your existing state variable
+        on_change=set_result,      # keep state in sync
     )
+
+    # Render it
+    #results_tab
     return (results_tab,)
 
 
@@ -348,7 +453,7 @@ def _(K, N, message, mo, np, pd, warning):
                             data={
                                 x: [format(z) for z in y.tolist()]
                                 for x, y in result.items()
-                                if x in ["voltage","generation","capacitors","condensers","demand","curtailment"] and isinstance(y, np.ndarray) and len(y) == N
+                                if x in ["voltage","generation","capacitors","condensers","demand","curtailment","substation constr cost", "substation upgrade cost"] and isinstance(y, np.ndarray) and len(y) == N
                             },
                             index=model.get_name("bus"),
                         ),
@@ -370,6 +475,7 @@ def _(K, N, message, mo, np, pd, warning):
 @app.cell
 def _(
     angle_limit_ui,
+    complex_flows_ui,
     curtailment_ui,
     error,
     file,
@@ -406,7 +512,7 @@ def _(
                             solver=solver_ui.value,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
-                           # complex_flows = complex_flows_ui.value
+                            complex_flows = complex_flows_ui.value
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -431,7 +537,9 @@ def _(
             )
     else:
         original = mo.md("")
-    if problem_ui.value and get_result() == "Initial optimal powerflow":
+    
+    if problem_ui.value and (get_result() == "Initial optimal powerflow") and file.value:
+        print(f"{get_result()} problem data")
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(model.problem)
@@ -459,6 +567,8 @@ def _(
     problem_ui,
     results,
     solver_ui,
+    substation_construction_cost,
+    substation_upgrade_cost,
     verbose_ui,
     voltage_limit_ui,
 ):
@@ -480,7 +590,7 @@ def _(
                                  "x2": gen_prodcost_ui_x2.value, 
                                  "x1": gen_prodcost_ui_x.value, 
                                  "c": gen_prodcost_ui_c.value}
-        
+
             with mo.capture_stderr() as _stderr:
                 with mo.capture_stdout() as _stdout:
                     _result = results(
@@ -496,8 +606,10 @@ def _(
                             margin=demand_margin_ui.value / 100,
                             angle_limit=angle_limit_ui.value,
                             voltage_limit=voltage_limit_ui.value/100,
-                            gen_prod_cost=gen_prod_cost_dict
-                        
+                            gen_prod_cost=gen_prod_cost_dict,
+                            substation_upgrade_cost = substation_upgrade_cost,
+                            substation_constr_cost = substation_construction_cost
+
                         ),
                     )
             _output = _stdout.getvalue() + _stderr.getvalue()
@@ -509,7 +621,7 @@ def _(
                 ]
             )
         except Exception as err:
-            raise
+            #raise
             _output = _stdout.getvalue() + _stderr.getvalue()
             sizing = mo.vstack(
                 [
@@ -521,7 +633,8 @@ def _(
             )
     else:
         sizing = mo.md("")
-    if problem_ui.value and get_result() == "Optimal sizing/placement solution":
+    
+    if problem_ui.value and (get_result() == "Optimal sizing/placement solution") and file.value:
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(osp_model.problem)
@@ -533,6 +646,551 @@ def _(mo):
     # Optimization state
     get_optimal,set_optimal = mo.state(None)
     return get_optimal, set_optimal
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Newly added Cells start""")
+    return
+
+
+@app.cell
+def _(model, pd):
+
+    try:
+        N_ = len(model.find("bus", list))
+    except Exception:
+        N_ = 0
+
+    try:
+        K_ = len(model.find("branch", list))
+    except Exception:
+        K_ = 0
+
+    try:
+        BUS_INDEX_ = pd.Index(model.get_name("bus"), name="bus")
+    except Exception:
+        BUS_INDEX_ = pd.Index(range(N_), name="bus")
+
+    try:
+        BRANCH_INDEX_ = pd.Index(model.get_name("branch"), name="branch")
+    except Exception:
+        BRANCH_INDEX_ = pd.Index(range(K_), name="branch")
+    return BRANCH_INDEX_, BUS_INDEX_, K_, N_
+
+
+@app.cell
+def _(mo, osp_model, pd):
+
+    # Pull last OSP result safely
+    try:
+        _osp_res = osp_model.get_result("optimal_sizing")
+    except Exception:
+        _osp_res = {}
+
+    # Build the diagnostics table (one row per constraint)
+    viol_df = pd.DataFrame(_osp_res.get("constraint_report", []))
+
+    # Friendly fallback so downstream cells always render
+    if viol_df.empty:
+        viol_df = pd.DataFrame([{
+            "idx": -1,
+            "constraint": "(no diagnostics)",
+            "type": "",
+            "max_violation": 0.0,
+            "binding": True,
+            "dual_abs_max": float("nan"),
+            "status": _osp_res.get("status", "")
+        }])
+
+    diagnostics_status = mo.md(
+        f"**OSP status:** `{_osp_res.get('status','')}` &nbsp;&nbsp; "
+        f"**Solver:** `{_osp_res.get('solver','')}`"
+    )
+    return diagnostics_status, viol_df
+
+
+@app.cell
+def _(mo):
+
+
+    sort_by = mo.ui.dropdown(
+        label="Sort by",
+        options=["max_violation", "idx", "constraint", "type", "dual_abs_max", "status"],
+        value="max_violation",
+        allow_select_none=False,
+    )
+    ascending = mo.ui.switch(value=False, label="Ascending")
+    tol_ui = mo.ui.slider(
+        label="Binding tolerance", start=0.0, stop=1e-2, step=1e-6,
+        value=1e-6, show_value=True, debounce=True,
+    )
+    only_viol = mo.ui.switch(value=True, label="Only violated (>0)")
+    show_duals = mo.ui.switch(value=False, label="Show duals")
+
+    summary_controls = mo.hstack([sort_by, ascending, tol_ui, only_viol, show_duals], justify="start")
+    summary_controls
+    return ascending, only_viol, show_duals, sort_by, summary_controls, tol_ui
+
+
+@app.cell
+def _(
+    ascending,
+    diagnostics_status,
+    mo,
+    only_viol,
+    show_duals,
+    sort_by,
+    summary_controls,
+    tol_ui,
+    viol_df,
+):
+
+    _df = viol_df.copy()
+
+    if "max_violation" in _df.columns and only_viol.value:
+        _df = _df[_df["max_violation"] > 0]
+    if "max_violation" in _df.columns:
+        _df["binding@tol"] = (_df["max_violation"] <= float(tol_ui.value))
+
+    cols = ["idx", "constraint", "type", "max_violation", "binding@tol", "status"]
+    if show_duals.value and "dual_abs_max" in _df.columns:
+        cols.insert(4, "dual_abs_max")
+    cols = [c for c in cols if c in _df.columns]
+
+    _df = _df[cols].sort_values(by=sort_by.value, ascending=ascending.value)
+
+    download_btn = mo.download(
+        _df.to_csv(index=False),
+        mimetype="text/csv",
+        filename="constraint_report.csv",
+        label="Download CSV",
+    )
+
+    summary_view = mo.vstack([diagnostics_status, summary_controls, mo.ui.table(_df, page_size=25), download_btn])
+    summary_view
+    return (summary_view,)
+
+
+@app.cell
+def _(mo, viol_df):
+    def _viol_row_label(row):
+        return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+
+    if "idx" in viol_df.columns and len(viol_df) > 0:
+        _viol_labels = [_viol_row_label(r) for _, r in viol_df.sort_values("idx").iterrows()]
+    else:
+        _viol_labels = ["-1 —  — (no diagnostics)"]
+
+    con_picker = mo.ui.dropdown(
+        label="Select constraint (by idx/name)",
+        options=_viol_labels,
+        value=_viol_labels[0],
+        allow_select_none=False,
+    )
+    only_pos = mo.ui.switch(value=True, label="Show only positive violations")
+
+    viol_controls = mo.hstack([con_picker, only_pos], justify="start")
+    viol_controls
+
+    return con_picker, only_pos, viol_controls
+
+
+@app.cell
+def _(
+    BRANCH_INDEX_,
+    BUS_INDEX_,
+    K_,
+    N_,
+    con_picker,
+    mo,
+    np,
+    only_pos,
+    osp_model,
+    pd,
+    viol_controls,
+    viol_df,
+):
+
+    # Rebuild label -> idx mapping locally
+    def _viol_row_label(row):
+        return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+    _label_to_idx = (
+        { _viol_row_label(r): int(r["idx"]) for _, r in viol_df.sort_values("idx").iterrows() }
+        if "idx" in viol_df.columns and len(viol_df) > 0 else
+        {"-1 —  — (no diagnostics)": -1}
+    )
+
+    _selected_idx = _label_to_idx.get(con_picker.value, -1)
+
+    try:
+        vals = np.array(osp_model.constraint_component_violations(int(_selected_idx)), dtype=float).ravel()
+    except Exception:
+        vals = np.array([], dtype=float)
+
+    if vals.size == N_ and N_ > 0:
+        idx_labels_v = BUS_INDEX_
+    elif vals.size == K_ and K_ > 0:
+        idx_labels_v = BRANCH_INDEX_
+    else:
+        idx_labels_v = pd.Index(range(vals.size), name="component")
+
+
+    comp_df = pd.DataFrame({"violation": vals}, index=idx_labels_v)
+    if only_pos.value:
+        comp_df = comp_df[comp_df["violation"] > 0]
+    comp_df = comp_df.sort_values("violation", ascending=False)
+
+    components_csv = mo.download(
+        comp_df.reset_index().to_csv(index=False),
+        mimetype="text/csv",
+        filename=f"constraint_{_selected_idx}_components.csv",
+        label="Download components CSV",
+    )
+
+    per_component_view = mo.vstack([viol_controls, mo.ui.table(comp_df.reset_index(), page_size=25), components_csv])
+    per_component_view
+    return (per_component_view,)
+
+
+@app.cell
+def _(mo, viol_df):
+
+
+    def _dual_row_label(row):
+        return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+
+    if "idx" in viol_df.columns and len(viol_df) > 0:
+        _dual_labels = [_dual_row_label(r) for _, r in viol_df.sort_values("idx").iterrows()]
+    else:
+        _dual_labels = ["-1 —  — (no diagnostics)"]
+
+    dual_picker = mo.ui.dropdown(
+        label="Select constraint (by idx/name)",
+        options=_dual_labels,
+        value=_dual_labels[0],
+        allow_select_none=False,
+    )
+    dual_abs = mo.ui.switch(value=True, label="Show |dual| (absolute value)")
+    only_nonzero_dual = mo.ui.switch(value=True, label="Hide zeros")
+
+    dual_controls = mo.hstack([dual_picker, dual_abs, only_nonzero_dual], justify="start")
+    dual_controls
+    return dual_abs, dual_controls, dual_picker, only_nonzero_dual
+
+
+@app.cell
+def _(
+    BRANCH_INDEX_,
+    BUS_INDEX_,
+    K_,
+    N_,
+    dual_abs,
+    dual_controls,
+    dual_picker,
+    mo,
+    np,
+    only_nonzero_dual,
+    osp_model,
+    pd,
+    viol_df,
+):
+
+    def _dual_row_label(row):
+        return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+
+    # Build label -> idx mapping locally
+    _label_to_idx_dual = (
+        { _dual_row_label(r): int(r["idx"]) for _, r in viol_df.sort_values("idx").iterrows() }
+        if "idx" in viol_df.columns and len(viol_df) > 0 else
+        {"-1 —  — (no diagnostics)": -1}
+    )
+
+    _dual_idx = _label_to_idx_dual.get(dual_picker.value, -1)
+
+    # Fetch duals (can be None/empty/scalar/vector)
+    try:
+        dual_vals = osp_model.constraint_component_duals(int(_dual_idx), absval=dual_abs.value)
+    except Exception:
+        dual_vals = None
+
+    # Normalize to a 1D numpy array safely
+    if dual_vals is None:
+        dual_arr = np.array([], dtype=float)
+    else:
+        dual_arr = np.array(dual_vals, dtype=float).ravel()
+        # Some solvers return a single scalar dual for scalar constraints
+        if dual_arr.size == 1 and not np.isscalar(dual_vals):
+            dual_arr = dual_arr.ravel()
+
+    # Choose index labels by shape, but ONLY if sizes match
+    if dual_arr.size == 0:
+        # empty -> empty index and DF
+        idx_labels_d = pd.Index([], name="component")
+    elif dual_arr.size == N_:
+        idx_labels_d = BUS_INDEX_
+    elif dual_arr.size == K_:
+        idx_labels_d = BRANCH_INDEX_
+    else:
+        idx_labels_d = pd.Index(range(dual_arr.size), name="component")
+
+    duals_df = pd.DataFrame({"dual": dual_arr}, index=idx_labels_d)
+
+    # Optional filtering
+    if only_nonzero_dual.value and duals_df.shape[0] > 0:
+        duals_df = duals_df[np.abs(duals_df["dual"]) > 0]
+
+    duals_df = duals_df.sort_values("dual", ascending=False) if duals_df.shape[0] > 0 else duals_df
+
+    duals_csv = mo.download(
+        duals_df.reset_index().to_csv(index=False),
+        mimetype="text/csv",
+        filename=f"constraint_{_dual_idx}_duals.csv",
+        label="Download duals CSV",
+    )
+
+    per_component_duals_view = mo.vstack([
+        dual_controls,
+        mo.ui.table(duals_df.reset_index(), page_size=25),
+        duals_csv,
+    ])
+    per_component_duals_view
+    return (per_component_duals_view,)
+
+
+@app.cell
+def _():
+
+
+    # # --- Diagnostics filters + table (marimo 0.16.5-compatible) ---
+
+    # # Controls (dropdown instead of select; number uses start/stop, not min/max)
+    # sort_by = mo.ui.dropdown(
+    #     label="Sort by",
+    #     options=["max_violation", "idx", "constraint", "type", "dual_abs_max", "status"],
+    #     value="max_violation",
+    #     allow_select_none=False,
+    # )
+    # ascending = mo.ui.switch(value=False, label="Ascending")
+
+
+    # # --- Binding tolerance as a slider (marimo 0.16.5) ---
+    # tol_ui = mo.ui.slider(
+    #     label="Binding tolerance",
+    #     start=0.0,          # min allowed
+    #     stop=1e-2,          # max allowed (adjust if you like)
+    #     step=1e-6,          # slider increment
+    #     value=1e-6,         # initial value
+    #     show_value=True,
+    #     debounce=True,
+    # )
+
+
+    return
+
+
+@app.cell
+def _():
+
+    # only_viol = mo.ui.switch(value=True, label="Only violated (>0)")
+    # show_duals = mo.ui.switch(value=False, label="Show duals")
+    return
+
+
+@app.cell
+def _():
+
+
+    # # Build filtered/sorted view from viol_df created in the previous cell
+    # _df = viol_df.copy()
+
+    # if "max_violation" in _df.columns:
+    #     if only_viol.value:
+    #         _df = _df[_df["max_violation"] > 0]
+    #     _df["binding@tol"] = (_df["max_violation"] <= float(tol_ui.value))
+
+    # cols = ["idx", "constraint", "type", "max_violation", "binding@tol", "status"]
+    # if show_duals.value and "dual_abs_max" in _df.columns:
+    #     cols.insert(4, "dual_abs_max")
+    # cols = [c for c in cols if c in _df.columns]
+
+    # _df = _df[cols].sort_values(by=sort_by.value, ascending=ascending.value)
+
+    # download_btn = mo.download(
+    #     _df.to_csv(index=False),
+    #     mimetype="text/csv",
+    #     filename="constraint_report.csv",
+    #     label="Download CSV",
+    # )
+
+    # # diagnostics_view = mo.vstack([
+    # #     diagnostics_status,  # from the previous cell
+    # #     mo.hstack([sort_by, ascending, tol_ui, only_viol, show_duals], justify="start"),
+    # #     mo.ui.table(_df, page_size=25),
+    # #     download_btn,
+    # # ])
+
+    # diagnostics_view = mo.tabs(
+    #     {
+    #         "Summary (max by constraint)": mo.vstack([
+    #             diagnostics_status,
+    #             mo.hstack([sort_by, ascending, tol_ui, only_viol, show_duals], justify="start"),
+    #             mo.ui.table(_df, page_size=25),
+    #             download_btn,
+    #         ]),
+    #         "Details (per component)": per_component_view,        # violations (you already added)
+    #         "Duals (per component)": per_component_duals_view,    # <— new tab
+    #     },
+    #     value="Summary (max by constraint)",
+    # )
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""### Violations dataframe""")
+    return
+
+
+@app.cell
+def _():
+    # def _row_label(row):
+    #     # Looks like: 3 — <= — cp.abs(I.real@x + I.imag@y) <= F
+    #     return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+
+    # # Build mapping: label -> idx (int)
+    # if "idx" in viol_df.columns and len(viol_df) > 0:
+    #     _label_to_idx = {
+    #         _row_label(r): int(r["idx"])
+    #         for _, r in viol_df.sort_values("idx").iterrows()
+    #     }
+    # else:
+    #     _label_to_idx = {"-1 —  — (no diagnostics)": -1}
+
+    # _labels = list(_label_to_idx.keys())
+    # _initial_label = _labels[0]
+
+    # con_picker = mo.ui.dropdown(
+    #     label="Select constraint (by idx/name)",
+    #     options=_labels,               # <-- pass a list of labels
+    #     value=_initial_label,          # <-- initial selection is a label
+    #     allow_select_none=False,
+    # )
+
+    # only_pos = mo.ui.switch(value=True, label="Show only positive violations")
+    return
+
+
+@app.cell
+def _():
+
+    # # Fetch per-component violations from the model (vector)
+    # try:
+    #     vals = np.array(osp_model.constraint_component_violations(con_picker.value), dtype=float).ravel()
+    # except Exception:
+    #     vals = np.array([], dtype=float)
+
+    # # Choose row labels by shape
+    # if vals.size == N:
+    #     idx_labels = pd.Index(model.get_name("bus"), name="bus")
+    # elif vals.size == K:
+    #     idx_labels = pd.Index(model.get_name("branch"), name="branch")
+    # else:
+    #     idx_labels = pd.Index(range(vals.size), name="component")
+
+    # comp_df = pd.DataFrame({"violation": vals}, index=idx_labels)
+
+    # if only_pos.value:
+    #     comp_df = comp_df[comp_df["violation"] > 0]
+
+    # comp_df = comp_df.sort_values("violation", ascending=False)
+
+    # download_components = mo.download(
+    #     comp_df.reset_index().to_csv(index=False),
+    #     mimetype="text/csv",
+    #     filename=f"constraint_{con_picker.value}_components.csv",
+    #     label="Download components CSV",
+    # )
+
+    # per_component_view = mo.vstack([
+    #     mo.hstack([con_picker, only_pos], justify="start"),
+    #     mo.ui.table(comp_df.reset_index(), page_size=25),
+    #     download_components,
+    # ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""### Duals Dataframe""")
+    return
+
+
+@app.cell
+def _():
+    # def _row_label(row):
+    #     # Looks like: 3 — <= — cp.abs(I.real@x + I.imag@y) <= F
+    #     return f"{int(row['idx'])} — {row.get('type','')} — {row.get('constraint','')}"
+
+    # if "idx" in viol_df.columns:
+    #     _dual_opts = {_row_label(r): int(r["idx"]) for _, r in viol_df.sort_values("idx").iterrows()}
+    # else:
+    #     _dual_opts = {"(no constraints)": 0}
+
+    # dual_picker = mo.ui.dropdown(
+    #     label="Select constraint (by idx/name)",
+    #     options=_dual_opts,
+    #     value=list(_dual_opts.values())[0] if _dual_opts else 0,
+    #     allow_select_none=False,
+    # )
+
+    # dual_abs = mo.ui.switch(value=True, label="Show |dual| (absolute value)")
+    # only_nonzero_dual = mo.ui.switch(value=True, label="Hide zeros")
+
+    # # Pull duals from the model (vector)
+    # try:
+    #     dual_vals = np.array(
+    #         osp_model.constraint_component_duals(dual_picker.value, absval=dual_abs.value),
+    #         dtype=float
+    #     ).ravel()
+    # except Exception:
+    #     dual_vals = np.array([], dtype=float)
+
+    # # Choose index labels by shape (N => buses, K => branches, else generic)
+    # if dual_vals.size == N:
+    #     dual_index = pd.Index(model.get_name("bus"), name="bus")
+    # elif dual_vals.size == K:
+    #     dual_index = pd.Index(model.get_name("branch"), name="branch")
+    # else:
+    #     dual_index = pd.Index(range(dual_vals.size), name="component")
+
+    # duals_df = pd.DataFrame({"dual": dual_vals}, index=dual_index)
+
+    # if only_nonzero_dual.value:
+    #     # filter tiny numerical noise too
+    #     duals_df = duals_df[np.abs(duals_df["dual"]) > 0]
+
+    # duals_df = duals_df.sort_values("dual", ascending=False)
+
+    # dual_download_btn = mo.download(
+    #     duals_df.reset_index().to_csv(index=False),
+    #     mimetype="text/csv",
+    #     filename=f"constraint_{dual_picker.value}_duals.csv",
+    #     label="Download duals CSV",
+    # )
+
+    # per_component_duals_view = mo.vstack([
+    #     mo.hstack([dual_picker, dual_abs, only_nonzero_dual], justify="start"),
+    #     mo.ui.table(duals_df.reset_index(), page_size=25),
+    #     dual_download_btn,
+    # ])
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Newly Added Cells End""")
+    return
 
 
 @app.cell
@@ -622,7 +1280,7 @@ def _(
             )
     else:
         set_optimal(mo.md(""))
-    if problem_ui.value and get_result() == "Final optimal powerflow":
+    if problem_ui.value and (get_result() == "Final optimal powerflow") and file.value:
         mo.output.append(mo.md("---"))
         mo.output.append(f"{get_result()} problem data")
         mo.output.append(opf_model.problem)
@@ -772,14 +1430,28 @@ def _(mo):
         show_value=True,
         debounce=True,
     )
-    return capcost_ui, concost_ui, gencost_ui
+
+    substation_upgrade_cost_ui = mo.ui.text(label="**Substation capacity upgrade costs ($/MVA)**", 
+                                            placeholder="default 0",
+                                            debounce=True)
+
+    substation_construction_cost_ui = mo.ui.text(label="**New Substation construction costs ($/MVA)**", 
+                                            placeholder="default inf",
+                                            debounce=True)
+    return (
+        capcost_ui,
+        concost_ui,
+        gencost_ui,
+        substation_construction_cost_ui,
+        substation_upgrade_cost_ui,
+    )
 
 
 @app.cell
 def _(mo):
     #Operations Cost Slider
     gen_prodcost_ui_x2 = mo.ui.slider(
-        label="$x^2$ quadratic coefficient: ($/MW)",
+        label="$x^2$ quadratic coefficient: ($/MWH)^2/H",
         start=0,
         stop=1000,
         step=10,
@@ -788,7 +1460,7 @@ def _(mo):
         debounce=True,
     )
     gen_prodcost_ui_x = mo.ui.slider(
-        label= "$x$ linear coefficient: ($/MW)",
+        label= "$x$ linear coefficient: ($/MWH)",
         start=0,
         stop=1000,
         step=10,
@@ -797,7 +1469,7 @@ def _(mo):
         debounce=True,
     )
     gen_prodcost_ui_c = mo.ui.slider(
-        label="$c$ constant coefficient: ($/MW)",
+        label="$c$ constant coefficient: ($/H)",
         start=0,
         stop=1000,
         step=10,
@@ -805,7 +1477,6 @@ def _(mo):
         show_value=True,
         debounce=True,
     )
-
     return gen_prodcost_ui_c, gen_prodcost_ui_x, gen_prodcost_ui_x2
 
 
@@ -901,6 +1572,8 @@ def _(
     showloads_ui,
     solver_options,
     solver_ui,
+    substation_construction_cost_ui,
+    substation_upgrade_cost_ui,
     verbose_ui,
     voltage_ui,
 ):
@@ -917,6 +1590,8 @@ def _(
                     capcost_ui,
                     concost_ui,
                     curtailment_ui,
+                    substation_upgrade_cost_ui,
+                    substation_construction_cost_ui
                 ]
             ),
             "**Added Generation Polynomial Production Cost Function**" : mo.vstack(

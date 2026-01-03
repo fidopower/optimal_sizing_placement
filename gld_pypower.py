@@ -24,6 +24,7 @@ import math
 import io
 import subprocess
 import numpy as np
+import copy 
 try:
     from numpy import Inf
 except:
@@ -34,6 +35,7 @@ from typing import Union, Any, TypeVar
 import random
 import warnings
 import pprint
+import pandas as pd 
 
 try:
     from pypower.api import runpf, runopf, ppoption, printpf
@@ -801,11 +803,66 @@ class Model:
         #NOTE; Float costs 
         costs = {self.get_property(y["parent"],"bus"):float(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
         #costs = {self.get_property(y["parent"],"bus"):complex(y["costs"].split(",")[0]) for x,y in self.costs(refresh).items()}
-
-
+        
         if verbose: print(f"[prices]{self.costs(refresh)=}\n", file = verbose)
         self.results[f"prices"] = np.array([costs[n+1] if n+1 in costs else 0 for n in range(len(self.nodes(refresh)))])
         return self.results[f"prices"]
+
+    
+    def determine_cost_expr(self,g, h, refresh:bool=False, verbose = False): 
+        """Returns a CVXPY cost expression 
+        
+        Arguments: 
+        **g: real power output, list indexed by bus id 
+        **h: reactive power output, list inedexed by bus id 
+
+        Returns: 
+        * cvxpy expression: expression with all the costs taken into account 
+        """
+
+        if verbose: print(f"[determine_cost_expr] {g=}, {h=}", file = verbose)
+
+        x = cp.abs(g + h*1j) 
+        
+        gen_costs = list(self.costs(refresh).values())
+
+        cvxpy_return_exp = 0 
+       
+        for gencost_dict in gen_costs: 
+            bus_1idx = self.get_property(gencost_dict["parent"],"bus")
+            bus = bus_1idx - 1
+
+            if verbose:  print(f"[determine_cost_expr] {bus=} {gencost_dict=} {gencost_dict=}",file = verbose)
+            
+            costs_str = copy.copy(gencost_dict["costs"]) #create a shallow copy
+            
+            try:
+                cost_coefs = [float(x) for x in costs_str.split(",")]
+                cost_coefs.reverse()
+
+            except Exception as e:
+                if verbose: print(f"[determine_cost_expr] bus={bus_1idx} bad costs '{costs_str}': {e}", file=verbose)
+                continue
+            
+            x_bus = x[bus]
+            cvxpy_base_exp = 0
+
+            if verbose:  print(f"[determine_cost_expr] {x_bus=}",file = verbose)
+
+            for n,coef in enumerate(cost_coefs): 
+                if verbose:  print(f"[determine_cost_expr] {n=} {coef=} ",file = verbose)
+                term_n = coef*cp.power(x_bus, n) 
+                cvxpy_base_exp += term_n
+                #if verbose:  print(f"[determine_cost_expr] {n=} {term_n.value=} ",file = verbose)
+                
+            if verbose:  print(f"[determine_cost_expr] {cvxpy_base_exp=}",file = verbose)
+            
+            cvxpy_return_exp+=cvxpy_base_exp
+
+        if verbose:  print(f"[determine_cost_expr] {cvxpy_base_exp=}",file = verbose)
+        
+        return cvxpy_return_exp
+
 
     def shunts(self,refresh:bool=False) -> dict:
         """Get shunt device data
@@ -1061,8 +1118,8 @@ class Model:
                 )
             
             # print("New gencost:",gencost,self.data["objects"][gencost])
-        if verbose:
-            pprint.pprint(self.data["objects"], stream=verbose)
+        # if verbose:
+        #     pprint.pprint(self.data["objects"], stream=verbose)
         
         # add capacitors
         if verbose:
@@ -1122,6 +1179,7 @@ class Model:
     def _problem_invalid(err):
         """Invalid problem default handler"""
         raise ValueError(err)
+
 
     def optimal_powerflow(self,
         refresh:bool=False,
@@ -1217,7 +1275,6 @@ class Model:
             print("\nTotal S:",sum(S),sep="\n",file=verbose)
             print("\nTotal C:",sum(C),sep="\n",file=verbose)
 
-   
         # setup problem
         x = cp.Variable(N)  # nodal voltage angles
         y = cp.Variable(N)  # nodal voltage magnitudes
@@ -1230,10 +1287,15 @@ class Model:
 
         try:
             cost =  P @ ( cp.abs(g + h * 1j))
+
+            #cost = self.determine_cost_expr(g,h, refresh, verbose)
+
             if curtailment_price is None:
                 curtailment_price = 100*max(P) # default load shedding 100x maximum generator price
+
             shed = np.ones(N)*curtailment_price @ cp.abs(d+e*1j) 
             objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
+            
             constraints = [
                 #NOTE: original constraint
                 G.real @ x - g + c + D.real - d - r == 0,  # KCL/KVL real power laws
@@ -1292,6 +1354,178 @@ class Model:
 
         return self.set_result("optimal_powerflow",result) #NOTE: original was - self.set_result("optimal_sizing",result)
 
+    # def optimal_powerflow(self,
+    #     refresh:bool=False,
+    #     verbose:bool|TypeVar('io.TextIOWrapper')=False,
+    #     curtailment_price=None,
+    #     ref:int|str = None,
+    #     angle_limit:float=10.0,
+    #     voltage_limit:float=0.05,
+    #     complex_flows:bool = True, 
+    #     on_invalid:callable=_problem_invalid,
+    #     on_fail:callable=_solver_failed,
+    #     **kwargs) -> dict:
+    #     """Compute optimal powerflow
+
+    #     Arguments:
+    #     * refresh: force recalculation of previous result
+    #     * verbose: output solver data and results
+    #     * curtailment_price: price at which load is curtailed
+    #     * ref: reference bus id or name
+    #     * angle_limit: voltage angle accuracy limit
+    #     * voltage_limit: voltage magnitude violation limit
+    #     * on_invalid: invalid problem handler
+    #     * on_fail: solution failed handler
+    #     * kwargs: options passed of cvxpy.Problem.solve()
+
+    #     Returns:
+    #     * dict: solution results
+    #     """
+    #     try:
+    #         if not refresh and not self.modified:
+    #             return self.get_result("optimal_powerflow")
+    #     except:
+    #         pass
+
+    #     if self.graphSpectral()[2] > 1:
+    #         return on_invalid(f"{self.name} cannot solve OPF on more than one network at a time (model has {self.graphSpectral()[2]} networks)")
+    #     if self.graphSpectral()[2] == 0:
+    #         return on_invalid(f"{self.name} cannot solve OPF on invalid network modles (no zero eigenvalues found)")
+
+    #     # setup verbose output
+    #     if verbose is True:
+    #         verbose = sys.stderr
+
+    #     # extract data from model   
+    #     try:
+    #         if ref is None:
+    #             ref = self.select({"class":"bus","type":"REF"})
+    #             if len(ref) > 0:
+    #                 if len(ref) > 1:
+    #                     warnings.warn(f"{self.name} multiple reference busses found {ref}, using bus {ref[0]}")
+    #                 ref = ref[list(ref)[0]]["bus_i"]
+    #             else:
+    #                 warnings.warn(f"{self.name} no reference bus found, using bus 0")
+    #                 ref = 0
+    #         elif isinstance(ref,str):
+    #             ref = self.get_bus(ref)
+           
+    #         P = self.prices(refresh, verbose)
+    #         G = self.graphLaplacian(refresh)
+    #         D = self.demand('actual',refresh)
+    #         I = self.graphIncidence(refresh,complex_flows)
+    #         F = self.lineratings("A",refresh)
+    #         S = self.generation('capacity',refresh)
+    #         C = self.capacitors('installed',refresh, verbose)
+    #         R = self.condensers("installed", refresh)
+    #         N = len(self.nodes(refresh))
+    #     except Exception as err:
+    #         return on_invalid(err)
+
+    #     if verbose:
+    #         print(f"\ngld('{self.name}').optimal_powerflow("
+    #             f"{refresh=},"
+    #             f"{verbose=},"
+    #             f"{curtailment_price=},"
+    #             f"{ref=},"
+    #             f"{angle_limit=},"
+    #             f"{voltage_limit=},"
+    #             f"{on_invalid=},"
+    #             f"{on_fail=},"
+    #             f"{',' if kwargs else ''}{','.join([f'{x}={repr(y)}' for x,y in kwargs.items()])}):",
+    #             file=sys.stderr)
+    #         print("\nP:",P,sep="\n",file=verbose)
+    #         print("\nN:",N,sep="\n",file=verbose)
+    #         print("\nG:",G,sep="\n",file=verbose)
+    #         print("\nD:",D,sep="\n",file=verbose)
+    #         print("\nI:",I,sep="\n",file=verbose)
+    #         print("\nF:",F,sep="\n",file=verbose)
+    #         print("\nS:",S,sep="\n",file=verbose)
+    #         print("\nC:",C,sep="\n",file=verbose)
+    #         print("\nR:",R,sep="\n",file=verbose)
+
+    #         print("\nTotal D:",np.array(D).sum(),sep="\n",file=verbose)
+    #         print("\nTotal S:",sum(S),sep="\n",file=verbose)
+    #         print("\nTotal C:",sum(C),sep="\n",file=verbose)
+
+   
+    #     # setup problem
+    #     x = cp.Variable(N)  # nodal voltage angles
+    #     y = cp.Variable(N)  # nodal voltage magnitudes
+    #     g = cp.Variable(N)  # generation real power dispatch
+    #     h = cp.Variable(N)  # generation reactive power dispatch
+    #     c = cp.Variable(N)  # capacitor bank settings
+    #     d = cp.Variable(N)  # demand real power curtailment
+    #     e = cp.Variable(N)  # demand reactive power curtailment
+    #     r = cp.Variable(N)  # condenser settings
+
+    #     try:
+    #         cost =  P @ ( cp.abs(g + h * 1j))
+
+    #         if curtailment_price is None:
+    #             curtailment_price = 100*max(P) # default load shedding 100x maximum generator price
+
+    #         shed = np.ones(N)*curtailment_price @ cp.abs(d+e*1j) 
+    #         objective = cp.Minimize(cost + shed)  # minimum cost (generation + demand response)
+
+    #         constraints = [
+    #             #NOTE: original constraint
+    #             G.real @ x - g + c + D.real - d - r == 0,  # KCL/KVL real power laws
+    #             G.imag @ y - h - c + D.imag - e + r == 0,  # KCL/KVL reactive power laws
+    #             x[ref] == 0,  # swing bus voltage angle always 0
+    #             y[ref] == 1,  # swing bus voltage magnitude is always 1
+    #             cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
+    #             cp.abs(I.real@x + I.imag@y) <= F,  # line flow limits,
+    #             g >= 0,  # generation real power limits
+    #             cp.abs(h) <= S.imag,  # generation reactive power limits
+    #             cp.abs(g+h*1j) <= S.real, # generation apparent power limit
+    #             0 <= c, c <= C, # capacitor bank settings
+    #             r <= cp.abs(R), 
+    #             d >= 0, cp.abs(d+e*1j) <= cp.abs(D),  # demand curtailment constraint with flexible reactive power
+    #             ]
+    #         problem = cp.Problem(objective, constraints)
+    #         problem.solve(verbose=(verbose!=False),**kwargs)
+    #         self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
+
+    #     except Exception as err:
+    #         return on_invalid(err)
+
+    #     if x.value is None:
+    #         return on_fail(problem.status)
+        
+    #     status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
+    #     if verbose:
+    #         print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
+    #         print("\nx (voltage angles):", x.value.round(4), file=verbose)
+    #         print("\ny (voltage magnitudes):", y.value.round(4), file=verbose)
+    #         print("\ng (real generation):", g.value.round(4), file=verbose)
+    #         print("\nh (reactive generation):", h.value.round(4), file=verbose)
+    #         print("\nc (capacitor settings):", c.value.round(4), file=verbose)
+    #         print("\nr (condenser settings):", r.value.round(4), file=verbose)
+    #         print("\nd (real demand curtailment):", d.value.round(4), file=verbose)
+    #         print("\ne (reactive demand curtailment):", e.value.round(4), file=verbose)
+    #         print("\nIx (real):", cp.abs(I.real@x).value, file=verbose)
+    #         print("\nIy (imag):", cp.abs(I.imag@y).value, file=verbose)
+
+    #     puV = self.perunit("V")
+    #     puS = self.perunit("S")
+
+    #     result = {
+    #             "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
+    #             "magnitude": y.value.round(3),
+    #             "angle": (x.value*57.3).round(2),
+    #             "generation": np.array((g+h*1j).value).round(3)*puS,
+    #             "capacitors": np.array([max(x,0) for x in c.value]).round(3)*puS,
+    #             "condensers": np.array([max(-x,0) for x in c.value]).round(3)*puS,
+    #             "flows": cp.abs(I.real@x + I.imag@y).value.round(3)*puS, 
+    #             "cost" : problem.value.round(2),
+    #             "curtailment":np.array(d.value).round(3)*puS,
+    #             "demand":D.round(3)*puS,
+    #             "status": status,
+    #         }
+
+    #     return self.set_result("optimal_powerflow",result) #NOTE: original was - self.set_result("optimal_sizing",result)
+
     def optimal_sizing(self,            
             refresh:bool=False,
             verbose:bool|TypeVar('io.TextIOWrapper')=False,
@@ -1312,6 +1546,8 @@ class Model:
                                     "x2": "0", 
                                     "x1": "0",
                                     "c": "0"},
+            substation_upgrade_cost:float|list|dict=None, 
+            substation_constr_cost:float|list|dict=None, 
             generator_expansion_limit=None,
             reactive_power_constraint=0.2,
             complex_flows:bool= True, 
@@ -1341,6 +1577,8 @@ class Model:
         * on_invalid: invalid problem handler
         * on_fail: failed solution handler
         * gen_prod_cost: per unit production cost for the generator
+        * substation_upgrade_cost: $/MVA upgrade cost for the substation
+        * substation_constr_cost: $/MVA cost for constructing a new substation 
         * complex_flows: if true creates a complex graph incidence matrix
         * kwargs: arguments passed to solver
 
@@ -1379,15 +1617,27 @@ class Model:
                     ref = 0
             elif isinstance(ref,str):
                 ref = self.get_bus(ref)
+            
+            ref = int(ref) #turns out the above code was outputting string ref
 
             G = self.graphLaplacian(refresh)
             D = self.demand('actual',refresh)
             I = self.graphIncidence(refresh,complex_flows)
             F = self.lineratings("A",refresh)
             S = self.generation('capacity',refresh)
+            M = np.absolute(S) #current capacity. 
             C = self.capacitors('installed',refresh)
             R = self.condensers('installed', refresh)
             N = len(self.nodes(refresh))
+            H = (M == 0).astype(int)
+
+            #We create an upper bound U as listed in readme by 
+            U = 3*np.sum(np.absolute(D)) 
+
+            if substation_constr_cost == np.inf:
+                KH = np.where(H == 1, np.inf, 0)
+            else:
+                KH = substation_constr_cost * H * U
 
             # normalize generation cost argument
             if gen_cost is None:
@@ -1419,6 +1669,18 @@ class Model:
             elif isinstance(con_cost,list):
                 con_cost = np.array(con_cost)
 
+            if substation_upgrade_cost is None:
+                substation_upgrade_cost = np.zeros(N)
+            elif isinstance(substation_upgrade_cost,float) or isinstance(substation_upgrade_cost,int):
+                substation_upgrade_cost = np.full(N,substation_upgrade_cost)
+            elif isinstance(substation_upgrade_cost,dict):
+                substation_upgrade_cost = np.array([substation_upgrade_cost[n] if n in substation_upgrade_cost else 0 for n in range(N)])
+            elif isinstance(substation_upgrade_cost,list):
+                substation_upgrade_cost = np.array(substation_upgrade_cost)
+            
+            #Substation Upgrade Cost, keeping in line with README.md 
+            L = substation_upgrade_cost
+
             # normalize minimum reactive power argument
             if isinstance(min_power_ratio,float):
                 min_power_ratio = np.full(N,min_power_ratio)
@@ -1436,6 +1698,8 @@ class Model:
                 f"{gen_cost=},"
                 f"{cap_cost=},"
                 f"{con_cost=},"
+                f"{substation_upgrade_cost=},"
+                f"{substation_constr_cost=},"
                 f"{refresh=},"
                 f"{update_model=},"
                 f"{margin=},"
@@ -1460,6 +1724,11 @@ class Model:
             print("\nS:",S,sep="\n",file=verbose)
             print("\nC:",C,sep="\n",file=verbose)
             print("\nR:",R,sep="\n",file=verbose)
+            print("\nL:",L,sep="\n",file=verbose)
+            print("\nU:",U,sep="\n",file=verbose)
+            print("\nM:",M,sep="\n",file=verbose)
+            print("\nH:",H,sep="\n",file=verbose)
+            print("\nKH:",KH,sep="\n",file=verbose)
             print("\nTotal D:",sum(D),sep="\n",file=verbose)
             print("\nTotal S:",sum(S),sep="\n",file=verbose)
             print("\nTotal C:",sum(C),sep="\n",file=verbose)
@@ -1470,52 +1739,247 @@ class Model:
         g = cp.Variable(N)  # generation real power dispatch
         h = cp.Variable(N)  # generation reactive power dispatch
         c = cp.Variable(N)  # capacitor bank settings
+        m = cp.Variable(N)    
+        
+        g_e = S.real
+        h_e = S.imag
 
         try:
-
             # construct problem
             puS = self.perunit("S")
-            costs = cp.abs(gen_cost) @ cp.abs(g) + cp.abs(gen_cost.imag) @ cp.abs(h) + (cap_cost+con_cost)/2 @ cp.abs(c) + (cap_cost-con_cost)/2 @ c
-            objective = cp.Minimize(costs)  # minimum cost (generation + demand response)
+            s = cp.abs(g) + cp.abs(h) #apparent power
+            costs = cp.abs(gen_cost) @ cp.abs(g) + cp.abs(gen_cost.imag) @ cp.abs(h) + (cap_cost+con_cost)/2 @ cp.abs(c) + (cap_cost-con_cost)/2@c 
+            sub_upgrade_cost =  L@cp.pos(s-M) 
+
             constraints = [
-                g - G.real @ x + c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
-                h - G.imag @ y - c - D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
-                x[ref] == 0,  # swing bus voltage angle always 0
-                y[ref] == 1,  # swing bus voltage magnitude is always 1
+                #G.real @ x - g  + c + D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                #G.imag @ y - h  - c  + D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+                
+                #NOTE: original code implementation
+                # g - G.real @ x + c - D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                # h - G.imag @ y - c -D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+
+                #NOTE: takes into account existing generation and capacitor and condensor cap
+                G.real @ x - g - g_e + c + C + D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                G.imag @ y - h - h_e - c - R + D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+
+                # G.real @ x - g - g_e + c  + D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                # G.imag @ y - h - h_e - c  + D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+                # G.real @ x - g  + c + D.real*(1+margin) == 0,  # KCL/KVL real power laws
+                # G.imag @ y - h  - c  + D.imag*(1+margin) == 0,  # KCL/KVL reactive power laws
+
+                x[ref-1] == 0,  # swing bus voltage angle always 0
+                y[ref-1] == 1,  # swing bus voltage magnitude is always 1
                 cp.abs(y - 1) <= voltage_limit,  # limit voltage magnitude to 5% deviation
                 cp.abs(I.real@x + I.imag@y) <= F, 
                 g >= 0, # generation must be positive
-                cp.abs(h) <= reactive_power_constraint*g # limit how much reactive power a generator can produce
+                cp.abs(h) <= reactive_power_constraint*g, # limit how much reactive power a generator can produce
+
+                #NOTE: Substation cost application
+                s <= U*m,
+                m >= 0, 
+                m <= 1
                 ]
+            
+            constraint_str_name = [
+                "G.real @ x - g - g_e + c + C + D.real*(1+margin) == 0",  # KCL/KVL real power laws
+                "G.imag @ y - h - h_e - c - R + D.imag*(1+margin) == 0",  # KCL/KVL reactive power laws
+                "x[ref-1] == 0", 
+                "y[ref-1] == 1", 
+                "cp.abs(y - 1) <= voltage_limit",  
+                "cp.abs(I.real@x + I.imag@y) <= F", 
+                "g >= 0", 
+                "cp.abs(h) <= reactive_power_constraint*g", 
+                "s <= U*m",
+                "0 <= m", 
+                "m <= 1"
+                ]
+           
+            if substation_constr_cost == np.inf: 
+                for i in np.where(H == 1)[0]:
+                    #we set m_i = 0 if substation constr is not allowed at particular buses
+                    #better for the solver than having inf costs for those locations 
+                    #rather than failing the solver results in an infeasible
+                    constraints += [m[i] == 0] 
+                    constraint_str_name.append(f"m[{i}] == 0")
+                sub_constr_cost = 0
+            else: 
+                sub_constr_cost = KH@m
+
+            costs+= sub_upgrade_cost
+            costs+= sub_constr_cost
+
+            objective = cp.Minimize(costs)  # minimum cost (generation + demand response)
+            
             if not generator_expansion_limit is None: #TODO: #change this to if generator_expansion_limit
                 # limit where and how much generation can be added
                 constraints.append(cp.abs(g+h*1j) <= generator_expansion_limit*cp.abs(S))
 
             problem = cp.Problem(objective, constraints)
-            problem.solve(verbose=(verbose!=False),**kwargs)
+            #problem.solve(verbose=(verbose!=False),**kwargs)
+            problem.solve(verbose=True,**kwargs)
             self.problem = problem.get_problem_data(solver=problem.solver_stats.solver_name)
 
         except Exception as err:
-
             return on_invalid(err)
 
-        if x.value is None:
 
-            return on_fail(problem.status)
+        status = problem.status
+
+        # --- If infeasible or unbounded, build an elastic (diagnostic) problem ---
+        need_diagnostic = status in [cp.INFEASIBLE, cp.UNBOUNDED, "infeasible", "unbounded", "infeasible_inaccurate", "unbounded_inaccurate"]
+
+        elastic_slacks = []       # list of slack variables
+        elastic_pairs  = []       # tuples (name, original_constraint, slack_var)
+        elastic_constr = []       # relaxed constraints
+        con_names      = []       # names for reporting
+
+        if need_diagnostic:
+            # Create slack per constraint (vectorized if needed)
+            for k, con in enumerate(constraints):
+                nm, ctype, size = self._con_meta(con)
+               # nm = f"c{k}:{nm}:{ctype}"
+                nm = constraint_str_name[k]
+                if isinstance(con, cp.constraints.zero.Equality):
+                    # expr == 0  ->  expr <= e_plus,  -expr <= e_minus,  e_* >= 0
+                    e_plus  = cp.Variable(con.expr.shape, nonneg=True, name=f"e+_{k}")
+                    e_minus = cp.Variable(con.expr.shape, nonneg=True, name=f"e-_{k}")
+                    elastic_constr += [ con.expr <= e_plus, -con.expr <= e_minus ]
+                    elastic_slacks += [ e_plus, e_minus ]
+                    elastic_pairs.append((nm, con, e_plus))
+                    elastic_pairs.append((nm, con, e_minus))
+                    con_names.append(nm + "[+]"); con_names.append(nm + "[-]")
+                elif isinstance(con, cp.constraints.nonpos.Inequality):
+                    # expr <= 0  ->  expr <= e,  e >= 0
+                    e = cp.Variable(con.expr.shape, nonneg=True, name=f"e_{k}")
+                    elastic_constr += [ con.expr <= e ]
+                    elastic_slacks += [ e ]
+                    elastic_pairs.append((nm, con, e))
+                    con_names.append(nm)
+                elif isinstance(con, cp.constraints.second_order.SOC):
+                    # ||x||_2 <= t + e   with e >= 0 (scalar slack)
+                    e = cp.Variable(nonneg=True, name=f"e_soc_{k}")
+                    # con.args[0] is t, con.args[1] is x; rebuild SOC as ||x||_2 <= t + e
+                    t = con.args[0]; x = con.args[1]
+                    elastic_constr += [ cp.SOC(t + e, x) ]
+                    elastic_slacks += [ e ]
+                    elastic_pairs.append((nm, con, e))
+                    con_names.append(nm)
+                else:
+                    # Fallback: try to relax as expr <= e with e>=0
+                    try:
+                        e = cp.Variable(con.expr.shape, nonneg=True, name=f"e_{k}")
+                        elastic_constr += [ con.expr <= e ]
+                        elastic_slacks += [ e ]
+                        elastic_pairs.append((nm, con, e))
+                        con_names.append(nm)
+                    except:
+                        pass
+
+            # Minimize total L1 slack (sum of all violations)
+            if len(elastic_slacks) == 0:
+                # Shouldn’t happen, but guard anyway
+                elastic_obj = cp.Minimize(0)
+            else:
+                elastic_obj = cp.Minimize(cp.sum([cp.sum(s) for s in elastic_slacks]))
+
+            diag_prob = cp.Problem(elastic_obj, elastic_constr)
+            diag_prob.solve( verbose=True, **kwargs)  # SCS works well for diagnostics
+
+        rows = []
+
+        if not need_diagnostic:
+            # Feasible: use original constraint residuals
+            feasible_run = True
+            # for con in constraints:
+            #     nm, ctype, max_v, binding, dual_max = self._summarize(con, feasible_run)
+            #     rows.append(dict(constraint=nm, type=ctype,
+            #                     max_violation=max_v, binding=binding, dual_abs_max=dual_max))
+                
+            for k, con in enumerate(constraints):
+                pretty = self._name_for_index(k, con, constraint_str_name)
+                nm, ctype, max_v, binding, dual_max = self._summarize(con, feasible_run)
+                rows.append(dict(idx=k,
+                                constraint=pretty,   # <— your string form
+                                type=ctype,
+                                max_violation=max_v,
+                                binding=binding,
+                                dual_abs_max=dual_max))
+
+        else:
+            # Infeasible: report elastic slacks as the violation metric
+            feasible_run = False
+            for k, (nm, con, e) in enumerate(elastic_pairs):
+                try:
+                    e_val = e.value
+                    max_v = float(np.nanmax(np.abs(np.array(e_val)))) if e_val is not None else np.nan
+                except Exception:
+                    max_v = np.nan
+                rows.append(dict(idx = k, constraint=nm, type=self._con_meta(con)[1],
+                                max_violation=max_v, binding=False, dual_abs_max=np.nan))
+
+        report_df = pd.DataFrame(rows).sort_values(by=["max_violation"], ascending=False)
+
+        # Pretty print to stderr if verbose; also stash for return
+        if verbose:
+            with pd.option_context("display.max_rows", None, "display.max_colwidth", None):
+                print("\n=== Constraint report ===", file=verbose)
+                print(report_df.to_string(index=False), file=verbose)
+
+        # Pack common fields for UI
+        try:
+            solver_name = problem.solver_stats.solver_name
+        except Exception:
+            solver_name = None
+
+        try:
+            objective_value = float(problem.value) if problem.value is not None else None
+        except Exception:
+            objective_value = None
+
+        # IMPORTANT: don't early-return on infeasible; hand UI the diagnostics
+        ui_status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
+
+        # You can attach it to your result dict as a plain Python object too:
+        # (convert to records so it JSON-serializes safely)
+        constraint_report = report_df.to_dict(orient="records")
+
+        if x.value is None:
+            result = {
+                "status": ui_status,
+                "objective": objective_value,
+                "solver": solver_name,
+                "constraint_report": constraint_report,
+                # add anything else the UI expects even if None:
+                "voltage": None,
+                "magnitude": None,
+                "angle": None,
+                "generation": None,
+                "capacitors": None,
+                "condensers": None,
+                "flows": None,
+                "demand": D.round(3)*self.perunit("S"),
+                "additions": {"generation": {}, "capacitors": {}, "condensers": {}},
+                # optional: logs (if you captured them upstream)
+                "logs": kwargs.get("_logs", None),
+            }
+            return self.set_result("optimal_sizing", result)
+            
+            #TODO: Remove below if this works 
+            #return on_fail(problem.status)
 
         # update model with new values
-        new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value + cp.abs(h).value*1j - S) ]
-        new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value - C)]
-        new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value + R)]
-
+        #new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value + cp.abs(h).value*1j - S) ]
+        new_gens = [complex(round(max(round(x.real,3)*puS,0),9),round(max(round(x.imag,3)*puS,0),9)) if x.real>0 else 0 for x in (g.value + cp.abs(h).value*1j) ]
+        #new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value - C)] 
+        new_caps = [round(max(round(x,3)*puS,0),9) for x in (c.value)] 
+        #new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value + R)]
+        new_conds = [round(max(round(-x,3)*puS,0),9) for x in (c.value)]
+        
         if verbose: 
             print(f"{new_gens=} \n"
                   f"{new_caps=} \n"
                   f"{new_conds=} \n", file = verbose)
-        
-        
-
-
 
         if update_model:
             self.update_model(min_power_ratio,voltage_high,voltage_low,new_gens,new_caps,new_conds,gen_prod_cost,verbose)
@@ -1523,18 +1987,29 @@ class Model:
         status = "inaccurate/approximation" if self.linesplit(angle_limit) else problem.status
         if verbose:
             print(f"Status: {status}\nCost: {problem.value:.2f}",file=verbose)
+        
+        #if verbose: print(KH*m.value, file = verbose)
 
         # generate result data
         puV = self.perunit("V")
         result = {
+                "status": ui_status,
+                "objective": objective_value,
+                "solver": solver_name,
+                "constraint_report": constraint_report,      # <—— UI consumes this
                 "voltage": np.array([y.value.round(3)*puV,(x.value*57.3).round(2)]).transpose(),
                 "magnitude": y.value.round(3),
                 "angle": (x.value*57.3).round(2),
-                "generation": np.array((g+h*1j).value).round(3)*puS,
-                "capacitors": np.array([max(x,0) for x in c.value]).round(3)*puS,
-                "condensers": np.array([max(-x,0) for x in c.value]).round(3)*puS,
+                #"generation": np.array((g+h*1j).value).round(3)*puS,
+                "generation": np.array((g+h*1j).value + S).round(3)*puS,
+                #"capacitors": np.array([max(x,0) for x in c.value]).round(3)*puS,
+                "capacitors": np.array([max(x,0) for x in (c.value + C)]).round(3)*puS,
+                #"condensers": np.array([max(-x,0) for x in (c.value)]).round(3)*puS,
+                "condensers": np.array([max(-x,0) for x in (c.value - R)]).round(3)*puS,
                 "flows": cp.abs(I.real@x + I.imag@y).value.round(3)*puS, 
-                "cost" : problem.value.round(2),
+                "substation constr cost": np.array(KH*m.value.round(3)), 
+                "substation upgrade cost": np.array(s.value), #TODO: START HERE
+                "cost" : round(problem.value, 2),
                 "demand":D.round(3)*puS,
                 "additions": {
                     "generation": {n:x for n,x in enumerate(new_gens) if abs(x)>0},
@@ -1543,10 +2018,108 @@ class Model:
                 },
                 "status": status,
             }
+        
+        self._last_constraints = constraints[:]   # keep for UI drill-down
+
+        #TODO: Remove after testing the substatiion upgrade cost 
+        # try: 
+        #     if verbose: print(f"K*H^T*m*(1/s) = {(KH*m.value.round(4))/s.value.round(4)}", file = verbose)
+        #     #if verbose: print(f"As= {substation_constr_cost*H*s.value}", file = verbose)
+
+        # except Exception as e: 
+        #     if verbose: print(e, file = verbose)
 
         return self.set_result("optimal_sizing",result)
+    
+    def constraint_component_duals(self, idx: int, absval: bool = False):
+        """Return elementwise duals for constraint at index `idx`.
+        If absval=True, return absolute values."""
+        con = self._last_constraints[idx]
+        d = getattr(con, "dual_value", None)
+        if d is None:
+            return np.array([])  # no duals (e.g., infeasible run or solver didn't return)
+        arr = np.array(d, dtype=float).ravel()
+        return np.abs(arr) if absval else arr
+    
+    def constraint_component_violations(self, idx: int):
+        """Return elementwise violation vector for constraint at index `idx`."""
+        con = self._last_constraints[idx]
+        return self._violation_array(con)  # uses your existing helper
+    
+    def _name_for_index(self, k, con, constraint_str_name):
+        try:
+            return constraint_str_name[k]
+        except Exception:
+            nm, ctype, _ = self._con_meta(con)
+            return f"c{k}:{nm}:{ctype}"
 
-    #
+    def _summarize(self, con, feasible_run=True):
+        
+        tol  = 1e-6
+        nm, ctype, _ = self._con_meta(con)
+        v = self._violation_array(con)
+        max_v = float(np.nanmax(v)) if v.size else np.nan
+        # Binding: zero slack to tolerance (only meaningful if feasible)
+        binding = (max_v <= tol) if feasible_run else False
+        # Dual (KKT multiplier) often present only for feasible solves
+        try:
+            dual = con.dual_value
+            if dual is None:
+                dual_max = np.nan
+            else:
+                dual_arr = np.array(dual).astype(float).ravel()
+                dual_max = float(np.nanmax(np.abs(dual_arr))) if dual_arr.size else np.nan
+        except Exception:
+            dual_max = np.nan
+        return nm, ctype, max_v, binding, dual_max
+
+    def _con_meta(self, con):
+        """Infer a readable type tag for a CVXPY constraint and its size."""
+        name = getattr(con, "name", None) or con.__class__.__name__
+        if isinstance(con, cp.constraints.zero.Equality):
+            ctype = "=="
+            size  = con.expr.shape
+        elif isinstance(con, cp.constraints.nonpos.Inequality):
+            # Inequality is in canonical form: expr <= 0
+            ctype = "<="
+            size  = con.expr.shape
+        elif isinstance(con, cp.constraints.second_order.SOC):
+            ctype = "SOC"
+            size  = (1 + con.args[1].shape[0],)  # (t, x) dim
+        else:
+            ctype = type(con).__name__
+            size  = getattr(con, "shape", ())
+        return name, ctype, size
+
+    def _violation_array(self, con):
+        """
+        Compute elementwise violation for common constraint types
+        using current variable values (works after a solve).
+        - Equality: abs(expr)
+        - Inequality (expr <= 0): pos(expr)
+        - Abs box (|x| <= b) appears in CVXPY as two inequalities; they’ll each report their own.
+        Returns a flattened numpy array.
+        """
+        if isinstance(con, cp.constraints.zero.Equality):
+            v = np.abs(con.expr.value)
+        elif isinstance(con, cp.constraints.nonpos.Inequality):
+            v = np.maximum(con.expr.value, 0.0)
+        elif isinstance(con, cp.constraints.second_order.SOC):
+            # SOC: ||x||_2 <= t  -> violation = max( ||x||_2 - t, 0 )
+            t = con.args[0].value
+            x = con.args[1].value
+            t = np.array(t).reshape(())
+            v = np.maximum(np.linalg.norm(x), 0) - float(t)
+            v = np.array([max(v, 0.0)])
+        else:
+            # Fallback: try to evaluate expr<=0
+            try:
+                v = np.maximum(con.expr.value, 0.0)
+            except:
+                v = np.array([np.nan])
+        return np.array(v).astype(float).ravel()
+
+        #
     # PyPOWER
     #
 
